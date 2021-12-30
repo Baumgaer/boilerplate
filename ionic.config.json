@@ -1,7 +1,7 @@
 {
-  "name": "boilerplate",
-  "integrations": {
-    "capacitor": {}
-  },
-  "type": "vue"
+    "name": "boilerplate",
+    "integrations": {
+        "capacitor": {}
+    },
+    "type": "vue"
 }
