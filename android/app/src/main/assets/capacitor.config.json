@@ -2,8 +2,5 @@
 	"appId": "io.ionic.starter",
 	"appName": "boilerplate",
 	"webDir": "dist",
-	"bundledWebRuntime": false,
-	"server": {
-		"url": "http://192.168.178.20:8100"
-	}
+	"bundledWebRuntime": false
 }
