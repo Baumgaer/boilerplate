@@ -27,7 +27,7 @@ module.exports = {
                 "ignores": []
             }
         ],
-        "indent": ["error", 4],
+        "indent": "error",
         "linebreak-style": [
             "error",
             "unix"
