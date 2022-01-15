@@ -1,12 +1,14 @@
 {
     "extends": "./../../tsconfig.json",
-    "baseUrl": ".",
-    "paths": {
-        "~common/*": [
-            "./*"
-        ],
-        "~env/*": [
-            "./*"
-        ]
-    }
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "~common/*": [
+                "./*"
+            ],
+            "~env/*": [
+                "./*"
+            ]
+        }
+    },
 }
