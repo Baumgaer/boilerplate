@@ -6,9 +6,18 @@
         "jsx": "preserve",
         "importHelpers": true,
         "moduleResolution": "node",
+        "resolveJsonModule": true,
         "skipLibCheck": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "forceConsistentCasingInFileNames": true,
+        "noImplicitOverride": true,
+        "noFallthroughCasesInSwitch": true,
+        "noUnusedLocals": true,
+        "allowUnreachableCode": false,
+        "allowUnusedLabels": false,
         "sourceMap": true,
         "baseUrl": ".",
         "types": [
@@ -16,7 +25,7 @@
             "jest"
         ],
         "paths": {
-            "@/*": [
+            "~root/*": [
                 "src/*"
             ]
         },
