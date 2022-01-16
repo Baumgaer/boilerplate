@@ -1,5 +1,6 @@
 import { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } from "@ionic/vue";
-import { Vue, Options } from "vue-property-decorator";
+import { Controller } from "~client/utils/decorators";
+import BaseController from "~client/lib/BaseController";
 
-@Options({ components: { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } })
-export default class HomePage extends Vue { }
+@Controller({ components: { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } })
+export default class HomePage extends BaseController { }
