@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { createApp } from 'vue';
 import App from '~client/App.vue';
 import router from '~client/routes';
