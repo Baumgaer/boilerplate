@@ -32,7 +32,10 @@ module.exports = {
     chainWebpack: (config) => {
 
         config.module.rule('ts').use('ts-loader').merge({
-            options: { configFile: TSCONFIG_PATH }
+            options: {
+                configFile: TSCONFIG_PATH,
+                compiler: "ttypescript"
+            }
         });
 
         config.plugin('fork-ts-checker').tap(args => {

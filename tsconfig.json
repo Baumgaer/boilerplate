@@ -35,6 +35,11 @@
             "dom",
             "dom.iterable",
             "scripthost"
+        ],
+        "plugins": [
+            {
+                "transform": "tst-reflect-transformer"
+            }
         ]
     },
     "include": [

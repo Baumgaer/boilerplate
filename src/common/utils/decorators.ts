@@ -1,12 +1,19 @@
 import { SchemaTypeOptions } from "mongoose";
 import BaseModel from "~common/lib/BaseModel";
+import { getType } from "tst-reflect";
 
 type allowedAttrFields = "alias" | "cast" | "select" | "index" | "unique" |
     "sparse" | "text" | "subtype" | "min" | "max" |
     "expires" | "excludeIndexes" | "match" | "lowercase" |
     "uppercase" | "trim" | "minlength" | "maxlength";
 
-export function Model(): ClassDecorator {
+/**
+ * @reflectDecorator
+ */
+export function Model<T>(): ClassDecorator {
+    const theType = getType<T>();
+    console.log(theType);
+
     return (target) => {
         const schemaDefinition = Reflect.getMetadata("schemaDefinition", target.prototype);
         console.log(schemaDefinition);

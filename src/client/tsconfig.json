@@ -14,6 +14,10 @@
             ]
         }
     },
+    "reflection": {
+        "metadata": false,
+        "debugMode": false
+    },
     "include": [
         "./**/*.ts",
         "./**/*.tsx",
