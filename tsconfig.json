@@ -22,7 +22,8 @@
         "baseUrl": ".",
         "types": [
             "webpack-env",
-            "jest"
+            "jest",
+            "reflect-metadata"
         ],
         "paths": {
             "~root/*": [

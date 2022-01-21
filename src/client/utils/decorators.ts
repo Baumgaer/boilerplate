@@ -8,7 +8,7 @@ import {
     Model as ModelDecorator,
     Ref as RefDecorator
 } from "vue-property-decorator";
-export { Model, Attr } from "~common/utils/decorators";
+export * from "~common/utils/decorators";
 
 
 /**

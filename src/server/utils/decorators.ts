@@ -1,1 +1,1 @@
-export { Model, Attr } from "~common/utils/decorators";
+export * from "~common/utils/decorators";

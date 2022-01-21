@@ -19,6 +19,7 @@ module.exports = {
         '@typescript-eslint/no-unused-vars': ["warn", {
             "argsIgnorePattern": "^_"
         }],
+        '@typescript-eslint/no-inferrable-types': "off",
         "vue/html-indent": [
             "error",
             4,

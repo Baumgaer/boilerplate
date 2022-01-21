@@ -1,19 +1,33 @@
 import { SchemaTypeOptions } from "mongoose";
-import { Vue } from "vue-class-component";
+import BaseModel from "~common/lib/BaseModel";
+
+type allowedAttrFields = "alias" | "cast" | "select" | "index" | "unique" |
+    "sparse" | "text" | "subtype" | "min" | "max" |
+    "expires" | "excludeIndexes" | "match" | "lowercase" |
+    "uppercase" | "trim" | "minlength" | "maxlength";
 
 export function Model(): ClassDecorator {
-    return (_target) => {
-        // pass
+    return (target) => {
+        const schemaDefinition = Reflect.getMetadata("schemaDefinition", target.prototype);
+        console.log(schemaDefinition);
     };
 }
 
-export function Attr<T extends Vue>(_options: Omit<SchemaTypeOptions<T> & ThisType<T>, "default">): PropertyDecorator {
+export function Attr<T extends BaseModel>(options: Pick<SchemaTypeOptions<keyof T> & ThisType<T>, allowedAttrFields> = {}): PropertyDecorator {
     // TODO:
     //      1. Make immutable on readonly
     //      2. Make enum on union types? Or maybe build own custom validator
     //      3. Make required if not optional
-    return (_target, _propertyName) => {
-        // pass
+    //      4. Determine "ref" in case of Model
+    //      5. Determine "of" in case of Map
+    return (target, attributeName) => {
+        let schemaDefinition = Reflect.getMetadata("schemaDefinition", target);
+        if (!schemaDefinition) {
+            schemaDefinition = {};
+            Reflect.defineMetadata("schemaDefinition", schemaDefinition, target);
+        }
+        if (schemaDefinition[attributeName]) throw new Error(`Attribute "${attributeName.toString()}" is already defined`);
+        schemaDefinition[attributeName] = options;
     };
 }
 
