@@ -24,6 +24,7 @@
         "@ionic/vue-router": "^6.0.3",
         "app-root-path": "^3.0.0",
         "core-js": "^3.20.3",
+        "lodash": "^4.17.21",
         "mongoose": "^6.1.7",
         "reflect-metadata": "^0.1.13",
         "tslib": "^2.3.1",
@@ -39,6 +40,7 @@
         "@capacitor/cli": "3.3.3",
         "@ionic/cli": "^6.18.1",
         "@types/jest": "^27.4.0",
+        "@types/lodash": "^4.14.178",
         "@typescript-eslint/eslint-plugin": "^5.10.0",
         "@typescript-eslint/parser": "^5.10.0",
         "@vue/cli-plugin-babel": "~5.0.0-rc.1",
@@ -64,6 +66,7 @@
         "tsconfig-paths-webpack-plugin": "^3.5.2",
         "tst-reflect-transformer": "^0.8.5-alpha.0",
         "ttypescript": "^1.5.13",
+        "type-fest": "^2.11.0",
         "typescript": "^4.5.5"
     },
     "description": "An Ionic project"

@@ -1,26 +1,21 @@
-import { SchemaTypeOptions } from "mongoose";
 import BaseModel from "~common/lib/BaseModel";
-import { getType } from "tst-reflect";
+import Attribute from "~common/lib/Attribute";
+import { merge } from "lodash";
+import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson } from "~common/types/decorators";
+import type { IMetadata } from "~common/types/metadataTypes";
 
-type allowedAttrFields = "alias" | "cast" | "select" | "index" | "unique" |
-    "sparse" | "text" | "subtype" | "min" | "max" |
-    "expires" | "excludeIndexes" | "match" | "lowercase" |
-    "uppercase" | "trim" | "minlength" | "maxlength";
-
-/**
- * @reflectDecorator
- */
-export function Model<T>(): ClassDecorator {
-    const theType = getType<T>();
-    console.log(theType);
-
+export function Model(): ClassDecorator {
     return (target) => {
         const schemaDefinition = Reflect.getMetadata("schemaDefinition", target.prototype);
         console.log(schemaDefinition);
     };
 }
 
-export function Attr<T extends BaseModel>(options: Pick<SchemaTypeOptions<keyof T> & ThisType<T>, allowedAttrFields> = {}): PropertyDecorator {
+export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): PropertyDecorator {
+    const metadata: IMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
+    const metadataOptions: AttrOptionsPartialMetadataJson<T> = merge({}, metadata, <AttrOptionsWithMetadataJson<T>>options);
+    delete metadataOptions.metadataJson;
+
     // TODO:
     //      1. Make immutable on readonly
     //      2. Make enum on union types? Or maybe build own custom validator
@@ -34,7 +29,7 @@ export function Attr<T extends BaseModel>(options: Pick<SchemaTypeOptions<keyof 
             Reflect.defineMetadata("schemaDefinition", schemaDefinition, target);
         }
         if (schemaDefinition[attributeName]) throw new Error(`Attribute "${attributeName.toString()}" is already defined`);
-        schemaDefinition[attributeName] = options;
+        schemaDefinition[attributeName] = new Attribute<T>(metadataOptions);
     };
 }
 
