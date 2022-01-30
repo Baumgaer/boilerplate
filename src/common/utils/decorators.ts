@@ -3,6 +3,7 @@ import Attribute from "~common/lib/Attribute";
 import { merge } from "lodash";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson } from "~common/types/decorators";
 import type { IMetadata } from "~common/types/metadataTypes";
+import { Constructor } from "type-fest";
 
 export function Model(): ClassDecorator {
     return (target) => {
@@ -28,8 +29,8 @@ export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): Propert
             schemaDefinition = {};
             Reflect.defineMetadata("schemaDefinition", schemaDefinition, target);
         }
-        if (schemaDefinition[attributeName]) throw new Error(`Attribute "${attributeName.toString()}" is already defined`);
-        schemaDefinition[attributeName] = new Attribute<T>(metadataOptions);
+        if (schemaDefinition[attributeName.toString()]) throw new Error(`Attribute "${attributeName.toString()}" is already defined`);
+        schemaDefinition[attributeName.toString()] = new Attribute<T>(<Constructor<T>>target, attributeName.toString(), metadataOptions);
     };
 }
 

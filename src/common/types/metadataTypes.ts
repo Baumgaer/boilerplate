@@ -1,7 +1,7 @@
 /* eslint no-use-before-define: 0 */ // because otherwise we won't be able to declare recursive types
 import { UnionToIntersection } from "type-fest";
 
-type MetadataType = IIdentifiedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType;
+type MetadataType = IIdentifiedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType | IUnresolvedType;
 
 interface IIdentifiedType {
     identifier: "String" | "Number" | "Boolean" | "Date" | string;
@@ -14,6 +14,10 @@ interface IModelType {
 
 interface IMixedType {
     isMixed: boolean;
+}
+
+interface IUnresolvedType {
+    isUnresolvedType: true;
 }
 
 interface ILiteralType {

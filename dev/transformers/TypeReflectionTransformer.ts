@@ -95,8 +95,9 @@ export default function transformer(program: ts.Program) {
 
             const alias = attr.name.getText();
             console.info(`processing attribute ${alias}`);
-            let type = typeChecker.getTypeAtLocation(attr);
-            type = resolveType(type, attr.type, sourceFile);
+            const type = resolveType(typeChecker.getTypeAtLocation(attr), attr, sourceFile);
+
+            console.log(attr.name.getText(), JSON.stringify(type));
 
             const isRequired = !attr.questionToken && !attr.initializer || attr.exclamationToken && !attr.initializer;
             const isReadOnly = attr.modifiers?.some((modifier) => modifier?.kind === ts.SyntaxKind.ReadonlyKeyword);
@@ -105,15 +106,19 @@ export default function transformer(program: ts.Program) {
             return JSON.stringify({ isRequired, isReadOnly, isInternal, type, alias });
         }
 
-        function resolveType(type: ts.Type, typeNode: ts.TypeNode, sourceFile: ts.SourceFile) {
+        function resolveType(type: ts.Type, attr: ts.PropertyDeclaration, sourceFile: ts.SourceFile) {
+
+            let typeNode = attr.type;
 
             // NORMALIZE TYPE
-            if (typeNode.kind === ts.SyntaxKind.ParenthesizedType) {
+            if (typeNode?.kind === ts.SyntaxKind.ParenthesizedType) {
                 typeNode = (<ts.ParenthesizedTypeNode>typeNode).type;
                 type = typeChecker.getTypeAtLocation(typeNode);
             }
 
             // RESOLVE PRIMITIVE TYPES
+            if (type.flags === ts.TypeFlags.Null) return { isNull: true };
+            if (type.flags === ts.TypeFlags.Undefined) return { isUndefined: true };
             if (type.flags === ts.TypeFlags.String) return { identifier: "String" };
             if (type.flags === ts.TypeFlags.Number) return { identifier: "Number" };
             if (type.flags === ts.TypeFlags.Union + ts.TypeFlags.Boolean || type.flags === ts.TypeFlags.BooleanLiteral) return { identifier: "Boolean" };
@@ -121,13 +126,6 @@ export default function transformer(program: ts.Program) {
                 const isStringLiteral = type.flags === ts.TypeFlags.StringLiteral;
                 const isNumberLiteral = type.flags === ts.TypeFlags.NumberLiteral;
                 return { isLiteral: true, isStringLiteral, isNumberLiteral, value: (<ts.LiteralType>type).value };
-            }
-
-            // RESOLVE ANY TYPE
-            if (type.flags === ts.TypeFlags.Any && !isIntersectionOrUnion(type, typeNode)) {
-                if (isMaybeModelType(type, sourceFile)) return { identifier: typeChecker.typeToString(type), isModel: true };
-                console.warn(`WARNING: Any type detected!`);
-                return { isMixed: true };
             }
 
             // RESOLVE MODEL TYPE
@@ -138,27 +136,58 @@ export default function transformer(program: ts.Program) {
                 }
             }
 
-            // RESOLVE ANY TYPE
-            if (typeNode.kind === ts.SyntaxKind.ArrayType) {
-                const elementTypeNode = (<ts.ArrayTypeNode>typeNode).elementType;
-                const elementType = typeChecker.getTypeAtLocation(elementTypeNode);
-                return { isArray: true, subType: resolveType(elementType, elementTypeNode, sourceFile) };
-            }
-
             // RESOLVE UNIONS AND INTERSECTIONS
-            if (isIntersectionOrUnion(type, typeNode)) {
-                const isUnion = type.isUnion() || typeNode.kind === ts.SyntaxKind.UnionType;
-                const isIntersection = type.isIntersection() || typeNode.kind === ts.SyntaxKind.IntersectionType;
+            if (type.flags === ts.TypeFlags.Union || type.flags === ts.TypeFlags.Intersection) {
+                const isUnion = type.flags === ts.TypeFlags.Union;
+                const isIntersection = type.flags === ts.TypeFlags.Intersection;
 
                 const subTypes = [];
-                for (const subTypeNode of (<ts.UnionOrIntersectionTypeNode>typeNode).types) {
-                    const subType = typeChecker.getTypeFromTypeNode(subTypeNode);
-                    subTypes.push(resolveType(subType, subTypeNode, sourceFile));
+                for (const subType of (<ts.UnionOrIntersectionType>type).types) {
+                    subTypes.push(resolveType(subType, attr, sourceFile));
                 }
                 return { isUnion, isIntersection, subTypes };
             }
 
-            return null;
+            if (type.flags === ts.TypeFlags.Object) return resolveObjectType(type, attr, sourceFile);
+
+            // RESOLVE ANY TYPE
+            if (type.flags === ts.TypeFlags.Any) {
+                if (isMaybeModelType(type, sourceFile)) return { identifier: typeChecker.typeToString(type), isModel: true };
+                console.warn(`WARNING: Any type detected!`);
+                return { isMixed: true };
+            }
+
+            return { isUnresolvedType: true };
+        }
+
+        function resolveObjectType(type: ts.Type, attr: ts.PropertyDeclaration, sourceFile: ts.SourceFile) {
+
+            // RESOLVE ARRAY
+            if (attr.type?.kind === ts.SyntaxKind.ArrayType || attr.initializer?.kind === ts.SyntaxKind.ArrayLiteralExpression) {
+                if (attr.type) {
+                    const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>attr.type).elementType);
+                    return { isArray: true, subType: resolveType(elementType, attr, sourceFile) };
+                }
+                if (attr.initializer) {
+                    const subTypes = [];
+                    (<ts.ArrayLiteralExpression>attr.initializer).elements.forEach((element) => {
+                        const subType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile);
+                        subTypes.push(subType);
+                    });
+                    return { isArray: true, subType: { isUnion: true, subTypes } };
+                }
+            }
+
+            // RESOLVE DATE
+            if (attr.type?.kind === ts.SyntaxKind.TypeReference || attr.initializer?.kind === ts.SyntaxKind.CallExpression || attr.initializer?.kind === ts.SyntaxKind.NewExpression) {
+                if ((<ts.Identifier>(<ts.TypeReferenceNode>attr.type)?.typeName)?.escapedText === "Date") {
+                    return { identifier: "Date" };
+                }
+
+                if ((<ts.Identifier>(<ts.CallExpression | ts.NewExpression>attr.initializer)?.expression)?.escapedText === "Date") {
+                    return { identifier: "Date" };
+                }
+            }
         }
 
         function isMaybeModelType(type: ts.Type, sourceFile: ts.SourceFile): boolean {
@@ -201,10 +230,6 @@ export default function transformer(program: ts.Program) {
 
         function isDefaultExported(declaration: ts.ClassDeclaration) {
             return declaration.modifiers?.[0].kind === ts.SyntaxKind.ExportKeyword && declaration.modifiers?.[1].kind === ts.SyntaxKind.DefaultKeyword;
-        }
-
-        function isIntersectionOrUnion(type: ts.Type, typeNode: ts.TypeNode) {
-            return type.isUnionOrIntersection() || typeNode.kind === ts.SyntaxKind.UnionType || typeNode.kind === ts.SyntaxKind.IntersectionType;
         }
 
         return (sourceFile) => {

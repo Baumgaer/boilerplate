@@ -4,5 +4,5 @@ import { Attr } from "~common/utils/decorators";
 export default abstract class Example extends BaseModel {
 
     @Attr({ alias: "tested" })
-    protected test!: Date;
+    protected test = new Date();
 }

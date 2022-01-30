@@ -31,6 +31,8 @@ module.exports = {
     },
     chainWebpack: (config) => {
 
+        config.module.rule('ts').uses.delete('cache-loader');
+
         config.module.rule('ts').use('ts-loader').merge({
             options: {
                 configFile: TSCONFIG_PATH,
