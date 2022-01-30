@@ -62,69 +62,94 @@ export default function transformer(program: ts.Program) {
                 type = typeChecker.getTypeAtLocation(typeNode);
             }
 
-            // RESOLVE PRIMITIVE TYPES
-            if (utils.isNull(type)) return { isNull: true };
-            if (utils.isUndefined(type)) return { isUndefined: true };
-            if (utils.isString(type)) return { identifier: "String" };
-            if (utils.isNumber(type)) return { identifier: "Number" };
-            if (utils.isBoolean(type)) return { identifier: "Boolean" };
-            if (utils.isLiteral(type)) {
-                const isStringLiteral = utils.isStringLiteral(type);
-                const isNumberLiteral = utils.isNumberLiteral(type);
-                return { isLiteral: true, isStringLiteral, isNumberLiteral, value: (<ts.LiteralType>type).value };
-            }
-
-            // RESOLVE MODEL TYPE
-            if (type.flags === ts.TypeFlags.TypeParameter || type.flags === ts.TypeFlags.Object) {
-                const symbol = type.symbol;
-                if (symbol?.flags === ts.SymbolFlags.Class && utils.isValidSourceFile(<ts.SourceFile>symbol.valueDeclaration.parent)) {
-                    return { identifier: (<ts.ClassDeclaration>symbol.valueDeclaration).name.getText(), isModel: true };
-                }
-            }
-
-            // RESOLVE UNIONS AND INTERSECTIONS
-            if (utils.isUnionOrIntersection(type)) {
-                const isUnion = utils.isUnion(type);
-                const isIntersection = utils.isIntersection(type);
-
-                const subTypes = [];
-                for (const subType of (<ts.UnionOrIntersectionType>type).types) {
-                    subTypes.push(resolveType(subType, attr, sourceFile));
-                }
-                return { isUnion, isIntersection, subTypes };
-            }
-
-            if (utils.isObject(type)) {
-                if (utils.isInterface(type, attr)) {
-                    return resolveInterface(<ts.TypeReferenceNode>typeNode, sourceFile);
-                }
-                return resolveObjectType(type, attr, sourceFile);
-            }
-
-            // RESOLVE ANY TYPE
-            if (utils.isAny(type)) {
-                if (isMaybeModelType(type, sourceFile)) return { identifier: typeChecker.typeToString(type), isModel: true };
-                if (utils.isDate(type, attr)) return { identifier: "Date" };
-                console.warn(`WARNING: Any type detected!`);
-                return { isMixed: true };
-            }
-
+            if (utils.isNull(type)) return resolveNull();
+            if (utils.isUndefined(type)) return resolveUndefined();
+            if (utils.isString(type)) return resolveString();
+            if (utils.isNumber(type)) return resolveNumber();
+            if (utils.isBoolean(type)) return resolveBoolean();
+            if (utils.isLiteral(type)) return resolveLiteral(type);
+            if (utils.isModel(type, sourceFile)) return resolveModel(type);
+            if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
+            if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode>typeNode, sourceFile);
+            if (utils.isDate(type, attr)) return resolveDate();
+            if (utils.isObject(type)) return resolveObject(type, attr, sourceFile);
+            if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
         }
 
-        function resolveInterface(typeNode: ts.TypeReferenceNode, sourceFile: ts.SourceFile) {
-            const identifier = typeNode.typeName;
-            const symbol = typeChecker.getSymbolAtLocation(identifier);
+        function resolveAny() {
+            console.warn(`WARNING: Any type detected!`);
+            return { isMixed: true };
+        }
+
+        function resolveNull() {
+            return { isNull: true };
+        }
+
+        function resolveUndefined() {
+            return { isUndefined: true };
+        }
+
+        function resolveString() {
+            return { identifier: "String" };
+        }
+
+        function resolveNumber() {
+            return { identifier: "Number" };
+        }
+
+        function resolveBoolean() {
+            return { identifier: "Boolean" };
+        }
+
+        function resolveDate() {
+            return { identifier: "Date" };
+        }
+
+        function resolveLiteral(type: ts.Type) {
+            const isStringLiteral = utils.isStringLiteral(type);
+            const isNumberLiteral = utils.isNumberLiteral(type);
+            return { isLiteral: true, isStringLiteral, isNumberLiteral, value: (<ts.LiteralType>type).value };
+        }
+
+        function resolveModel(type: ts.Type) {
+            return { isModel: true, identifier: typeChecker.typeToString(type) };
+        }
+
+        function resolveUnionOrIntersection(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
+            const isUnion = utils.isUnion(type);
+            const isIntersection = utils.isIntersection(type);
+
+            const subTypes = [];
+            for (const subType of (<ts.UnionOrIntersectionType>type).types) {
+                subTypes.push(resolveType(subType, attr, sourceFile));
+            }
+            return { isUnion, isIntersection, subTypes };
+        }
+
+        function resolveInterface(typeNode: ts.TypeReferenceNode | ts.TypeLiteralNode, sourceFile: ts.SourceFile) {
+
+            let typeMembers: ts.SymbolTable | ts.NodeArray<ts.PropertySignature>;
+            if (ts.isTypeReferenceNode(typeNode)) {
+                const identifier = typeNode.typeName;
+                const symbol = typeChecker.getSymbolAtLocation(identifier);
+                typeMembers = symbol.members;
+            } else typeMembers = <ts.NodeArray<ts.PropertySignature>>typeNode.members;
+
             const members = {};
-            symbol.members?.forEach((member) => {
-                const signature = <ts.PropertySignature>member.valueDeclaration;
+            typeMembers?.forEach((member: ts.Symbol | ts.PropertySignature) => {
+                let signature: ts.PropertySignature;
+                if ("valueDeclaration" in member) {
+                    signature = <ts.PropertySignature>member.valueDeclaration;
+                } else signature = <ts.PropertySignature>member;
                 const type = typeChecker.getTypeAtLocation(signature);
-                members[member.getName()] = resolveType(type, signature, sourceFile);
+                members[signature.name.getText()] = resolveType(type, signature, sourceFile);
             });
+
             return { isInterface: true, members };
         }
 
-        function resolveObjectType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
+        function resolveObject(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
 
             // RESOLVE ARRAY
             if (attr.type?.kind === ts.SyntaxKind.ArrayType || attr.initializer?.kind === ts.SyntaxKind.ArrayLiteralExpression) {
@@ -141,35 +166,6 @@ export default function transformer(program: ts.Program) {
                     return { isArray: true, subType: { isUnion: true, subTypes } };
                 }
             }
-        }
-
-        function isMaybeModelType(type: ts.Type, sourceFile: ts.SourceFile): boolean {
-            for (const statement of sourceFile.statements) {
-                if (!ts.isImportDeclaration(statement)) continue;
-                const importClause = statement.importClause;
-                const moduleSpecifier = statement.moduleSpecifier;
-
-                if (!importClause?.name || !type.aliasSymbol) continue;
-                if (importClause.name.getText() !== type.aliasSymbol.name) continue;
-
-                let importPath = moduleSpecifier.getText();
-                importPath = importPath.substring(1, importPath.length - 1);
-                if (importPath.startsWith("~")) {
-                    const subProgram = utils.programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
-
-                    const resolvedPath = utils.resolveImportPath(importPath);
-                    const possibleSourceFiles = subProgram.getSourceFiles().filter(utils.isValidSourceFile);
-                    const newSourceFile = possibleSourceFiles.find((sourceFile) => !path.relative(resolvedPath, sourceFile.fileName));
-                    if (!newSourceFile) continue;
-
-                    for (const statement of newSourceFile.statements) {
-                        if (!ts.isClassDeclaration(statement)) continue;
-                        if (!utils.isDefaultExported(statement)) continue;
-                        return true;
-                    }
-                }
-            }
-            return false;
         }
 
         return (sourceFile) => {

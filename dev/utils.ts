@@ -51,8 +51,56 @@ export function isObject(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object;
 }
 
+export function hasTypeLiteral(property: ts.PropertyDeclaration | ts.PropertySignature) {
+    return (property.type?.kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral;
+}
+
 export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature) {
-    return type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property);
+    return type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) || hasTypeLiteral(property);
+}
+
+export function isTypeParameter(type: ts.Type) {
+    return (type.flags & ts.TypeFlags.TypeParameter) === ts.TypeFlags.TypeParameter;
+}
+
+export function isModel(type: ts.Type, sourceFile: ts.SourceFile) {
+
+    function isMaybeModelType(): boolean {
+        for (const statement of sourceFile.statements) {
+            if (!ts.isImportDeclaration(statement)) continue;
+            const importClause = statement.importClause;
+            const moduleSpecifier = statement.moduleSpecifier;
+
+            if (!importClause?.name || !type.aliasSymbol) continue;
+            if (importClause.name.getText() !== type.aliasSymbol.name) continue;
+
+            let importPath = moduleSpecifier.getText();
+            importPath = importPath.substring(1, importPath.length - 1);
+            if (importPath.startsWith("~")) {
+                const subProgram = programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
+
+                const resolvedPath = resolveImportPath(importPath);
+                const possibleSourceFiles = subProgram.getSourceFiles().filter(isValidSourceFile);
+                const newSourceFile = possibleSourceFiles.find((sourceFile) => !path.relative(resolvedPath, sourceFile.fileName));
+                if (!newSourceFile) continue;
+
+                for (const statement of newSourceFile.statements) {
+                    if (!ts.isClassDeclaration(statement)) continue;
+                    if (!isDefaultExported(statement)) continue;
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    if (isMaybeModelType()) return true;
+    if (!isTypeParameter(type) && !isObject(type)) return false;
+    const symbol = type.symbol;
+    if (symbol?.flags === ts.SymbolFlags.Class && isValidSourceFile(<ts.SourceFile>symbol.valueDeclaration.parent)) {
+        return true;
+    }
+    return false;
 }
 
 export function isDate(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature) {
