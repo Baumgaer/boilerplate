@@ -51,7 +51,11 @@ export function isObject(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object;
 }
 
-export function isDate(type: ts.Type, property: ts.PropertyDeclaration) {
+export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature) {
+    return type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property);
+}
+
+export function isDate(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature) {
     if (!isObject(type) && !isAny(type)) return false;
 
     if (property.type && ts.isTypeReferenceNode(property.type)) {

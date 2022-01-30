@@ -1,8 +1,12 @@
 import type { AttrOptionsPartialMetadataJson } from "~common/types/decorators";
 import type { IMetadata } from "~common/types/metadataTypes";
-import { type SchemaTypeOptions, Schema } from "mongoose";
+import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema } from "mongoose";
 import { Constructor, ValueOf } from "type-fest";
 
+type CalculatedType<T> = Pick<SchemaTypeOptions<T>, "ref" | "enum"> & {
+    // eslint-disable-next-line
+    type: ValueOf<typeof Schema.Types> | Schema<T> | ReturnType<Attribute<T>["calculateTypePartials"]>[]
+};
 export default class Attribute<T> implements SchemaTypeOptions<T> {
 
     public alias?: SchemaTypeOptions<T>["alias"];
@@ -60,7 +64,7 @@ export default class Attribute<T> implements SchemaTypeOptions<T> {
         Object.assign(this, this.calculateTypePartials(cTor, attributeName, parameters.type));
     }
 
-    private calculateTypePartials(cTor: Constructor<T>, attributeName: string, rawType: IMetadata["type"]): Pick<SchemaTypeOptions<T>, "ref" | "enum"> & { type: ValueOf<typeof Schema.Types> | ReturnType<Attribute<T>["calculateTypePartials"]>[] } {
+    private calculateTypePartials(cTor: Constructor<T>, attributeName: string, rawType: IMetadata["type"]): CalculatedType<T> {
         if (rawType.isUnresolvedType) throw new Error(`Unresolved type detected in ${cTor.name}[${attributeName}]`);
         if (rawType.isModel) return { ref: rawType.identifier, type: Schema.Types.ObjectId };
         if (rawType.isArray) return { type: [this.calculateTypePartials(cTor, attributeName, rawType.subType)] };
@@ -72,6 +76,16 @@ export default class Attribute<T> implements SchemaTypeOptions<T> {
                 if (rawType.subTypes.every((subType) => subType.isStringLiteral)) enumType = Schema.Types.String;
             } else console.log(rawType);
             return { type: enumType, enum: rawType.subTypes.map((subType) => subType.value) };
+        }
+        if (rawType.isInterface) {
+            const members: Record<string, CalculatedType<T>> = {};
+            for (const key in rawType.members) {
+                if (Object.prototype.hasOwnProperty.call(rawType.members, key)) {
+                    const member = rawType.members[key];
+                    members[key] = this.calculateTypePartials(cTor, attributeName, member);
+                }
+            }
+            return { type: new Schema(<SchemaDefinition<SchemaDefinitionType<T>>>members) };
         }
 
         const mayType = Schema.Types[<keyof typeof Schema.Types>rawType.identifier];

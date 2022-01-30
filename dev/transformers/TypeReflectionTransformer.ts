@@ -52,7 +52,7 @@ export default function transformer(program: ts.Program) {
             return JSON.stringify({ isRequired, isReadOnly, isInternal, type, alias });
         }
 
-        function resolveType(type: ts.Type, attr: ts.PropertyDeclaration, sourceFile: ts.SourceFile) {
+        function resolveType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
 
             let typeNode = attr.type;
 
@@ -94,7 +94,12 @@ export default function transformer(program: ts.Program) {
                 return { isUnion, isIntersection, subTypes };
             }
 
-            if (utils.isObject(type)) return resolveObjectType(type, attr, sourceFile);
+            if (utils.isObject(type)) {
+                if (utils.isInterface(type, attr)) {
+                    return resolveInterface(<ts.TypeReferenceNode>typeNode, sourceFile);
+                }
+                return resolveObjectType(type, attr, sourceFile);
+            }
 
             // RESOLVE ANY TYPE
             if (utils.isAny(type)) {
@@ -107,7 +112,19 @@ export default function transformer(program: ts.Program) {
             return { isUnresolvedType: true };
         }
 
-        function resolveObjectType(type: ts.Type, attr: ts.PropertyDeclaration, sourceFile: ts.SourceFile) {
+        function resolveInterface(typeNode: ts.TypeReferenceNode, sourceFile: ts.SourceFile) {
+            const identifier = typeNode.typeName;
+            const symbol = typeChecker.getSymbolAtLocation(identifier);
+            const members = {};
+            symbol.members?.forEach((member) => {
+                const signature = <ts.PropertySignature>member.valueDeclaration;
+                const type = typeChecker.getTypeAtLocation(signature);
+                members[member.getName()] = resolveType(type, signature, sourceFile);
+            });
+            return { isInterface: true, members };
+        }
+
+        function resolveObjectType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
 
             // RESOLVE ARRAY
             if (attr.type?.kind === ts.SyntaxKind.ArrayType || attr.initializer?.kind === ts.SyntaxKind.ArrayLiteralExpression) {
