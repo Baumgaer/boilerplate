@@ -1,36 +1,9 @@
 import * as ts from "typescript";
 import arp from "app-root-path";
 import path from "path";
-import clientConfig from "./../../src/client/tsconfig.json";
+import * as utils from "./../utils";
 
 let typeChecker!: ts.TypeChecker;
-
-function programFromConfig(configFileName: string) {
-    const configFile = ts.sys.readFile(configFileName);
-    if (!configFile) throw new Error("No configuration found");
-
-    // basically a copy of https://github.com/Microsoft/TypeScript/blob/3663d400270ccae8b69cbeeded8ffdc8fa12d7ad/src/compiler/tsc.ts -> parseConfigFile
-    const result = ts.parseConfigFileTextToJson(configFileName, configFile);
-    const configObject = result.config;
-
-    // Normalize configuration for parsing schema only
-    const configParseResult = ts.parseJsonConfigFileContent(configObject, ts.sys, path.dirname(configFileName), {}, path.basename(configFileName));
-    const options = configParseResult.options;
-    options.noEmit = true;
-    delete options.out;
-    delete options.outDir;
-    delete options.outFile;
-    delete options.declaration;
-    delete options.declarationDir;
-    delete options.declarationMap;
-
-    const program = ts.createProgram({
-        rootNames: configParseResult.fileNames,
-        options,
-        projectReferences: configParseResult.projectReferences
-    });
-    return program;
-}
 
 export default function transformer(program: ts.Program) {
 
@@ -38,37 +11,10 @@ export default function transformer(program: ts.Program) {
 
     return (context: ts.TransformationContext): ts.Transformer<ts.SourceFile> => {
 
-        function isValidSourceFile(sourceFile: ts.SourceFile): boolean {
-            const validSourceFiles = [
-                "/src/client/models",
-                "/src/common/models",
-                "/src/server/models",
-                "/src/client/lib/BaseModel.ts",
-                "/src/common/lib/BaseModel.ts",
-                "/src/server/lib/BaseModel.ts"
-            ];
-            return validSourceFiles.some((path) => sourceFile.fileName.includes(path));
-        }
-
-        function isValidAttrIdentifier(identifier: ts.Identifier) {
-            const symbol = typeChecker.getSymbolAtLocation(identifier);
-            if (!symbol) return false;
-
-            const declaration = symbol.declarations?.[0];
-            const importDeclaration = declaration?.parent?.parent?.parent;
-            if (!importDeclaration || !ts.isImportDeclaration(importDeclaration)) return false;
-            if (!ts.isStringLiteral(importDeclaration.moduleSpecifier)) return false;
-
-            const importPath = importDeclaration.moduleSpecifier.text;
-            const validAttrImports = ["~client/utils/decorators", "~common/utils/decorators", "~server/utils/decorators"];
-            const isValidImport = validAttrImports.some((attrImport) => importPath === attrImport);
-            return isValidImport;
-        }
-
         function processCallExpression(node: ts.CallExpression, sourceFile: ts.SourceFile) {
             if (!ts.isDecorator(node.parent)) return node;
             if (!ts.isPropertyDeclaration(node.parent.parent)) return node;
-            if (ts.isIdentifier(node.expression) && !isValidAttrIdentifier(node.expression)) return node;
+            if (ts.isIdentifier(node.expression) && !utils.isValidAttrIdentifier(node.expression, typeChecker)) return node;
 
             const metadataJson = processAttr(node.parent.parent, sourceFile);
             const argument = <ts.ObjectLiteralExpression>node.arguments[0];
@@ -117,29 +63,29 @@ export default function transformer(program: ts.Program) {
             }
 
             // RESOLVE PRIMITIVE TYPES
-            if (type.flags === ts.TypeFlags.Null) return { isNull: true };
-            if (type.flags === ts.TypeFlags.Undefined) return { isUndefined: true };
-            if (type.flags === ts.TypeFlags.String) return { identifier: "String" };
-            if (type.flags === ts.TypeFlags.Number) return { identifier: "Number" };
-            if (type.flags === ts.TypeFlags.Union + ts.TypeFlags.Boolean || type.flags === ts.TypeFlags.BooleanLiteral) return { identifier: "Boolean" };
-            if (type.flags === ts.TypeFlags.NumberLiteral || type.flags === ts.TypeFlags.StringLiteral) {
-                const isStringLiteral = type.flags === ts.TypeFlags.StringLiteral;
-                const isNumberLiteral = type.flags === ts.TypeFlags.NumberLiteral;
+            if (utils.isNull(type)) return { isNull: true };
+            if (utils.isUndefined(type)) return { isUndefined: true };
+            if (utils.isString(type)) return { identifier: "String" };
+            if (utils.isNumber(type)) return { identifier: "Number" };
+            if (utils.isBoolean(type)) return { identifier: "Boolean" };
+            if (utils.isLiteral(type)) {
+                const isStringLiteral = utils.isStringLiteral(type);
+                const isNumberLiteral = utils.isNumberLiteral(type);
                 return { isLiteral: true, isStringLiteral, isNumberLiteral, value: (<ts.LiteralType>type).value };
             }
 
             // RESOLVE MODEL TYPE
             if (type.flags === ts.TypeFlags.TypeParameter || type.flags === ts.TypeFlags.Object) {
                 const symbol = type.symbol;
-                if (symbol?.flags === ts.SymbolFlags.Class && isValidSourceFile(<ts.SourceFile>symbol.valueDeclaration.parent)) {
+                if (symbol?.flags === ts.SymbolFlags.Class && utils.isValidSourceFile(<ts.SourceFile>symbol.valueDeclaration.parent)) {
                     return { identifier: (<ts.ClassDeclaration>symbol.valueDeclaration).name.getText(), isModel: true };
                 }
             }
 
             // RESOLVE UNIONS AND INTERSECTIONS
-            if (type.flags === ts.TypeFlags.Union || type.flags === ts.TypeFlags.Intersection) {
-                const isUnion = type.flags === ts.TypeFlags.Union;
-                const isIntersection = type.flags === ts.TypeFlags.Intersection;
+            if (utils.isUnionOrIntersection(type)) {
+                const isUnion = utils.isUnion(type);
+                const isIntersection = utils.isIntersection(type);
 
                 const subTypes = [];
                 for (const subType of (<ts.UnionOrIntersectionType>type).types) {
@@ -148,11 +94,12 @@ export default function transformer(program: ts.Program) {
                 return { isUnion, isIntersection, subTypes };
             }
 
-            if (type.flags === ts.TypeFlags.Object) return resolveObjectType(type, attr, sourceFile);
+            if (utils.isObject(type)) return resolveObjectType(type, attr, sourceFile);
 
             // RESOLVE ANY TYPE
-            if (type.flags === ts.TypeFlags.Any) {
+            if (utils.isAny(type)) {
                 if (isMaybeModelType(type, sourceFile)) return { identifier: typeChecker.typeToString(type), isModel: true };
+                if (utils.isDate(type, attr)) return { identifier: "Date" };
                 console.warn(`WARNING: Any type detected!`);
                 return { isMixed: true };
             }
@@ -177,17 +124,6 @@ export default function transformer(program: ts.Program) {
                     return { isArray: true, subType: { isUnion: true, subTypes } };
                 }
             }
-
-            // RESOLVE DATE
-            if (attr.type?.kind === ts.SyntaxKind.TypeReference || attr.initializer?.kind === ts.SyntaxKind.CallExpression || attr.initializer?.kind === ts.SyntaxKind.NewExpression) {
-                if ((<ts.Identifier>(<ts.TypeReferenceNode>attr.type)?.typeName)?.escapedText === "Date") {
-                    return { identifier: "Date" };
-                }
-
-                if ((<ts.Identifier>(<ts.CallExpression | ts.NewExpression>attr.initializer)?.expression)?.escapedText === "Date") {
-                    return { identifier: "Date" };
-                }
-            }
         }
 
         function isMaybeModelType(type: ts.Type, sourceFile: ts.SourceFile): boolean {
@@ -202,16 +138,16 @@ export default function transformer(program: ts.Program) {
                 let importPath = moduleSpecifier.getText();
                 importPath = importPath.substring(1, importPath.length - 1);
                 if (importPath.startsWith("~")) {
-                    const subProgram = programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
+                    const subProgram = utils.programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
 
-                    const resolvedPath = resolveImportPath(importPath);
-                    const possibleSourceFiles = subProgram.getSourceFiles().filter(isValidSourceFile);
+                    const resolvedPath = utils.resolveImportPath(importPath);
+                    const possibleSourceFiles = subProgram.getSourceFiles().filter(utils.isValidSourceFile);
                     const newSourceFile = possibleSourceFiles.find((sourceFile) => !path.relative(resolvedPath, sourceFile.fileName));
                     if (!newSourceFile) continue;
 
                     for (const statement of newSourceFile.statements) {
                         if (!ts.isClassDeclaration(statement)) continue;
-                        if (!isDefaultExported(statement)) continue;
+                        if (!utils.isDefaultExported(statement)) continue;
                         return true;
                     }
                 }
@@ -219,21 +155,8 @@ export default function transformer(program: ts.Program) {
             return false;
         }
 
-        function resolveImportPath(importPath: string) {
-            if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
-            const pathParts = importPath.split("/");
-            const entryPoint = pathParts.shift();
-            const fileName = pathParts.pop() + ".ts";
-            const relativePath = clientConfig.compilerOptions.paths[`${entryPoint}/*`][0].replace("*", "");
-            return path.resolve(path.join(arp.path, "src", "client", relativePath, ...pathParts, fileName));
-        }
-
-        function isDefaultExported(declaration: ts.ClassDeclaration) {
-            return declaration.modifiers?.[0].kind === ts.SyntaxKind.ExportKeyword && declaration.modifiers?.[1].kind === ts.SyntaxKind.DefaultKeyword;
-        }
-
         return (sourceFile) => {
-            if (!isValidSourceFile(sourceFile)) return sourceFile;
+            if (!utils.isValidSourceFile(sourceFile)) return sourceFile;
             console.log("processing file:", sourceFile.fileName);
             const visitor = (node: ts.Node): ts.Node => {
                 if (ts.isCallExpression(node)) return processCallExpression(node, sourceFile);
