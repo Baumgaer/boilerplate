@@ -17,5 +17,7 @@ export default abstract class Example extends BaseModel {
         prop2: number;
         // eslint-disable-next-line
         prop3: Example;
+        prop4: Date;
+        prop5: number[]
     };
 }

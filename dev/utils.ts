@@ -47,6 +47,13 @@ export function isIntersection(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Intersection) === ts.TypeFlags.Intersection;
 }
 
+export function isArray(property: ts.PropertyDeclaration | ts.PropertySignature) {
+    const kind = property.type?.kind || property.initializer?.kind;
+    const isArrayType = (kind & ts.SyntaxKind.ArrayType) === ts.SyntaxKind.ArrayType;
+    const isArrayLiteralExpression = (kind & ts.SyntaxKind.ArrayLiteralExpression) === ts.SyntaxKind.ArrayLiteralExpression;
+    return isArrayType || isArrayLiteralExpression;
+}
+
 export function isObject(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object;
 }

@@ -1,6 +1,4 @@
 import * as ts from "typescript";
-import arp from "app-root-path";
-import path from "path";
 import * as utils from "./../utils";
 
 let typeChecker!: ts.TypeChecker;
@@ -72,7 +70,7 @@ export default function transformer(program: ts.Program) {
             if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
             if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode>typeNode, sourceFile);
             if (utils.isDate(type, attr)) return resolveDate();
-            if (utils.isObject(type)) return resolveObject(type, attr, sourceFile);
+            if (utils.isArray(attr)) return resolveArray(attr, sourceFile);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
         }
@@ -149,22 +147,18 @@ export default function transformer(program: ts.Program) {
             return { isInterface: true, members };
         }
 
-        function resolveObject(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
-
-            // RESOLVE ARRAY
-            if (attr.type?.kind === ts.SyntaxKind.ArrayType || attr.initializer?.kind === ts.SyntaxKind.ArrayLiteralExpression) {
-                if (attr.type) {
-                    const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>attr.type).elementType);
-                    return { isArray: true, subType: resolveType(elementType, attr, sourceFile) };
-                }
-                if (attr.initializer) {
-                    const subTypes = [];
-                    (<ts.ArrayLiteralExpression>attr.initializer).elements.forEach((element) => {
-                        const subType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile);
-                        subTypes.push(subType);
-                    });
-                    return { isArray: true, subType: { isUnion: true, subTypes } };
-                }
+        function resolveArray(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
+            if (attr.type) {
+                const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>attr.type).elementType);
+                return { isArray: true, subType: resolveType(elementType, attr, sourceFile) };
+            }
+            if (attr.initializer) {
+                const subTypes = [];
+                (<ts.ArrayLiteralExpression>attr.initializer).elements.forEach((element) => {
+                    const subType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile);
+                    subTypes.push(subType);
+                });
+                return { isArray: true, subType: { isUnion: true, subTypes } };
             }
         }
 
