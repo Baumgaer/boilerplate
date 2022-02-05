@@ -1,5 +1,5 @@
 import type { SchemaTypeOptions } from "mongoose";
-import type { IMetadata } from "~common/types/metadataTypes";
+import type { IMetadata } from "~common/types/MetadataTypes";
 import type { SetOptional, SetRequired } from "type-fest";
 
 export type allowedAttrFields = "alias" | "cast" | "select" | "index" | "unique" |

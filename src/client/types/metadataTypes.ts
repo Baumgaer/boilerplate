@@ -1,1 +1,1 @@
-export * from "~common/types/metadataTypes";
+export * from "~common/types/MetadataTypes";

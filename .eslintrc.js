@@ -21,6 +21,7 @@ module.exports = {
         }],
         '@typescript-eslint/no-inferrable-types': "off",
         '@typescript-eslint/explicit-member-accessibility': "error",
+        '@typescript-eslint/consistent-type-imports': ["error", { "prefer": "type-imports" }],
         "vue/html-indent": [
             "error",
             4,

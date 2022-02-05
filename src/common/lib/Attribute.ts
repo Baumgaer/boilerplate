@@ -1,15 +1,11 @@
-import type { AttrOptionsPartialMetadataJson } from "~common/types/decorators";
-import type { IMetadata } from "~common/types/metadataTypes";
-import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema, SchemaDefinitionProperty } from "mongoose";
-import { Constructor, ValueOf } from "type-fest";
-import { merge } from "lodash";
-import BaseModel from "./BaseModel";
+import { merge } from 'lodash';
+import type { AttrOptionsPartialMetadataJson } from "~common/types/Decorators";
+import type { IMetadata } from "~common/types/MetadataTypes";
+import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema, type SchemaDefinitionProperty } from "mongoose";
+import type { Constructor } from "type-fest";
+import type BaseModel from "./BaseModel";
 import { isValue } from "~common/utils/utils";
-
-type CalculatedType<T extends Constructor<BaseModel>> = Pick<SchemaTypeOptions<T>, "ref" | "enum"> & {
-    // eslint-disable-next-line
-    type: ValueOf<typeof Schema.Types> | Schema<T> | ReturnType<Attribute<T>["calculateTypePartials"]>[]
-};
+import type { CalculatedType } from "~common/types/Attribute";
 
 export default class Attribute<T extends Constructor<BaseModel>> implements SchemaTypeOptions<T> {
 

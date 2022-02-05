@@ -1,7 +1,7 @@
 import type { Constructor } from "type-fest";
-import BaseModel from "~common/lib/BaseModel";
+import type BaseModel from "~common/lib/BaseModel";
 import Attribute from "~common/lib/Attribute";
-import type { IMetadata } from "~common/types/metadataTypes";
+import type { IMetadata } from "~common/types/MetadataTypes";
 import { model, Schema, type SchemaDefinition } from "mongoose";
 
 export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T) {

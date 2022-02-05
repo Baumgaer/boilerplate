@@ -1,1 +1,1 @@
-export * from "~common/types/decorators";
+export * from "~common/types/Decorators";

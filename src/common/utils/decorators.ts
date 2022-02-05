@@ -1,8 +1,8 @@
-import BaseModel from "~common/lib/BaseModel";
+import type BaseModel from "~common/lib/BaseModel";
 import ModelClassFactory from "~common/lib/ModelClass";
 import { merge } from "lodash";
-import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson } from "~common/types/decorators";
-import type { IMetadata } from "~common/types/metadataTypes";
+import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson } from "~common/types/Decorators";
+import type { IMetadata } from "~common/types/MetadataTypes";
 
 export function Model(className: string, collection: string): ClassDecorator {
     return (target: any) => {
