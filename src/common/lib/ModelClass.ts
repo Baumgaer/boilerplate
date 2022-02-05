@@ -1,4 +1,3 @@
-// import { Schema } from "mongoose";
 import type { Constructor } from "type-fest";
 import BaseModel from "~common/lib/BaseModel";
 import Attribute from "~common/lib/Attribute";
