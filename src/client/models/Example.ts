@@ -1,7 +1,12 @@
 import CommonExample from "~common/models/Example";
-import { Model } from "~client/utils/decorators";
+import { Attr, Model } from "~client/utils/decorators";
 
-@Model()
+@Model("Example", "examples")
 export default class Example extends CommonExample {
 
+    @Attr()
+    public override name: string = "test";
+
+    @Attr()
+    public exampleClient: string = "test";
 }

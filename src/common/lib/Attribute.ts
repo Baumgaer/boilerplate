@@ -2,12 +2,15 @@ import type { AttrOptionsPartialMetadataJson } from "~common/types/decorators";
 import type { IMetadata } from "~common/types/metadataTypes";
 import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema } from "mongoose";
 import { Constructor, ValueOf } from "type-fest";
+import { merge } from "lodash";
+import BaseModel from "./BaseModel";
 
-type CalculatedType<T> = Pick<SchemaTypeOptions<T>, "ref" | "enum"> & {
+type CalculatedType<T extends Constructor<BaseModel>> = Pick<SchemaTypeOptions<T>, "ref" | "enum"> & {
     // eslint-disable-next-line
     type: ValueOf<typeof Schema.Types> | Schema<T> | ReturnType<Attribute<T>["calculateTypePartials"]>[]
 };
-export default class Attribute<T> implements SchemaTypeOptions<T> {
+
+export default class Attribute<T extends Constructor<BaseModel>> implements SchemaTypeOptions<T> {
 
     public alias?: SchemaTypeOptions<T>["alias"];
 
@@ -57,17 +60,41 @@ export default class Attribute<T> implements SchemaTypeOptions<T> {
 
     public maxlength?: SchemaTypeOptions<T>["maxlength"];
 
-    constructor(cTor: Constructor<T>, attributeName: string, parameters: AttrOptionsPartialMetadataJson<T>) {
-        this.required = Boolean(parameters.isRequired);
-        this.immutable = Boolean(parameters.isReadOnly);
+    public readonly parameters: AttrOptionsPartialMetadataJson<T>;
 
-        Object.assign(this, this.calculateTypePartials(cTor, attributeName, parameters.type));
+    private ctor: T;
+
+    private attributeName: string;
+
+    public constructor(ctor: T, attributeName: string, parameters: AttrOptionsPartialMetadataJson<T>) {
+        this.ctor = ctor;
+        this.attributeName = attributeName;
+        this.parameters = parameters;
+        this.setConstants(parameters);
+        this.assignType(parameters.type);
     }
 
-    private calculateTypePartials(cTor: Constructor<T>, attributeName: string, rawType: IMetadata["type"]): CalculatedType<T> {
-        if (rawType.isUnresolvedType) throw new Error(`Unresolved type detected in ${cTor.name}[${attributeName}]`);
+    public updateParameters(parameters: AttrOptionsPartialMetadataJson<T>) {
+        merge(this.parameters, parameters);
+        this.setConstants(parameters);
+        this.assignType(parameters.type);
+    }
+
+    private setConstants(parameters: AttrOptionsPartialMetadataJson<T>) {
+        this.required = Boolean(parameters.isRequired);
+        this.immutable = Boolean(parameters.isReadOnly);
+    }
+
+    private assignType(type: IMetadata["type"]) {
+        Object.assign(this, this.calculateTypePartials(this.ctor, this.attributeName, type));
+    }
+
+    private calculateTypePartials(ctor: T, attributeName: string, rawType: IMetadata["type"]): CalculatedType<T> {
+        // TODO:
+        //      1. Determine "of" in case of Map
+        if (rawType.isUnresolvedType) throw new Error(`Unresolved type detected in ${(<any>ctor).name}[${attributeName}]`);
         if (rawType.isModel) return { ref: rawType.identifier, type: Schema.Types.ObjectId };
-        if (rawType.isArray) return { type: [this.calculateTypePartials(cTor, attributeName, rawType.subType)] };
+        if (rawType.isArray) return { type: [this.calculateTypePartials(ctor, attributeName, rawType.subType)] };
         if (rawType.isMixed) return { type: Schema.Types.Mixed };
         if (rawType.isUnion && rawType.subTypes.every((subType) => subType.isNumberLiteral || subType.isStringLiteral)) {
             let enumType = Schema.Types.Mixed;
@@ -82,7 +109,7 @@ export default class Attribute<T> implements SchemaTypeOptions<T> {
             for (const key in rawType.members) {
                 if (Object.prototype.hasOwnProperty.call(rawType.members, key)) {
                     const member = rawType.members[key];
-                    members[key] = this.calculateTypePartials(cTor, attributeName, member);
+                    members[key] = this.calculateTypePartials(ctor, attributeName, member);
                 }
             }
             return { type: new Schema(<SchemaDefinition<SchemaDefinitionType<T>>>members) };

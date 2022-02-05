@@ -20,6 +20,7 @@ module.exports = {
             "argsIgnorePattern": "^_"
         }],
         '@typescript-eslint/no-inferrable-types': "off",
+        '@typescript-eslint/explicit-member-accessibility': "error",
         "vue/html-indent": [
             "error",
             4,
@@ -31,7 +32,7 @@ module.exports = {
                 "ignores": []
             }
         ],
-        "indent": "error",
+        "@typescript-eslint/indent": ["error", 4],
         "linebreak-style": [
             "error",
             "unix"
