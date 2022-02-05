@@ -1,9 +1,10 @@
 import type { AttrOptionsPartialMetadataJson } from "~common/types/decorators";
 import type { IMetadata } from "~common/types/metadataTypes";
-import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema } from "mongoose";
+import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema, SchemaDefinitionProperty } from "mongoose";
 import { Constructor, ValueOf } from "type-fest";
 import { merge } from "lodash";
 import BaseModel from "./BaseModel";
+import { isValue } from "~common/utils/utils";
 
 type CalculatedType<T extends Constructor<BaseModel>> = Pick<SchemaTypeOptions<T>, "ref" | "enum"> & {
     // eslint-disable-next-line
@@ -78,6 +79,16 @@ export default class Attribute<T extends Constructor<BaseModel>> implements Sche
         merge(this.parameters, parameters);
         this.setConstants(parameters);
         this.assignType(parameters.type);
+    }
+
+    public toSchemaPropertyDefinition() {
+        const forbiddenKeys = ["ctor", "attributeName", "parameters"];
+        const propertyDefinition: Record<string, SchemaDefinitionProperty<T>> = {};
+        for (const key of Object.getOwnPropertyNames(this)) {
+            const value = Reflect.get(this, key);
+            if (isValue(value) && !forbiddenKeys.includes(key)) propertyDefinition[key] = value;
+        }
+        return propertyDefinition;
     }
 
     private setConstants(parameters: AttrOptionsPartialMetadataJson<T>) {

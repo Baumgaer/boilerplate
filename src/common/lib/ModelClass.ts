@@ -1,8 +1,9 @@
 // import { Schema } from "mongoose";
-import { Constructor } from "type-fest";
+import type { Constructor } from "type-fest";
 import BaseModel from "~common/lib/BaseModel";
 import Attribute from "~common/lib/Attribute";
-import { IMetadata } from "~common/types/metadataTypes";
+import type { IMetadata } from "~common/types/metadataTypes";
+import { model, Schema, type SchemaDefinition } from "mongoose";
 
 export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T) {
 
@@ -14,9 +15,12 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         if (classPrototype && (<any>prototype).isModelClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
     }
 
-    // Build schema definition for current model
+    // Build attribute map to have access to raw declaration
     const attributeMap: Record<string, Attribute<T>> = {};
-    for (const metadataKey of Reflect.getMetadataKeys(ctor.prototype).reverse()) {
+    Reflect.defineMetadata(`${ctor.name}:attributeMap`, attributeMap, ctor.prototype);
+    const metadataKeys: string[] = Reflect.getMetadataKeys(ctor.prototype).reverse();
+    for (const metadataKey of metadataKeys) {
+        if (!metadataKey.endsWith("schemaDefinition")) continue;
         for (const key in Reflect.getMetadata(metadataKey, ctor.prototype)) {
             if (Object.prototype.hasOwnProperty.call(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
                 const metadata: IMetadata = Reflect.getMetadata(metadataKey, ctor.prototype)[key];
@@ -27,27 +31,52 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         }
     }
 
-    Reflect.defineMetadata(`${ctor.name}:attributeMap`, attributeMap, ctor.prototype);
+    // Create schema for data model
+    const schemaDefinition: SchemaDefinition = {};
+    for (const key in attributeMap) {
+        if (Object.prototype.hasOwnProperty.call(attributeMap, key)) {
+            const attribute = attributeMap[key];
+            schemaDefinition[key] = attribute.toSchemaPropertyDefinition();
+        }
+    }
+    const schema = new Schema(schemaDefinition);
+    Reflect.defineMetadata(`${ctor.name}:schema`, schema, ctor.prototype);
+    const DataModel = model<T>(Reflect.get(ctor, "className"), schema, Reflect.get(ctor, "collection"));
+    Reflect.defineMetadata(`${ctor.name}:staticDataModel`, DataModel, ctor.prototype);
 
     return class ModelClass extends ctor {
 
         public static isModelClass = true;
+
         public isModelClass = true;
+
+        protected static dataModel = DataModel;
 
         public constructor(...args: any[]) {
             super(...args);
+            // @ts-expect-error yes it's read only but not during construction...
+            this.dataModel = new DataModel(this.mergeProperties(args[0]));
             return new Proxy(this, this.proxyHandler);
         }
 
-        private get(target: this, propertyName: string | symbol, l: any) {
-            console.log(l);
+        private mergeProperties(properties: Record<string, any> = {}) {
+            const defaults: Record<string, any> = {};
+            for (const key in schemaDefinition) {
+                if (Reflect.has(schemaDefinition, key)) defaults[key] = Reflect.get(this, key);
+            }
+            return Object.assign(defaults, properties);
+        }
+
+        private get(target: this, propertyName: string | symbol) {
             if (typeof propertyName === "symbol") return Reflect.get(target, propertyName);
-            return (<any>target)[propertyName];
+            if (Reflect.has(schemaDefinition, propertyName)) return Reflect.get(this.dataModel, propertyName);
+            return Reflect.get(target, propertyName);
         }
 
         private set(target: this, propertyName: string | symbol, value: any) {
-            (<any>target)[propertyName] = value;
-            return true;
+            if (typeof propertyName === "symbol") return Reflect.set(target, propertyName, value);
+            if (Reflect.has(schemaDefinition, propertyName)) return Reflect.set(this.dataModel, propertyName, value);
+            return Reflect.set(target, propertyName, value);
         }
 
         private get proxyHandler(): ProxyHandler<this> {

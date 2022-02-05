@@ -1,3 +1,4 @@
+import { Model } from "mongoose";
 import { Constructor } from "type-fest";
 import { Attr } from "~common/utils/decorators";
 import Attribute from "./Attribute";
@@ -8,6 +9,10 @@ export default abstract class BaseModel {
     public static readonly className = "BaseModel";
 
     public static readonly collection = "BaseModels";
+
+    protected static readonly dataModel: Model<typeof this>;
+
+    protected readonly dataModel!: InstanceType<Model<typeof this>>;
 
     @Attr()
     public id: string = "";
@@ -40,12 +45,11 @@ export default abstract class BaseModel {
     }
 
     public static getSchema() {
-        // const schema = Reflect.getMetadata("schema", this) as Schema<typeof this>;
-        // return schema;
-        return "hahaha";
+        const ctorName = Object.getPrototypeOf(this.prototype).constructor.name;
+        return Reflect.getMetadata(`${ctorName}:schema`, this.prototype);
     }
 
     public getSchema() {
-        return this.name; //(<typeof BaseModel>this.constructor).getSchema();
+        return (<typeof BaseModel>this.constructor).getSchema();
     }
 }
