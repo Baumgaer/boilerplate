@@ -1,7 +1,8 @@
 import Attribute from "~common/lib/Attribute";
-import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
+import { isChangeObservable, isChangeObserved, hasOwnProperty } from "~common/utils/utils";
 import { model, Schema, type SchemaDefinition } from "mongoose";
-import onChange, { type ApplyData } from "on-change";
+import onChange, { type ApplyData, type Options } from "on-change";
+import { v4 as uuid } from "uuid";
 import type { Constructor } from "type-fest";
 import type BaseModel from "~common/lib/BaseModel";
 import type { IMetadata } from "~common/types/MetadataTypes";
@@ -23,7 +24,7 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
     for (const metadataKey of metadataKeys) {
         if (!metadataKey.endsWith("definition")) continue;
         for (const key in Reflect.getMetadata(metadataKey, ctor.prototype)) {
-            if (Object.prototype.hasOwnProperty.call(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
+            if (hasOwnProperty(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
                 const metadata: IMetadata = Reflect.getMetadata(metadataKey, ctor.prototype)[key];
                 if (!(key in attributeMap)) {
                     attributeMap[key] = new Attribute(ctor, key, metadata);
@@ -35,9 +36,9 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
     // Create schema for data model
     const schemaDefinition: SchemaDefinition = {};
     for (const key in attributeMap) {
-        if (Object.prototype.hasOwnProperty.call(attributeMap, key)) {
+        if (hasOwnProperty(attributeMap, key)) {
             const attribute = attributeMap[key];
-            schemaDefinition[key] = attribute.toSchemaPropertyDefinition();
+            Reflect.set(schemaDefinition, key, attribute.toSchemaPropertyDefinition());
         }
     }
     const schema = new Schema(schemaDefinition);
@@ -53,6 +54,8 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
 
         protected static dataModel = DataModel;
 
+        private observedAttributes: Record<string, any> = {};
+
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
@@ -64,8 +67,16 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
 
         private mergeProperties(properties: Record<string, any> = {}) {
             const defaults: Record<string, any> = {};
+            if (!properties.id) this.dummyId = uuid();
+
             for (const key in schemaDefinition) {
-                if (Reflect.has(schemaDefinition, key)) defaults[key] = Reflect.get(this, key);
+                if (hasOwnProperty(schemaDefinition, key)) {
+                    const value = Reflect.get(this, key);
+                    if (this.musstObserveChanges(key, value)) {
+                        this.observedAttributes[key] = onChange(value, (...args) => this.changeCallback(key, ...args), this.changeCallbackOptions);
+                    }
+                    defaults[key] = value;
+                }
             }
             return Object.assign(defaults, properties);
         }
@@ -76,44 +87,31 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
 
         private get(target: this, propertyName: string | symbol, proxy: any) {
             const stringProperty = propertyName.toString();
-            if (!schemaDefinition.hasOwnProperty.call(schemaDefinition, stringProperty)) {
-                return Reflect.get(target, propertyName);
-            }
+            if (!hasOwnProperty(schemaDefinition, stringProperty)) return Reflect.get(target, propertyName);
             const hookValue = this.callHook("getter", proxy, target, stringProperty);
-            return hookValue !== undefined ? hookValue : Reflect.get(target.dataModel, stringProperty);
+            return hookValue !== undefined ? hookValue : this.observedAttributes[stringProperty] ?? Reflect.get(target.dataModel, stringProperty);
         }
 
         private set(target: this, propertyName: string | symbol, value: any, proxy: any) {
             const stringProperty = propertyName.toString();
-            if (!schemaDefinition.hasOwnProperty.call(schemaDefinition, stringProperty)) {
-                return Reflect.set(target, propertyName, value);
-            }
+            if (!hasOwnProperty(schemaDefinition, stringProperty)) return Reflect.set(target, propertyName, value);
 
-            const oldValue = Reflect.get(target.dataModel, stringProperty);
             const hookValue = this.callHook("setter", proxy, target, stringProperty, value);
+            const oldValue = this.observedAttributes[stringProperty] ?? Reflect.get(target.dataModel, stringProperty);
             let newValue = hookValue !== undefined ? hookValue : value;
-
             if (this.musstObserveChanges(stringProperty, newValue)) {
-                newValue = onChange(newValue, this.changeCallback.bind(this), {
-                    isShallow: true,
-                    pathAsArray: true,
-                    details: true
-                });
-            }
+                newValue = onChange(newValue, (...args) => this.changeCallback(stringProperty, ...args), this.changeCallbackOptions);
+                this.observedAttributes[stringProperty] = newValue;
+            } else if (stringProperty in this.observedAttributes) delete this.observedAttributes[stringProperty];
 
             const setResult = Reflect.set(target.dataModel, stringProperty, newValue);
-            try {
-                if (setResult && oldValue !== newValue) this.callHook("observer:change", proxy, target, stringProperty, newValue);
-            } catch (error) {
-                if (error instanceof TypeError) return false;
-                throw error;
-            }
-
+            if (setResult && oldValue !== newValue) this.callHook("observer:change", proxy, target, stringProperty, newValue);
             return setResult;
         }
 
-        private changeCallback(_path: (string | symbol)[], _value: unknown, _previousValue: unknown, _applyData: ApplyData): void {
-            // pass
+        private changeCallback(propertyName: string, path: (string | symbol)[], value: unknown, previousValue: unknown, applyData: ApplyData): void {
+            Reflect.set(this.dataModel, propertyName, this.observedAttributes[propertyName]);
+            console.log(propertyName, path, value, previousValue, applyData);
         }
 
         private musstObserveChanges(propertyName: string, value: any) {
@@ -121,14 +119,14 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         }
 
         private hasHook(propertyName: string, hookName: string | string[]) {
-            const check = (name: string) => Boolean(Reflect.getMetadata(`${ctor.name}:${propertyName}:${name}`, ctor.prototype));
+            const check = (name: string) => Boolean(Reflect.getMetadata(`${propertyName}:${name}`, ctor.prototype));
             if (hookName instanceof Array) return hookName.some((name) => check(name));
             return check(hookName);
         }
 
         private callHook(name: string, proxy: any, target: this, propertyName: string, value?: any) {
             const activeHookMetaKey = `${ctor.name}:${propertyName}:active${name}`;
-            const hook = Reflect.getMetadata(`${ctor.name}:${propertyName}:${name}`, ctor.prototype);
+            const hook = Reflect.getMetadata(`${propertyName}:${name}`, ctor.prototype);
             if (!hook || Reflect.getMetadata(activeHookMetaKey, target)) return;
 
             Reflect.defineMetadata(activeHookMetaKey, true, target);
@@ -154,6 +152,10 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
                 preventExtensions: (target) => Reflect.preventExtensions(target),
                 construct: (target, argArray) => Reflect.construct(<any>target, argArray)
             };
+        }
+
+        private get changeCallbackOptions(): Options & { pathAsArray: true } {
+            return { isShallow: true, pathAsArray: true, details: true };
         }
     };
 }

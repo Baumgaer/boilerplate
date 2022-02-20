@@ -29,25 +29,25 @@ export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): Propert
 }
 
 export function AttrValidator<T>(attributeName: keyof T) {
-    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
-        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:validator`, descriptor, target);
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => boolean>) => {
+        Reflect.defineMetadata(`${attributeName}:validator`, descriptor, target);
     };
 }
 
 export function AttrGetter<T>(attributeName: keyof T) {
-    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
-        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:getter`, descriptor, target);
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${attributeName}:getter`, descriptor, target);
     };
 }
 
 export function AttrSetter<T>(attributeName: keyof T) {
-    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
-        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:setter`, descriptor, target);
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${attributeName}:setter`, descriptor, target);
     };
 }
 
 export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
-    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
-        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:observer:${type}`, descriptor, target);
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: any) => void>) => {
+        Reflect.defineMetadata(`${attributeName}:observer:${type}`, descriptor, target);
     };
 }

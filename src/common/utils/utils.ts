@@ -1,4 +1,4 @@
-import _, { isNull, isUndefined as _isUndefined, set, get, difference as _difference, union as _union, intersection as _intersection } from "lodash";
+import _, { isNull, isUndefined as _isUndefined, set, get, difference as _difference, union as _union, intersection as _intersection, isObjectLike } from "lodash";
 import onChange from "on-change";
 import addDeepdash from "deepdash-es";
 
@@ -25,6 +25,16 @@ export function difference(...args: Parameters<typeof _difference>): ReturnType<
     return _difference(...args);
 }
 
+export function resolveProxy<T>(value: T): T {
+    if (!isChangeObserved(value)) return value;
+    return resolveProxy(onChange.target(value));
+}
+
+export function hasOwnProperty(value: any, key: string) {
+    if (!isObjectLike(value)) return false;
+    return Object.prototype.hasOwnProperty.call(value, key);
+}
+
 export function isChangeObservable(value: unknown) {
     return value instanceof Array || value instanceof Set || value instanceof Map;
 }
@@ -33,11 +43,6 @@ export function isChangeObserved(value: any) {
     if (!isValue(value)) return false;
     if (onChange.target(value) === value) return false;
     return true;
-}
-
-export function resolveProxy<T>(value: T): T {
-    if (!isChangeObserved(value)) return value;
-    return resolveProxy(onChange.target(value));
 }
 
 export function isUndefined(...args: Parameters<typeof _isUndefined>): ReturnType<typeof _isUndefined> {

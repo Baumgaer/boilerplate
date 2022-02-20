@@ -7,7 +7,3 @@ export type CalculatedType<T extends Constructor<BaseModel>> = Pick<SchemaTypeOp
     // eslint-disable-next-line
     type: ValueOf<typeof Schema.Types> | Schema<T> | ReturnType<Attribute<T>["calculateTypePartials"]>[]
 };
-
-export type AttributeSetter = () => any;
-
-export type AttributeGetter = () => any;

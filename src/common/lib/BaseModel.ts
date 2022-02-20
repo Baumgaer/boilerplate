@@ -1,4 +1,4 @@
-import { Attr } from "~common/utils/decorators";
+import { Attr, AttrGetter } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
 import type { Model } from "mongoose";
 import type { Schema } from "mongoose";
@@ -13,12 +13,11 @@ export default abstract class BaseModel {
 
     protected static readonly dataModel: Model<typeof this>;
 
-    protected readonly dataModel!: InstanceType<Model<typeof this>>;
+    protected readonly dataModel!: InstanceType<typeof BaseModel["dataModel"]>;
 
     @Attr()
-    public id: string = "";
+    public readonly id!: string;
 
-    @Attr()
     public dummyId: string = "";
 
     @Attr()
@@ -46,6 +45,11 @@ export default abstract class BaseModel {
         throw new Error("Not implemented");
     }
 
+    @AttrGetter("id")
+    protected getId() {
+        return this.dataModel._id.toString();
+    }
+
     public get className() {
         return (<typeof BaseModel>this.constructor).className;
     }
@@ -55,11 +59,11 @@ export default abstract class BaseModel {
     }
 
     public isNew(): boolean {
-        return this.id === "" || this.dataModel.isNew();
+        return this.dummyId !== "";
     }
 
     public toId() {
-        return this.id || this.dummyId;
+        return this.dummyId || this.id;
     }
 
     public toString() {
