@@ -1,0 +1,122 @@
+{
+    "root": true,
+    "env": {
+        "browser": true,
+        "node": true
+    },
+    "extends": [
+        "plugin:vue/vue3-essential",
+        "eslint:recommended",
+        "@vue/typescript/recommended"
+    ],
+    "overrides": [
+        {
+            "env": {
+                "jest": true
+            },
+            "files": [
+                "**/__tests__/*.{j,t}s?(x)",
+                "**/tests/unit/**/*.spec.{j,t}s?(x)"
+            ]
+        }
+    ],
+    "parserOptions": {
+        "ecmaVersion": 2020,
+        "project": "./tsconfig.json"
+    },
+    "rules": {
+        "@typescript-eslint/ban-types": [
+            "error",
+            {
+                "types": {
+                    "any": "use unknown instead"
+                }
+            }
+        ],
+        "@typescript-eslint/consistent-type-imports": [
+            "error",
+            {
+                "prefer": "type-imports"
+            }
+        ],
+        "@typescript-eslint/explicit-member-accessibility": "error",
+        "@typescript-eslint/indent": [
+            "error",
+            4
+        ],
+        "@typescript-eslint/no-explicit-any": "off",
+        "@typescript-eslint/no-inferrable-types": "off",
+        "@typescript-eslint/no-unused-vars": [
+            "warn",
+            {
+                "argsIgnorePattern": "^_"
+            }
+        ],
+        "@typescript-eslint/restrict-plus-operands": "error",
+        "@typescript-eslint/unbound-method": "error",
+        "no-use-before-define": "off",
+        "@typescript-eslint/no-use-before-define": [
+            "error",
+            {
+                "ignoreTypeReferences": true,
+                "functions": false
+            }
+        ],
+        "arrow-spacing": [
+            "error",
+            {
+                "after": true,
+                "before": true
+            }
+        ],
+        "camelcase": "error",
+        "comma-dangle": [
+            "error",
+            "never"
+        ],
+        "curly": [
+            "error",
+            "multi-line"
+        ],
+        "dot-notation": "error",
+        "guard-for-in": "error",
+        "linebreak-style": [
+            "error",
+            "unix"
+        ],
+        "no-console": "off",
+        "no-debugger": "off",
+        "no-trailing-spaces": "error",
+        "semi": [
+            "error",
+            "always"
+        ],
+        "semi-spacing": [
+            "error",
+            {
+                "after": true,
+                "before": false
+            }
+        ],
+        "strict": [
+            "error",
+            "global"
+        ],
+        "vue/comma-dangle": [
+            "error",
+            "never"
+        ],
+        "vue/html-indent": [
+            "error",
+            4,
+            {
+                "alignAttributesVertically": true,
+                "attribute": 1,
+                "baseIndent": 1,
+                "closeBracket": 0,
+                "ignores": []
+            }
+        ],
+        "vue/no-deprecated-slot-attribute": "off"
+    }
+}

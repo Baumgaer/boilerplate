@@ -7,4 +7,8 @@ import AnotherExample from "~client/models/AnotherExample";
 export default class HomePage extends BaseController {
 
     public model = new AnotherExample();
+
+    public override mounted() {
+        this.model.toObject();
+    }
 }

@@ -57,6 +57,8 @@ export default class Attribute<T extends Constructor<BaseModel>> implements Sche
 
     public maxlength?: SchemaTypeOptions<T>["maxlength"];
 
+    public isInternal: boolean = false;
+
     public readonly parameters: AttrOptionsPartialMetadataJson<T>;
 
     private ctor: T;
@@ -90,6 +92,7 @@ export default class Attribute<T extends Constructor<BaseModel>> implements Sche
     private setConstants(parameters: AttrOptionsPartialMetadataJson<T>) {
         this.required = Boolean(parameters.isRequired);
         this.immutable = Boolean(parameters.isReadOnly);
+        this.isInternal = Boolean(parameters.isInternal);
     }
 
     private assignType(type: IMetadata["type"]) {

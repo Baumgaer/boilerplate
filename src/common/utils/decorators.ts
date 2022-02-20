@@ -1,7 +1,7 @@
-import type BaseModel from "~common/lib/BaseModel";
 import ModelClassFactory from "~common/lib/ModelClass";
 import { merge } from "lodash";
-import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson } from "~common/types/Decorators";
+import type BaseModel from "~common/lib/BaseModel";
+import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/types/Decorators";
 import type { IMetadata } from "~common/types/MetadataTypes";
 
 export function Model(className: string, collection: string): ClassDecorator {
@@ -19,35 +19,35 @@ export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): Propert
 
     return (target, attributeName) => {
         const attributeString = attributeName.toString();
-        let schemaDefinition = Reflect.getMetadata(`${target.constructor.name}:schemaDefinition`, target);
-        if (!schemaDefinition) {
-            schemaDefinition = {};
-            Reflect.defineMetadata(`${target.constructor.name}:schemaDefinition`, schemaDefinition, target);
+        let attributeDefinition = Reflect.getMetadata(`${target.constructor.name}:${attributeString}:definition`, target);
+        if (!attributeDefinition) {
+            attributeDefinition = {};
+            Reflect.defineMetadata(`${target.constructor.name}:${attributeString}:definition`, attributeDefinition, target);
         }
-        schemaDefinition[attributeString] = metadataOptions;
+        attributeDefinition[attributeString] = metadataOptions;
     };
 }
 
-export function AttrValidator(): MethodDecorator {
-    return (_target, _propertyName, _descriptor) => {
-        // pass
+export function AttrValidator<T>(attributeName: keyof T) {
+    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:validator`, descriptor, target);
     };
 }
 
-export function AttrGetter(): MethodDecorator {
-    return (_target, _propertyName, _descriptor) => {
-        // pass
+export function AttrGetter<T>(attributeName: keyof T) {
+    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:getter`, descriptor, target);
     };
 }
 
-export function AttrSetter(): MethodDecorator {
-    return (_target, _propertyName, _descriptor) => {
-        // pass
+export function AttrSetter<T>(attributeName: keyof T) {
+    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:setter`, descriptor, target);
     };
 }
 
-export function AttrTransformer(): MethodDecorator {
-    return (_target, _propertyName, _descriptor) => {
-        // pass
+export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
+    return (target: T & BaseModel, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${target.constructor.name}:${attributeName}:observer:${type}`, descriptor, target);
     };
 }

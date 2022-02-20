@@ -1,8 +1,9 @@
-import { Model } from "mongoose";
-import { Constructor } from "type-fest";
 import { Attr } from "~common/utils/decorators";
-import Attribute from "./Attribute";
-// import { Schema } from "mongoose";
+import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
+import type { Model } from "mongoose";
+import type { Schema } from "mongoose";
+import type Attribute from "~common/lib/Attribute";
+import type { Constructor } from "type-fest";
 
 export default abstract class BaseModel {
 
@@ -23,8 +24,26 @@ export default abstract class BaseModel {
     @Attr()
     public name!: string;
 
-    public constructor(..._args: any[]) {
+    protected backup: Partial<Record<keyof this, any>> = {};
+
+    public constructor(_params?: ConstructionParams<BaseModel>) {
         // intentionally left blanc
+    }
+
+    public static getById<T extends BaseModel>(this: Constructor<T>, _id: string): T | null {
+        throw new Error("Not implemented");
+    }
+
+    public static getOne<T extends BaseModel>(this: Constructor<T>, _obj: Record<string, any>): T | null {
+        throw new Error("Not implemented");
+    }
+
+    public static getMany<T extends BaseModel>(this: Constructor<T>, _obj: Record<string, any>): T[] {
+        throw new Error("Not implemented");
+    }
+
+    public static getAll<T extends BaseModel>(this: Constructor<T>, _obj: Record<string, any>): T[] {
+        throw new Error("Not implemented");
     }
 
     public get className() {
@@ -35,21 +54,63 @@ export default abstract class BaseModel {
         return (<typeof BaseModel>this.constructor).collection;
     }
 
+    public isNew(): boolean {
+        return this.id === "" || this.dataModel.isNew();
+    }
+
+    public toId() {
+        return this.id || this.dummyId;
+    }
+
+    public toString() {
+        return `${this.className}:${this.toId()}`;
+    }
+
+    public toJson() {
+        return JSON.stringify(this.toObject());
+    }
+
+    public toObject() {
+        const obj: Partial<ConstructionParams<this>> = {};
+        eachDeep(this, (value, key, parentValue, context) => {
+            if (parentValue instanceof BaseModel) {
+                const attribute = parentValue.getAttribute(key.toString());
+                if (!attribute || attribute.isInternal) return false;
+            }
+
+            if (isUndefined(value)) return;
+            if (value instanceof BaseModel) {
+                setValue(obj, context.path || key, value.toObject());
+            } else setValue(obj, context.path || key, value);
+        });
+        return obj;
+    }
+
     public static getAttribute(name: string): Attribute<Constructor<BaseModel>> {
-        const ctorName = Object.getPrototypeOf(this.prototype).constructor.name;
-        return Reflect.getMetadata(`${ctorName}:attributeMap`, this.prototype)[name];
+        return Reflect.getMetadata(`${this.className}:attributeMap`, this.prototype)[name];
     }
 
     public getAttribute(name: string) {
         return (<typeof BaseModel>this.constructor).getAttribute(name);
     }
 
-    public static getSchema() {
-        const ctorName = Object.getPrototypeOf(this.prototype).constructor.name;
-        return Reflect.getMetadata(`${ctorName}:schema`, this.prototype);
+    public static getSchema(): Schema<BaseModel> {
+        return Reflect.getMetadata(`${this.className}:schema`, this.prototype);
     }
 
     public getSchema() {
         return (<typeof BaseModel>this.constructor).getSchema();
+    }
+
+    public updateFromServer() {
+        throw new Error("Not implemented");
+    }
+
+    public save() {
+        throw new Error("Not implemented");
+    }
+
+    public discard() {
+        throw new Error("Not implemented");
     }
 }
