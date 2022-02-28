@@ -1,4 +1,4 @@
-import _, { isNull, isUndefined as _isUndefined, set, get, difference as _difference, union as _union, intersection as _intersection, isObjectLike } from "lodash";
+import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
 import addDeepdash from "deepdash-es";
 
@@ -13,16 +13,24 @@ export function eachDeep(obj: any, callback: eachDeepParams["1"], options: eachD
     }, Object.assign({ pathFormat: "array", checkCircular: true, includeRoot: false }, options));
 }
 
-export function union(...args: Parameters<typeof _union>): ReturnType<typeof _union> {
-    return _union(...args);
+export function merge(...args: Parameters<typeof _["merge"]>): ReturnType<typeof _["merge"]> {
+    return _.merge(...args);
 }
 
-export function intersection(...args: Parameters<typeof _intersection>): ReturnType<typeof _intersection> {
-    return _intersection(...args);
+export function camelCase(...args: Parameters<typeof _["camelCase"]>): ReturnType<typeof _["camelCase"]> {
+    return _.camelCase(...args);
 }
 
-export function difference(...args: Parameters<typeof _difference>): ReturnType<typeof _difference> {
-    return _difference(...args);
+export function union(...args: Parameters<typeof _["union"]>): ReturnType<typeof _["union"]> {
+    return _.union(...args);
+}
+
+export function intersection(...args: Parameters<typeof _["intersection"]>): ReturnType<typeof _["intersection"]> {
+    return _.intersection(...args);
+}
+
+export function difference(...args: Parameters<typeof _["difference"]>): ReturnType<typeof _["difference"]> {
+    return _.difference(...args);
 }
 
 export function resolveProxy<T>(value: T): T {
@@ -45,18 +53,18 @@ export function isChangeObserved(value: any) {
     return true;
 }
 
-export function isUndefined(...args: Parameters<typeof _isUndefined>): ReturnType<typeof _isUndefined> {
-    return _isUndefined(...args);
+export function isUndefined(...args: Parameters<typeof _["isUndefined"]>): ReturnType<typeof _["isUndefined"]> {
+    return _.isUndefined(...args);
 }
 
 export function isValue(value: any): boolean {
     return !isUndefined(value) && !isNull(value);
 }
 
-export function setValue(...args: Parameters<typeof set>): ReturnType<typeof set> {
-    return set(...args);
+export function setValue(...args: Parameters<typeof _["set"]>): ReturnType<typeof _["set"]> {
+    return _.set(...args);
 }
 
-export function getValue(...args: Parameters<typeof get>): ReturnType<typeof get> {
-    return get(...args);
+export function getValue(...args: Parameters<typeof _["get"]>): ReturnType<typeof _["get"]> {
+    return _.get(...args);
 }

@@ -3,11 +3,11 @@ import type { AttrOptionsPartialMetadataJson } from "~common/types/Decorators";
 import type { IMetadata } from "~common/types/MetadataTypes";
 import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema, type SchemaDefinitionProperty } from "mongoose";
 import type { Constructor } from "type-fest";
-import type BaseModel from "./BaseModel";
+import type BaseModel from "~common/lib/BaseModel";
 import { isValue } from "~common/utils/utils";
 import type { CalculatedType } from "~common/types/Attribute";
 
-export default class Attribute<T extends Constructor<BaseModel>> implements SchemaTypeOptions<T> {
+export default class AttributeSchema<T extends Constructor<BaseModel>> implements SchemaTypeOptions<T> {
 
     public alias?: SchemaTypeOptions<T>["alias"];
 

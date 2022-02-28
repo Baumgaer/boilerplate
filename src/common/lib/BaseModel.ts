@@ -1,8 +1,9 @@
-import { Attr, AttrGetter } from "~common/utils/decorators";
+import { Attr } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
 import type { Model } from "mongoose";
 import type { Schema } from "mongoose";
-import type Attribute from "~common/lib/Attribute";
+import type BaseAttribute from "~common/lib/BaseAttribute";
+import type AttributeSchema from "~common/lib/AttributeSchema";
 import type { Constructor } from "type-fest";
 
 export default abstract class BaseModel {
@@ -12,6 +13,8 @@ export default abstract class BaseModel {
     public static readonly collection = "BaseModels";
 
     protected static readonly dataModel: Model<typeof this>;
+
+    public readonly unProxyfiedModel!: typeof this;
 
     protected readonly dataModel!: InstanceType<typeof BaseModel["dataModel"]>;
 
@@ -45,11 +48,6 @@ export default abstract class BaseModel {
         throw new Error("Not implemented");
     }
 
-    @AttrGetter("id")
-    protected getId() {
-        return this.dataModel._id.toString();
-    }
-
     public get className() {
         return (<typeof BaseModel>this.constructor).className;
     }
@@ -79,7 +77,7 @@ export default abstract class BaseModel {
         eachDeep(this, (value, key, parentValue, context) => {
             if (parentValue instanceof BaseModel) {
                 const attribute = parentValue.getAttribute(key.toString());
-                if (!attribute || attribute.isInternal) return false;
+                if (!attribute || attribute.schema.isInternal) return false;
             }
 
             if (isUndefined(value)) return;
@@ -90,16 +88,16 @@ export default abstract class BaseModel {
         return obj;
     }
 
-    public static getAttribute(name: string): Attribute<Constructor<BaseModel>> {
-        return Reflect.getMetadata(`${this.className}:attributeMap`, this.prototype)[name];
+    public static getAttributeSchema<T extends Constructor<BaseModel>>(this: T, name: string): AttributeSchema<T> {
+        return Reflect.getMetadata(`${Object.getPrototypeOf(this).name}:attributeSchemaMap`, this.prototype)?.[name];
     }
 
-    public getAttribute(name: string) {
-        return (<typeof BaseModel>this.constructor).getAttribute(name);
+    public getAttribute<T extends BaseModel>(this: T, name: string): BaseAttribute<T> {
+        return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:${name}:attribute`, this.unProxyfiedModel);
     }
 
-    public static getSchema(): Schema<BaseModel> {
-        return Reflect.getMetadata(`${this.className}:schema`, this.prototype);
+    public static getSchema<T extends Constructor<BaseModel>>(): Schema<T> {
+        return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:schema`, this.prototype);
     }
 
     public getSchema() {

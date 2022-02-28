@@ -31,7 +31,7 @@ module.exports = {
     },
     chainWebpack: (config) => {
 
-        // config.module.rule('ts').uses.delete('cache-loader'); // when developing type transformer
+        //config.module.rule('ts').uses.delete('cache-loader'); // when developing type transformer
 
         config.module.rule('ts').use('ts-loader').merge({
             options: {

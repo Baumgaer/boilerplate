@@ -1,5 +1,5 @@
 import ModelClassFactory from "~common/lib/ModelClass";
-import { merge } from "lodash";
+import { mergeWith } from "lodash";
 import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/types/Decorators";
 import type { IMetadata } from "~common/types/MetadataTypes";
@@ -14,7 +14,7 @@ export function Model(className: string, collection: string): ClassDecorator {
 
 export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): PropertyDecorator {
     const metadata: IMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
-    const metadataOptions: AttrOptionsPartialMetadataJson<T> = merge({}, metadata, <AttrOptionsWithMetadataJson<T>>options);
+    const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <AttrOptionsWithMetadataJson<T>>options);
     delete metadataOptions.metadataJson;
 
     return (target, attributeName) => {

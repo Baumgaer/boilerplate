@@ -1,11 +1,19 @@
-import Attribute from "~common/lib/Attribute";
-import { isChangeObservable, isChangeObserved, hasOwnProperty } from "~common/utils/utils";
-import { model, Schema, type SchemaDefinition } from "mongoose";
+import AttributeSchema from "~common/lib/AttributeSchema";
+import { isChangeObservable, isChangeObserved, hasOwnProperty, camelCase } from "~common/utils/utils";
+import DefaultAttribute from "~env/attributes/DefaultAttribute";
+import { model, Schema, type SchemaDefinition, type SchemaDefinitionType } from "mongoose";
 import onChange, { type ApplyData, type Options } from "on-change";
 import { v4 as uuid } from "uuid";
 import type { Constructor } from "type-fest";
+import type BaseAttribute from "~common/lib/BaseAttribute";
 import type BaseModel from "~common/lib/BaseModel";
 import type { IMetadata } from "~common/types/MetadataTypes";
+
+const attributes: Record<string, Constructor<BaseAttribute<BaseModel>>> = {};
+const context = require.context("~env/attributes/", true, /.+\.ts/, "sync");
+context.keys().forEach((key) => {
+    attributes[camelCase(key.substring(2, key.length - 3))] = context(key).default;
+});
 
 export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T) {
 
@@ -18,35 +26,36 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
     }
 
     // Build attribute map to have access to raw declaration
-    const attributeMap: Record<string, Attribute<T>> = {};
-    Reflect.defineMetadata(`${ctor.name}:attributeMap`, attributeMap, ctor.prototype);
+    const attributeSchemaMap: Record<string, AttributeSchema<T>> = {};
+    Reflect.defineMetadata(`${ctor.name}:attributeSchemaMap`, attributeSchemaMap, ctor.prototype);
     const metadataKeys: string[] = Reflect.getMetadataKeys(ctor.prototype).reverse();
     for (const metadataKey of metadataKeys) {
         if (!metadataKey.endsWith("definition")) continue;
         for (const key in Reflect.getMetadata(metadataKey, ctor.prototype)) {
             if (hasOwnProperty(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
                 const metadata: IMetadata = Reflect.getMetadata(metadataKey, ctor.prototype)[key];
-                if (!(key in attributeMap)) {
-                    attributeMap[key] = new Attribute(ctor, key, metadata);
-                } else attributeMap[key].updateParameters(metadata);
+                if (!(key in attributeSchemaMap)) {
+                    attributeSchemaMap[key] = new AttributeSchema(ctor, key, metadata);
+                } else attributeSchemaMap[key].updateParameters(metadata);
             }
         }
     }
 
     // Create schema for data model
-    const schemaDefinition: SchemaDefinition = {};
-    for (const key in attributeMap) {
-        if (hasOwnProperty(attributeMap, key)) {
-            const attribute = attributeMap[key];
+    const schemaDefinition: Partial<SchemaDefinition<SchemaDefinitionType<T>>> = {};
+    for (const key in attributeSchemaMap) {
+        if (hasOwnProperty(attributeSchemaMap, key)) {
+            const attribute = attributeSchemaMap[key];
             Reflect.set(schemaDefinition, key, attribute.toSchemaPropertyDefinition());
         }
     }
-    const schema = new Schema(schemaDefinition);
+
+    const schema = new Schema<T>(<SchemaDefinition<SchemaDefinitionType<T>>>schemaDefinition, { _id: false });
     Reflect.defineMetadata(`${ctor.name}:schema`, schema, ctor.prototype);
     const DataModel = model<T>(Reflect.get(ctor, "className"), schema, Reflect.get(ctor, "collection"));
     Reflect.defineMetadata(`${ctor.name}:staticDataModel`, DataModel, ctor.prototype);
 
-    return class ModelClass extends ctor {
+    class ModelClass extends ctor {
 
         public static isModelClass = true;
 
@@ -59,8 +68,11 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
+            this.unProxyfiedModel = this;
+            // @ts-expect-error yes it's read only but not during construction...
             this.dataModel = new DataModel(this.mergeProperties(args[0]));
             const proxy = new Proxy(this, this.proxyHandler);
+            this.createAttributes(proxy);
             console.log(proxy);
             return proxy;
         }
@@ -79,6 +91,15 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
                 }
             }
             return Object.assign(defaults, properties);
+        }
+
+        private createAttributes(proxy: this) {
+            for (const key in schemaDefinition) {
+                if (Object.prototype.hasOwnProperty.call(schemaDefinition, key)) {
+                    const attribute = new (attributes[key] || DefaultAttribute)(proxy, key, attributeSchemaMap[key]);
+                    Reflect.defineMetadata(`${ctor.name}:${key}:attribute`, attribute, this);
+                }
+            }
         }
 
         private getPropertyNames() {
@@ -157,5 +178,8 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         private get changeCallbackOptions(): Options & { pathAsArray: true } {
             return { isShallow: true, pathAsArray: true, details: true };
         }
-    };
+    }
+
+    schema.loadClass(ModelClass);
+    return ModelClass;
 }
