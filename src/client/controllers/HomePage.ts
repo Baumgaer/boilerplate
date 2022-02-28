@@ -9,6 +9,6 @@ export default class HomePage extends BaseController {
     public model = new AnotherExample();
 
     public override mounted() {
-        this.model.toObject();
+        console.log(this.model, this.model.toObject());
     }
 }

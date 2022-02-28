@@ -1,9 +1,9 @@
 import AttributeSchema from "~common/lib/AttributeSchema";
-import { isChangeObservable, isChangeObserved, hasOwnProperty, camelCase } from "~common/utils/utils";
+import { hasOwnProperty, camelCase } from "~common/utils/utils";
 import DefaultAttribute from "~env/attributes/DefaultAttribute";
 import { model, Schema, type SchemaDefinition, type SchemaDefinitionType } from "mongoose";
-import onChange, { type ApplyData, type Options } from "on-change";
 import { v4 as uuid } from "uuid";
+import { reactive } from "vue";
 import type { Constructor } from "type-fest";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 import type BaseModel from "~common/lib/BaseModel";
@@ -63,16 +63,15 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
 
         protected static dataModel = DataModel;
 
-        private observedAttributes: Record<string, any> = {};
-
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedModel = this;
             // @ts-expect-error yes it's read only but not during construction...
-            this.dataModel = new DataModel(this.mergeProperties(args[0]));
-            const proxy = new Proxy(this, this.proxyHandler);
+            this.dataModel = new DataModel();
+            const proxy = reactive(new Proxy(this, this.proxyHandler)) as this;
             this.createAttributes(proxy);
+            Object.assign(proxy, this.mergeProperties(args[0]));
             console.log(proxy);
             return proxy;
         }
@@ -82,13 +81,7 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
             if (!properties.id) this.dummyId = uuid();
 
             for (const key in schemaDefinition) {
-                if (hasOwnProperty(schemaDefinition, key)) {
-                    const value = Reflect.get(this, key);
-                    if (this.musstObserveChanges(key, value)) {
-                        this.observedAttributes[key] = onChange(value, (...args) => this.changeCallback(key, ...args), this.changeCallbackOptions);
-                    }
-                    defaults[key] = value;
-                }
+                if (hasOwnProperty(schemaDefinition, key)) defaults[key] = Reflect.get(this, key);
             }
             return Object.assign(defaults, properties);
         }
@@ -106,55 +99,16 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
             return Object.keys(schemaDefinition);
         }
 
-        private get(target: this, propertyName: string | symbol, proxy: any) {
+        private get(target: this, propertyName: string | symbol) {
             const stringProperty = propertyName.toString();
             if (!hasOwnProperty(schemaDefinition, stringProperty)) return Reflect.get(target, propertyName);
-            const hookValue = this.callHook("getter", proxy, target, stringProperty);
-            return hookValue !== undefined ? hookValue : this.observedAttributes[stringProperty] ?? Reflect.get(target.dataModel, stringProperty);
+            return this.getAttribute(stringProperty).get();
         }
 
-        private set(target: this, propertyName: string | symbol, value: any, proxy: any) {
+        private set(target: this, propertyName: string | symbol, value: any) {
             const stringProperty = propertyName.toString();
             if (!hasOwnProperty(schemaDefinition, stringProperty)) return Reflect.set(target, propertyName, value);
-
-            const hookValue = this.callHook("setter", proxy, target, stringProperty, value);
-            const oldValue = this.observedAttributes[stringProperty] ?? Reflect.get(target.dataModel, stringProperty);
-            let newValue = hookValue !== undefined ? hookValue : value;
-            if (this.musstObserveChanges(stringProperty, newValue)) {
-                newValue = onChange(newValue, (...args) => this.changeCallback(stringProperty, ...args), this.changeCallbackOptions);
-                this.observedAttributes[stringProperty] = newValue;
-            } else if (stringProperty in this.observedAttributes) delete this.observedAttributes[stringProperty];
-
-            const setResult = Reflect.set(target.dataModel, stringProperty, newValue);
-            if (setResult && oldValue !== newValue) this.callHook("observer:change", proxy, target, stringProperty, newValue);
-            return setResult;
-        }
-
-        private changeCallback(propertyName: string, path: (string | symbol)[], value: unknown, previousValue: unknown, applyData: ApplyData): void {
-            Reflect.set(this.dataModel, propertyName, this.observedAttributes[propertyName]);
-            console.log(propertyName, path, value, previousValue, applyData);
-        }
-
-        private musstObserveChanges(propertyName: string, value: any) {
-            return this.hasHook(propertyName, ["observer:add", "observer:remove"]) && isChangeObservable(value) && !isChangeObserved(value);
-        }
-
-        private hasHook(propertyName: string, hookName: string | string[]) {
-            const check = (name: string) => Boolean(Reflect.getMetadata(`${propertyName}:${name}`, ctor.prototype));
-            if (hookName instanceof Array) return hookName.some((name) => check(name));
-            return check(hookName);
-        }
-
-        private callHook(name: string, proxy: any, target: this, propertyName: string, value?: any) {
-            const activeHookMetaKey = `${ctor.name}:${propertyName}:active${name}`;
-            const hook = Reflect.getMetadata(`${propertyName}:${name}`, ctor.prototype);
-            if (!hook || Reflect.getMetadata(activeHookMetaKey, target)) return;
-
-            Reflect.defineMetadata(activeHookMetaKey, true, target);
-            value = hook.value.call(proxy, value);
-            Reflect.defineMetadata(activeHookMetaKey, false, target);
-
-            return value;
+            return this.getAttribute(stringProperty).set(value);
         }
 
         private get proxyHandler(): ProxyHandler<this> {
@@ -173,10 +127,6 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
                 preventExtensions: (target) => Reflect.preventExtensions(target),
                 construct: (target, argArray) => Reflect.construct(<any>target, argArray)
             };
-        }
-
-        private get changeCallbackOptions(): Options & { pathAsArray: true } {
-            return { isShallow: true, pathAsArray: true, details: true };
         }
     }
 
