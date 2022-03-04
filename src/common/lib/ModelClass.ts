@@ -50,10 +50,11 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         }
     }
 
-    const schema = new Schema<T>(<SchemaDefinition<SchemaDefinitionType<T>>>schemaDefinition, { _id: false });
+    const schema = new Schema<T>(<SchemaDefinition<SchemaDefinitionType<T>>>schemaDefinition);
+    schema.post("init", (...args) => console.log("lalalalalalal", ...args));
     Reflect.defineMetadata(`${ctor.name}:schema`, schema, ctor.prototype);
+
     const DataModel = model<T>(Reflect.get(ctor, "className"), schema, Reflect.get(ctor, "collection"));
-    Reflect.defineMetadata(`${ctor.name}:staticDataModel`, DataModel, ctor.prototype);
 
     class ModelClass extends ctor {
 
@@ -79,7 +80,6 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         private mergeProperties(properties: Record<string, any> = {}) {
             const defaults: Record<string, any> = {};
             if (!properties.id) this.dummyId = uuid();
-
             for (const key in schemaDefinition) {
                 if (hasOwnProperty(schemaDefinition, key)) defaults[key] = Reflect.get(this, key);
             }
@@ -130,6 +130,5 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         }
     }
 
-    schema.loadClass(ModelClass);
     return ModelClass;
 }
