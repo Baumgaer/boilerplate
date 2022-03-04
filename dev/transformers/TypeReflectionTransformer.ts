@@ -37,26 +37,33 @@ export default function transformer(program: ts.Program) {
 
         function processAttr(attr: ts.PropertyDeclaration, sourceFile: ts.SourceFile) {
 
-            const alias = attr.name.getText();
-            console.info(`processing attribute ${alias}`);
+            const name = attr.name.getText();
+            console.info(`processing attribute ${name}`);
             const type = resolveType(typeChecker.getTypeAtLocation(attr), attr, sourceFile);
 
-            console.log(attr.name.getText(), JSON.stringify(type));
+            //console.log(attr.name.getText(), JSON.stringify(type));
 
             const isRequired = !attr.questionToken && !attr.initializer || attr.exclamationToken && !attr.initializer;
             const isReadOnly = attr.modifiers?.some((modifier) => modifier?.kind === ts.SyntaxKind.ReadonlyKeyword);
             const isInternal = attr.modifiers?.every((modifier) => modifier?.kind !== ts.SyntaxKind.PublicKeyword);
+            const isLazy = utils.isPromise(attr.type);
 
-            return JSON.stringify({ isRequired, isReadOnly, isInternal, type, alias });
+            return JSON.stringify({ name, isInternal, isReadOnly, isRequired, isLazy, type });
         }
 
-        function resolveType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
+        function resolveType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, useAsTypeNode?: ts.TypeNode): any {
 
-            let typeNode = attr.type;
+            let typeNode = useAsTypeNode ?? attr.type;
 
             // NORMALIZE TYPE
-            if (typeNode?.kind === ts.SyntaxKind.ParenthesizedType) {
+            if (utils.isParenthesizedType(typeNode)) {
                 typeNode = (<ts.ParenthesizedTypeNode>typeNode).type;
+                type = typeChecker.getTypeAtLocation(typeNode);
+            }
+
+            if (utils.isPromise(typeNode)) {
+                if (!typeNode.typeArguments?.[0]) return { isUnresolvedType: true };
+                typeNode = typeNode.typeArguments[0];
                 type = typeChecker.getTypeAtLocation(typeNode);
             }
 
@@ -70,6 +77,7 @@ export default function transformer(program: ts.Program) {
             if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
             if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isDate(type, attr)) return resolveDate();
+            if (utils.isTupleType(typeNode)) return resolveTupleType(type, attr, sourceFile, typeNode);
             if (utils.isArray(attr)) return resolveArray(attr, sourceFile);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
@@ -127,14 +135,14 @@ export default function transformer(program: ts.Program) {
 
         function resolveInterface(typeNode: ts.TypeReferenceNode | ts.TypeLiteralNode, sourceFile: ts.SourceFile) {
 
-            let typeMembers: ts.SymbolTable | ts.NodeArray<ts.PropertySignature>;
+            let typeMembers: ts.SymbolTable | ts.NodeArray<ts.PropertySignature> | undefined;
             if (ts.isTypeReferenceNode(typeNode)) {
                 const identifier = typeNode.typeName;
                 const symbol = typeChecker.getSymbolAtLocation(identifier);
-                typeMembers = symbol.members;
+                typeMembers = symbol?.members;
             } else typeMembers = <ts.NodeArray<ts.PropertySignature>>typeNode.members;
 
-            const members = {};
+            const members: Record<string, any> = {};
             typeMembers?.forEach((member: ts.Symbol | ts.PropertySignature) => {
                 let signature: ts.PropertySignature;
                 if ("valueDeclaration" in member) {
@@ -147,13 +155,21 @@ export default function transformer(program: ts.Program) {
             return { isInterface: true, members };
         }
 
+        function resolveTupleType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode: ts.TupleTypeNode) {
+            const subTypes: any[] = [];
+            typeNode.elements.forEach((element) => {
+                subTypes.push(resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile, element));
+            });
+            return { isTuple: true, subTypes };
+        }
+
         function resolveArray(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
             if (attr.type) {
                 const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>attr.type).elementType);
                 return { isArray: true, subType: resolveType(elementType, attr, sourceFile) };
             }
             if (attr.initializer) {
-                const subTypes = [];
+                const subTypes: any[] = [];
                 (<ts.ArrayLiteralExpression>attr.initializer).elements.forEach((element) => {
                     const subType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile);
                     subTypes.push(subType);

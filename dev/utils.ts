@@ -49,24 +49,42 @@ export function isIntersection(type: ts.Type) {
 
 export function isArray(property: ts.PropertyDeclaration | ts.PropertySignature) {
     const kind = property.type?.kind || property.initializer?.kind;
-    const isArrayType = (kind & ts.SyntaxKind.ArrayType) === ts.SyntaxKind.ArrayType;
-    const isArrayLiteralExpression = (kind & ts.SyntaxKind.ArrayLiteralExpression) === ts.SyntaxKind.ArrayLiteralExpression;
-    return isArrayType || isArrayLiteralExpression;
+    const isArrayType = kind && (kind & ts.SyntaxKind.ArrayType) === ts.SyntaxKind.ArrayType;
+    const isArrayLiteralExpression = kind && (kind & ts.SyntaxKind.ArrayLiteralExpression) === ts.SyntaxKind.ArrayLiteralExpression;
+    return Boolean(isArrayType || isArrayLiteralExpression);
 }
 
-export function isObject(type: ts.Type) {
+export function isTupleType(node?: ts.TypeNode | ts.PropertyDeclaration | ts.PropertySignature): node is ts.TupleTypeNode {
+    return Boolean(node && ts.isTupleTypeNode(node));
+}
+
+export function isObject(type: ts.Type): type is ts.ObjectType {
     return (type.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object;
 }
 
+export function isParenthesizedType(node?: ts.TypeNode | ts.PropertyDeclaration | ts.PropertySignature): node is ts.ParenthesizedTypeNode {
+    if (!node) return false;
+    let kind: ts.SyntaxKind | undefined = undefined;
+    if (ts.isTypeNode(node)) {
+        kind = node.kind;
+    } else kind = node.type?.kind || node.initializer?.kind;
+    return Boolean(kind && (kind & ts.SyntaxKind.ParenthesizedType) === ts.SyntaxKind.ParenthesizedType);
+}
+
+export function isPromise(node?: ts.TypeNode | ts.PropertyDeclaration | ts.PropertySignature): node is ts.TypeReferenceNode {
+    return Boolean(node && ts.isTypeReferenceNode(node) && node.typeName.getText() === "Promise");
+}
+
 export function hasTypeLiteral(property: ts.PropertyDeclaration | ts.PropertySignature) {
-    return (property.type?.kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral;
+    const kind = property.type?.kind;
+    return Boolean(kind && (kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral);
 }
 
 export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature) {
-    return type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) || hasTypeLiteral(property);
+    return Boolean(property.type && type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) || hasTypeLiteral(property));
 }
 
-export function isTypeParameter(type: ts.Type) {
+export function isTypeParameter(type: ts.Type): type is ts.TypeParameter {
     return (type.flags & ts.TypeFlags.TypeParameter) === ts.TypeFlags.TypeParameter;
 }
 
@@ -104,7 +122,7 @@ export function isModel(type: ts.Type, sourceFile: ts.SourceFile) {
     if (isMaybeModelType()) return true;
     if (!isTypeParameter(type) && !isObject(type)) return false;
     const symbol = type.symbol;
-    if (symbol?.flags === ts.SymbolFlags.Class && isValidSourceFile(<ts.SourceFile>symbol.valueDeclaration.parent)) {
+    if (symbol?.flags === ts.SymbolFlags.Class && symbol?.valueDeclaration && isValidSourceFile(<ts.SourceFile>symbol.valueDeclaration.parent)) {
         return true;
     }
     return false;
@@ -165,9 +183,11 @@ export function isValidAttrIdentifier(identifier: ts.Identifier, typeChecker: ts
 export function resolveImportPath(importPath: string) {
     if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
     const pathParts = importPath.split("/");
-    const entryPoint = pathParts.shift();
-    const fileName = pathParts.pop() + ".ts";
-    const relativePath = clientConfig.compilerOptions.paths[`${entryPoint}/*`][0].replace("*", "");
+    const entryPoint = pathParts.shift() as "~client" | "~common" | "~env" | "~test";
+    const fileName = `${pathParts.pop()}.ts`;
+
+    const paths = clientConfig.compilerOptions.paths;
+    const relativePath = paths[`${entryPoint}/*`][0].replace("*", "");
     return path.resolve(path.join(arp.path, "src", "client", relativePath, ...pathParts, fileName));
 }
 
