@@ -1,18 +1,18 @@
 import AnotherCommonExample from "~common/models/AnotherExample";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model } from "~client/utils/decorators";
 
-@Model("AnotherExample", "anotherExamples")
+@Model({ className: "AnotherExample", collectionName: "anotherExamples" })
 export default class AnotherExample extends AnotherCommonExample {
 
     public constructor(params?: ConstructionParams<AnotherExample>) {
         super(params);
     }
 
-    @Attr()
+    @Attr({ deferrable: "INITIALLY IMMEDIATE" })
     public override name: string = "jojo";
 
     @Attr()
-    public anotherExampleClient!: boolean;
+    public anotherExampleClient!: Promise<[string, number, [AnotherExample, boolean]]>;
 
     @AttrValidator("name")
     public validateName(value: string): boolean {

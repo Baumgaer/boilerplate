@@ -1,13 +1,12 @@
-import AttributeSchema from "~common/lib/AttributeSchema";
 import { hasOwnProperty, camelCase } from "~common/utils/utils";
 import DefaultAttribute from "~env/attributes/DefaultAttribute";
-import { model, Schema, type SchemaDefinition, type SchemaDefinitionType } from "mongoose";
 import { v4 as uuid } from "uuid";
 import { reactive } from "vue";
+import { Entity } from "typeorm";
 import type { Constructor } from "type-fest";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 import type BaseModel from "~common/lib/BaseModel";
-import type { IMetadata } from "~common/types/MetadataTypes";
+import type { ModelOptions } from "~common/types/ModelClass";
 
 const attributes: Record<string, Constructor<BaseAttribute<BaseModel>>> = {};
 const context = require.context("~env/attributes/", true, /.+\.ts/, "sync");
@@ -15,7 +14,7 @@ context.keys().forEach((key) => {
     attributes[camelCase(key.substring(2, key.length - 3))] = context(key).default;
 });
 
-export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T) {
+export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T, _options: ModelOptions<T>) {
 
     // Remove ModelClass from prototype chain of ctor to avoid double registration
     // of proxy and other ModelClass stuff
@@ -26,35 +25,33 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
     }
 
     // Build attribute map to have access to raw declaration
-    const attributeSchemaMap: Record<string, AttributeSchema<T>> = {};
-    Reflect.defineMetadata(`${ctor.name}:attributeSchemaMap`, attributeSchemaMap, ctor.prototype);
-    const metadataKeys: string[] = Reflect.getMetadataKeys(ctor.prototype).reverse();
-    for (const metadataKey of metadataKeys) {
-        if (!metadataKey.endsWith("definition")) continue;
-        for (const key in Reflect.getMetadata(metadataKey, ctor.prototype)) {
-            if (hasOwnProperty(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
-                const metadata: IMetadata = Reflect.getMetadata(metadataKey, ctor.prototype)[key];
-                if (!(key in attributeSchemaMap)) {
-                    attributeSchemaMap[key] = new AttributeSchema(ctor, key, metadata);
-                } else attributeSchemaMap[key].updateParameters(metadata);
-            }
-        }
-    }
+    const attributeSchemaMap: Record<string, any> = {};
+    // Reflect.defineMetadata(`${ctor.name}:attributeSchemaMap`, attributeSchemaMap, ctor.prototype);
+    // const metadataKeys: string[] = Reflect.getMetadataKeys(ctor.prototype).reverse();
+    // for (const metadataKey of metadataKeys) {
+    //     if (!metadataKey.endsWith("definition")) continue;
+    //     for (const key in Reflect.getMetadata(metadataKey, ctor.prototype)) {
+    //         if (hasOwnProperty(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
+    //             const metadata: IMetadata = Reflect.getMetadata(metadataKey, ctor.prototype)[key];
+    //             if (!(key in attributeSchemaMap)) {
+    //                 attributeSchemaMap[key] = new AttributeSchema(ctor, key, metadata);
+    //             } else attributeSchemaMap[key].updateParameters(metadata);
+    //         }
+    //     }
+    // }
 
     // Create schema for data model
-    const schemaDefinition: Partial<SchemaDefinition<SchemaDefinitionType<T>>> = {};
-    for (const key in attributeSchemaMap) {
-        if (hasOwnProperty(attributeSchemaMap, key)) {
-            const attribute = attributeSchemaMap[key];
-            Reflect.set(schemaDefinition, key, attribute.toSchemaPropertyDefinition());
-        }
-    }
+    const schemaDefinition = {};
+    // for (const key in attributeSchemaMap) {
+    //     if (hasOwnProperty(attributeSchemaMap, key)) {
+    //         const attribute = attributeSchemaMap[key];
+    //         Reflect.set(schemaDefinition, key, attribute.toSchemaPropertyDefinition());
+    //     }
+    // }
 
-    const schema = new Schema<T>(<SchemaDefinition<SchemaDefinitionType<T>>>schemaDefinition);
-    schema.post("init", (...args) => console.log("lalalalalalal", ...args));
-    Reflect.defineMetadata(`${ctor.name}:schema`, schema, ctor.prototype);
-
-    const DataModel = model<T>(Reflect.get(ctor, "className"), schema, Reflect.get(ctor, "collection"));
+    // const schema = new Schema<T>(<SchemaDefinition<SchemaDefinitionType<T>>>schemaDefinition);
+    // schema.post("init", (...args) => console.log("lalalalalalal", ...args));
+    // Reflect.defineMetadata(`${ctor.name}:schema`, schema, ctor.prototype);
 
     class ModelClass extends ctor {
 
@@ -62,14 +59,10 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
 
         public isModelClass = true;
 
-        protected static dataModel = DataModel;
-
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedModel = this;
-            // @ts-expect-error yes it's read only but not during construction...
-            this.dataModel = new DataModel();
             const proxy = reactive(new Proxy(this, this.proxyHandler)) as this;
             this.createAttributes(proxy);
             Object.assign(proxy, this.mergeProperties(args[0]));
@@ -130,5 +123,6 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         }
     }
 
+    Entity()(ModelClass);
     return ModelClass;
 }

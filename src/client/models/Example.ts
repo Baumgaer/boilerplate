@@ -1,10 +1,10 @@
 import CommonExample from "~common/models/Example";
 import { Attr, Model } from "~client/utils/decorators";
 
-@Model("Example", "examples")
+@Model({ className: "Example", collectionName: "examples" })
 export default class Example extends CommonExample {
 
-    @Attr()
+    @Attr({ cascade: false })
     public override name: string = "test";
 
     @Attr()

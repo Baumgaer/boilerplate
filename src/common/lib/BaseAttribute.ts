@@ -5,7 +5,6 @@ import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type BaseModel from "~common/lib/BaseModel";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type { Constructor } from "type-fest";
-import type { Model } from "mongoose";
 
 export default abstract class BaseAttribute<T extends BaseModel> {
 
@@ -19,8 +18,6 @@ export default abstract class BaseAttribute<T extends BaseModel> {
 
     protected readonly unProxyfiedOwner: T;
 
-    protected readonly dataModel: Model<T>;
-
     private readonly ctorName: string;
 
     private observedValue?: T[this["name"]];
@@ -30,25 +27,24 @@ export default abstract class BaseAttribute<T extends BaseModel> {
         this.unProxyfiedOwner = owner.unProxyfiedModel;
         this.name = name;
         this.schema = attributeSchema;
-        this.dataModel = Reflect.get(this.unProxyfiedOwner, "dataModel");
         this.ctorName = Object.getPrototypeOf(this.unProxyfiedOwner.constructor).name;
     }
 
     public get(): T[this["name"]] {
         const hookValue = this.callHook("getter");
-        return hookValue !== undefined ? hookValue : this.observedValue ?? Reflect.get(this.dataModel, this.name);
+        return hookValue !== undefined ? hookValue : this.observedValue ?? true; //Reflect.get(this.dataModel, this.name);
     }
 
     public set(value: T[this["name"]]): boolean {
         const hookValue = this.callHook("setter", value);
-        const oldValue = this.observedValue ?? Reflect.get(this.dataModel, this.name);
+        const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;
         if (this.musstObserveChanges(newValue)) {
             newValue = reactive(onChange(newValue, (...args) => this.changeCallback(...args), this.changeCallbackOptions));
             this.observedValue = newValue;
         } else delete this.observedValue;
 
-        const setResult = Reflect.set(this.dataModel, this.name, newValue);
+        const setResult = true; //Reflect.set(this.dataModel, this.name, newValue);
         if (setResult && oldValue !== newValue) this.callHook("observer:change", newValue);
         return setResult;
     }

@@ -1,51 +1,62 @@
-/* eslint no-use-before-define: 0 */ // because otherwise we won't be able to declare recursive types
-import { UnionToIntersection } from "type-fest";
+import type { LiteralUnion } from "type-fest";
 
-type MetadataType = IIdentifiedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType | IUnresolvedType | IInterfaceType;
+type MetadataType = IIdentifiedType & IModelType & IMixedType & IArrayType & IUnionOrIntersectionType & ILiteralType & IUnresolvedType & IInterfaceType & ITupleType;
 
-interface IIdentifiedType {
-    identifier: "String" | "Number" | "Boolean" | "Date" | string;
+export interface IIdentifiedType {
+    identifier: LiteralUnion<"String" | "Number" | "Boolean" | "Date", string>;
 }
 
-interface IModelType {
-    identifier: string;
+export interface IModelType {
+    identifier: IIdentifiedType["identifier"];
     isModel: boolean;
 }
 
-interface IMixedType {
+export interface IMixedType {
     isMixed: boolean;
 }
 
-interface IInterfaceType {
+export interface IInterfaceType {
     isInterface: boolean,
-    members: Record<string, UnionToIntersection<MetadataType>>
+    members: Record<string, MetadataType>
 }
 
-interface IUnresolvedType {
+export interface IUnresolvedType {
     isUnresolvedType: true;
 }
 
-interface ILiteralType {
-    isLiteral: true;
-    isStringLiteral: boolean;
-    isNumberLiteral: boolean;
+export interface ILiteralType {
+    isLiteral?: true;
+    isStringLiteral?: boolean;
+    isNumberLiteral?: boolean;
     value: string | number;
 }
 
-interface IArrayType {
+export interface IArrayType {
     isArray: boolean;
-    subType: UnionToIntersection<MetadataType>;
+    subType: MetadataType;
 }
 
-interface IUnionOrIntersectionType {
-    isUnion: boolean;
-    isIntersection: boolean;
-    subTypes: UnionToIntersection<MetadataType>[]
+export interface IUnionOrIntersectionType {
+    isUnion?: boolean;
+    isIntersection?: boolean;
+    subTypes: (MetadataType)[]
+}
+
+export interface IOptionalType {
+    isOptional: boolean;
+    subType: MetadataType
+}
+
+export interface ITupleType {
+    isTuple: boolean;
+    subTypes: (MetadataType | IOptionalType)[]
 }
 
 export interface IMetadata {
-    isRequired: boolean;
-    isReadOnly: boolean;
+    name: string;
     isInternal: boolean;
-    type: UnionToIntersection<MetadataType>;
+    isReadOnly: boolean;
+    isRequired: boolean;
+    isLazy: boolean;
+    type: MetadataType;
 }

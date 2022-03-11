@@ -8,6 +8,7 @@
         "moduleResolution": "node",
         "resolveJsonModule": true,
         "skipLibCheck": true,
+        "skipDefaultLibCheck": true,
         "esModuleInterop": true,
         "allowSyntheticDefaultImports": true,
         "experimentalDecorators": true,
@@ -23,7 +24,8 @@
         "types": [
             "webpack-env",
             "jest",
-            "reflect-metadata"
+            "reflect-metadata",
+            "node"
         ],
         "paths": {
             "~root/*": [
@@ -43,9 +45,11 @@
         ]
     },
     "include": [
+        "./**/*.js",
         "src/**/*.ts",
         "src/**/*.tsx",
         "src/**/*.vue",
+        "dev/**/*.ts",
         "tests/**/*.ts",
         "tests/**/*.tsx"
     ],

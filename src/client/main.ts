@@ -24,6 +24,26 @@ import '@ionic/vue/css/display.css';
 /* Theme variables */
 import '~client/themes/default.css';
 
+/* Web database */
+import "sql.js/dist/sql-wasm.js";
+import { createConnection } from "typeorm";
+import type { Constructor } from "type-fest";
+import type BaseModel from "~common/lib/BaseModel";
+
+const models: Constructor<BaseModel>[] = [];
+const context = require.context("~client/models/", true, /.+\.ts/, "sync");
+context.keys().forEach((key) => models.push(context(key).default));
+
+const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
+createConnection({
+    type: "sqljs",
+    entities: models,
+    synchronize: true,
+    sqlJsConfig: {
+        locateFile: () => sqlWasm.href
+    }
+});
+
 const app = createApp(App)
     .use(IonicVue)
     .use(router);

@@ -1,132 +1,280 @@
 import { merge } from 'lodash';
-import type { AttrOptionsPartialMetadataJson } from "~common/types/Decorators";
-import type { IMetadata } from "~common/types/MetadataTypes";
-import { type SchemaTypeOptions, type SchemaDefinition, type SchemaDefinitionType, Schema, type SchemaDefinitionProperty } from "mongoose";
-import type { Constructor } from "type-fest";
+import { Column, PrimaryGeneratedColumn, OneToOne, OneToMany, ManyToOne, ManyToMany, JoinTable, JoinColumn, Generated, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, VersionColumn } from "typeorm";
 import type BaseModel from "~common/lib/BaseModel";
-import { isValue } from "~common/utils/utils";
-import type { CalculatedType } from "~common/types/Attribute";
+import { pascalCase } from "~common/utils/utils";
+import type { AttrOptions, AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
+import type { IMetadata } from "~common/types/MetadataTypes";
+import type { Constructor } from "type-fest";
 
-export default class AttributeSchema<T extends Constructor<BaseModel>> implements SchemaTypeOptions<T> {
+const models: Record<string, Constructor<BaseModel>> = {};
 
-    public alias?: SchemaTypeOptions<T>["alias"];
+interface IRelation<T extends Constructor<BaseModel>> {
+    type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many",
+    field?: keyof InstanceType<T>;
+}
 
-    public cast?: SchemaTypeOptions<T>["cast"];
+export default class AttributeSchema<T extends Constructor<BaseModel>> implements AttrOptions<T> {
 
-    public required?: SchemaTypeOptions<T>["required"];
+    /**
+     * Holds the class object which created the schema
+     *
+     * @memberof AttributeSchema
+     */
+    public readonly ctor: T;
 
-    public ref?: SchemaTypeOptions<T>["ref"];
+    /**
+     * The name of the attribute in the schema. Corresponds to the attribute
+     * name in the class (maybe not in runtime)
+     *
+     * @memberof AttributeSchema
+     */
+    public readonly attributeName: keyof InstanceType<T>;
 
-    public select?: SchemaTypeOptions<T>["select"];
+    /**
+     * The parameters which initializes the schema
+     *
+     * @memberof AttributeSchema
+     */
+    public readonly parameters = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
 
-    public index?: SchemaTypeOptions<T>["index"];
-
-    public unique?: SchemaTypeOptions<T>["unique"];
-
-    public immutable?: SchemaTypeOptions<T>["immutable"];
-
-    public sparse?: SchemaTypeOptions<T>["sparse"];
-
-    public text?: SchemaTypeOptions<T>["text"];
-
-    public enum?: SchemaTypeOptions<T>["enum"];
-
-    public subtype?: SchemaTypeOptions<T>["subtype"];
-
-    public min?: SchemaTypeOptions<T>["min"];
-
-    public max?: SchemaTypeOptions<T>["max"];
-
-    public expires?: SchemaTypeOptions<T>["expires"];
-
-    public excludeIndexes?: SchemaTypeOptions<T>["excludeIndexes"];
-
-    public of?: SchemaTypeOptions<T>["of"];
-
-    public auto?: SchemaTypeOptions<T>["auto"];
-
-    public match?: SchemaTypeOptions<T>["match"];
-
-    public lowercase?: SchemaTypeOptions<T>["lowercase"];
-
-    public trim?: SchemaTypeOptions<T>["trim"];
-
-    public uppercase?: SchemaTypeOptions<T>["uppercase"];
-
-    public minlength?: SchemaTypeOptions<T>["minlength"];
-
-    public maxlength?: SchemaTypeOptions<T>["maxlength"];
-
+    /**
+     * Indicates if an attribute should be sent to another endpoint.
+     * Very important for privacy!
+     *
+     * @memberof AttributeSchema
+     */
     public isInternal: boolean = false;
 
-    public readonly parameters: AttrOptionsPartialMetadataJson<T>;
+    /**
+     * Indicates if an attribute has to be set manually (does not have a default)
+     *
+     * @memberof AttributeSchema
+     */
+    public isRequired: boolean = false;
 
-    private ctor: T;
+    /**
+     * Indicates if an attribute is readonly / not writable / only writable once
+     *
+     * @memberof AttributeSchema
+     */
+    public isImmutable: boolean = false;
 
-    private attributeName: string;
+    /**
+     * Indicates if an attribute should only be loaded from database when it
+     * is explicitly used. This is always the case when the type of the
+     * attribute is a Promise
+     *
+     * @memberof AttributeSchema
+     */
+    public isLazy: boolean = false;
 
-    public constructor(ctor: T, attributeName: string, parameters: AttrOptionsPartialMetadataJson<T>) {
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public isCreationDate: boolean = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public isModifiedDate: boolean = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public isDeletedDate: boolean = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public isVersion: boolean = false;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public isGenerated?: 'increment' | 'uuid' | 'rowid' | undefined;
+
+    /**
+     * defines if an attribute is a relation to its corresponding type and to
+     * which field of this type
+     *
+     * @memberof AttributeSchema
+     */
+    public relation!: IRelation<T> | false;
+
+    /**
+     * If true, the column will be used as the relation column
+     *
+     * @memberof AttributeSchema
+     */
+    public isRelationOwner!: boolean;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public cascade: AttrOptions<T>["cascade"];
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public createForeignKeyConstraints!: Exclude<AttrOptions<T>["createForeignKeyConstraints"], undefined>;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public orphanedRowAction: AttrOptions<T>["orphanedRowAction"];
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public persistence!: Exclude<AttrOptions<T>["persistence"], undefined>;
+
+    /**
+     * @inheritdoc
+     *
+     * @memberof AttributeSchema
+     */
+    public primary?: AttrOptions<T>["primary"];
+
+    private type!: IMetadata["type"];
+
+    public constructor(ctor: T, attributeName: keyof InstanceType<T>, parameters: AttrOptionsPartialMetadataJson<T>) {
         this.ctor = ctor;
         this.attributeName = attributeName;
         this.parameters = parameters;
+        this.collectModels();
         this.setConstants(parameters);
-        this.assignType(parameters.type);
+        this.activateSchema(parameters.type);
     }
 
     public updateParameters(parameters: AttrOptionsPartialMetadataJson<T>) {
         merge(this.parameters, parameters);
         this.setConstants(parameters);
-        this.assignType(parameters.type);
+        this.activateSchema(parameters.type);
     }
 
-    public toSchemaPropertyDefinition() {
-        const forbiddenKeys = ["ctor", "attributeName", "parameters"];
-        const propertyDefinition: Record<string, SchemaDefinitionProperty<T>> = {};
-        for (const key of Object.getOwnPropertyNames(this)) {
-            const value = Reflect.get(this, key);
-            if (isValue(value) && !forbiddenKeys.includes(key)) propertyDefinition[key] = value;
+    private collectModels() {
+        if (Object.keys(models).length) return;
+        const context = require.context("~env/models/", true, /.+\.ts/, "sync");
+        context.keys().forEach((key) => {
+            models[pascalCase(key.substring(2, key.length - 3))] = context(key).default;
+        });
+    }
+
+    private setConstants(params: AttrOptionsPartialMetadataJson<T>) {
+        this.isRequired = Boolean(params.isRequired);
+        this.isImmutable = Boolean(params.isReadOnly);
+        this.isInternal = Boolean(params.isInternal);
+        this.isLazy = Boolean(params.isLazy);
+        this.primary = Boolean(params.primary);
+        this.isCreationDate = Boolean(params.isCreationDate);
+        this.isModifiedDate = Boolean(params.isModifiedDate);
+        this.isDeletedDate = Boolean(params.isDeletedDate);
+        this.isVersion = Boolean(params.isVersion);
+        this.persistence = Boolean(params.persistence);
+
+        this.isGenerated = params.isGenerated;
+        this.cascade = params.cascade;
+        this.orphanedRowAction = params.orphanedRowAction;
+        this.type = params.type;
+
+        const fieldRelations = params.oneToMany || params.manyToOne || params.manyToMany;
+        if (fieldRelations || params.oneToOne) {
+            let type: IRelation<T>["type"] = "many-to-many";
+            if (params.oneToOne) {
+                type = "one-to-one";
+            } else if (params.oneToMany) {
+                type = "one-to-many";
+            } else if (params.manyToOne) type = "many-to-one";
+            this.relation = { type };
+            if (typeof fieldRelations === "string") this.relation.field = <keyof InstanceType<T>>fieldRelations;
         }
-        return propertyDefinition;
     }
 
-    private setConstants(parameters: AttrOptionsPartialMetadataJson<T>) {
-        this.required = Boolean(parameters.isRequired);
-        this.immutable = Boolean(parameters.isReadOnly);
-        this.isInternal = Boolean(parameters.isInternal);
-    }
+    private activateSchema(type: IMetadata["type"]) {
+        const typeMap: Record<string, any> = {
+            Number: "double",
+            String: "text",
+            Boolean: "boolean",
+            Date: "date",
+            Object: "json"
+        };
 
-    private assignType(type: IMetadata["type"]) {
-        Object.assign(this, this.calculateTypePartials(this.ctor, this.attributeName, type));
-    }
+        const attrName = this.attributeName.toString();
+        const options = {
+            lazy: this.isLazy,
+            cascade: this.cascade,
+            createForeignKeyConstraints: this.createForeignKeyConstraints,
+            nullable: !this.isRequired,
+            orphanedRowAction: this.orphanedRowAction,
+            persistence: this.persistence,
+            array: type.isArray
+        };
 
-    private calculateTypePartials(ctor: T, attributeName: string, rawType: IMetadata["type"]): CalculatedType<T> {
-        // TODO:
-        //      1. Determine "of" in case of Map
-        if (rawType.isUnresolvedType) throw new Error(`Unresolved type detected in ${(<any>ctor).name}[${attributeName}]`);
-        if (rawType.isModel) return { ref: rawType.identifier, type: Schema.Types.ObjectId };
-        if (rawType.isArray) return { type: [this.calculateTypePartials(ctor, attributeName, rawType.subType)] };
-        if (rawType.isMixed) return { type: Schema.Types.Mixed };
-        if (rawType.isUnion && rawType.subTypes.every((subType) => subType.isNumberLiteral || subType.isStringLiteral)) {
-            let enumType = Schema.Types.Mixed;
-            if (rawType.subTypes.length) {
-                if (rawType.subTypes.every((subType) => subType.isNumberLiteral)) enumType = Schema.Types.Number;
-                if (rawType.subTypes.every((subType) => subType.isStringLiteral)) enumType = Schema.Types.String;
-            } else console.log(rawType);
-            return { type: enumType, enum: rawType.subTypes.map((subType) => subType.value) };
-        }
-        if (rawType.isInterface) {
-            const members: Record<string, CalculatedType<T>> = {};
-            for (const key in rawType.members) {
-                if (Object.prototype.hasOwnProperty.call(rawType.members, key)) {
-                    const member = rawType.members[key];
-                    members[key] = this.calculateTypePartials(ctor, attributeName, member);
-                }
+        if (this.primary) {
+            PrimaryGeneratedColumn("uuid")(this.ctor, attrName);
+        } else if (this.isGenerated) {
+            Generated(this.isGenerated)(this.ctor, attrName);
+        } else if (this.isCreationDate) {
+            CreateDateColumn(options)(this.ctor, attrName);
+        } else if (this.isModifiedDate) {
+            UpdateDateColumn(options)(this.ctor, attrName);
+        } else if (this.isDeletedDate) {
+            DeleteDateColumn(options)(this.ctor, attrName);
+        } else if (this.isVersion) {
+            VersionColumn(options)(this.ctor, attrName);
+        } else {
+            let typeName = typeMap[type.identifier];
+            if (type.isInterface) {
+                typeName = "simple-json";
+            } else if (type.isArray || type.isTuple) {
+                typeName = "simple-array";
             }
-            return { type: new Schema(<SchemaDefinition<SchemaDefinitionType<T>>>members) };
-        }
 
-        const mayType = Schema.Types[<keyof typeof Schema.Types>rawType.identifier];
-        if (mayType) return { type: mayType };
-        return { type: Schema.Types.Mixed };
+            if (this.relation && this.isModel()) {
+                const identifier = this.type.identifier || (<any>this.type.subType)[0]?.identifier;
+                const field = this.relation.field;
+
+                const typeFunc = () => models[identifier];
+                // because we use the inverse func only when its a many relation,
+                // the field is definitely assigned
+                // eslint-disable-next-line
+                const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, field!);
+                if (this.relation.type === "one-to-one") {
+                    OneToOne(typeFunc, options)(this.ctor, attrName);
+                    if (this.isRelationOwner) JoinColumn()(this.ctor, attrName);
+                } else if (this.relation.type === "one-to-many") {
+                    OneToMany(typeFunc, inverseFunc, options)(this.ctor, attrName);
+                } else if (this.relation.type === "many-to-one") {
+                    ManyToOne(typeFunc, inverseFunc, options)(this.ctor, attrName);
+                } else {
+                    let inverse = undefined;
+                    if (field) inverse = (instance: InstanceType<T>) => Reflect.get(instance, field);
+                    ManyToMany(() => models[this.ctor.name], inverse, options)(this.ctor, attrName);
+                    if (this.isRelationOwner) JoinTable()(this.ctor, attrName);
+                }
+            } else Column(typeName, options)(this.ctor, attrName);
+        }
+    }
+
+    private isModel() {
+        return this.type.isModel || this.type.isArray && this.type.subTypes.every((subType) => subType.isModel);
     }
 }

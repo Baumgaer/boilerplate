@@ -1,24 +1,23 @@
 import { Attr } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
-import type { Model } from "mongoose";
-import type { Schema } from "mongoose";
+import { BaseEntity } from "typeorm";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type { Constructor } from "type-fest";
 
-export default abstract class BaseModel {
+export default abstract class BaseModel extends BaseEntity {
 
     public static readonly className = "BaseModel";
 
-    public static readonly collection = "BaseModels";
+    public static readonly collectionName = "BaseModels";
 
-    protected static readonly dataModel: Model<typeof this>;
+    public readonly className = (<typeof BaseModel>this.constructor).className;
+
+    public readonly collectionName = (<typeof BaseModel>this.constructor).collectionName;
 
     public readonly unProxyfiedModel!: typeof this;
 
-    protected readonly dataModel!: InstanceType<typeof BaseModel["dataModel"]>;
-
-    @Attr()
+    @Attr({ primary: true })
     public readonly id!: string;
 
     public dummyId: string = "";
@@ -29,42 +28,18 @@ export default abstract class BaseModel {
     protected backup: Partial<Record<keyof this, any>> = {};
 
     public constructor(_params?: ConstructionParams<BaseModel>) {
-        // intentionally left blanc
-    }
-
-    public static getById<T extends BaseModel>(this: Constructor<T>, _id: string): T | null {
-        throw new Error("Not implemented");
-    }
-
-    public static getOne<T extends BaseModel>(this: Constructor<T>, _obj: Record<string, any>): T | null {
-        throw new Error("Not implemented");
-    }
-
-    public static getMany<T extends BaseModel>(this: Constructor<T>, _obj: Record<string, any>): T[] {
-        throw new Error("Not implemented");
-    }
-
-    public static getAll<T extends BaseModel>(this: Constructor<T>, _obj: Record<string, any>): T[] {
-        throw new Error("Not implemented");
-    }
-
-    public get className() {
-        return (<typeof BaseModel>this.constructor).className;
-    }
-
-    public get collection() {
-        return (<typeof BaseModel>this.constructor).collection;
+        super();
     }
 
     public isNew(): boolean {
-        return this.dummyId !== "";
+        return this.hasId() && !this.dummyId;
     }
 
     public toId() {
         return this.dummyId || this.id;
     }
 
-    public toString() {
+    public override toString() {
         return `${this.className}:${this.toId()}`;
     }
 
@@ -96,20 +71,12 @@ export default abstract class BaseModel {
         return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:${name}:attribute`, this.unProxyfiedModel);
     }
 
-    public static getSchema<T extends Constructor<BaseModel>>(): Schema<T> {
+    public static getSchema() {
         return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:schema`, this.prototype);
     }
 
     public getSchema() {
         return (<typeof BaseModel>this.constructor).getSchema();
-    }
-
-    public updateFromServer() {
-        throw new Error("Not implemented");
-    }
-
-    public save() {
-        throw new Error("Not implemented");
     }
 
     public discard() {

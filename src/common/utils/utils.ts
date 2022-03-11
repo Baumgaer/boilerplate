@@ -21,6 +21,10 @@ export function camelCase(...args: Parameters<typeof _["camelCase"]>): ReturnTyp
     return _.camelCase(...args);
 }
 
+export function pascalCase(str: string): ReturnType<typeof _["camelCase"]> {
+    return _.capitalize(camelCase(str));
+}
+
 export function union(...args: Parameters<typeof _["union"]>): ReturnType<typeof _["union"]> {
     return _.union(...args);
 }

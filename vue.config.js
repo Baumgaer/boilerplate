@@ -1,6 +1,7 @@
 const path = require('path');
 const arp = require('app-root-path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin').TsconfigPathsPlugin;
+const webpack = require("webpack");
 
 const TSCONFIG_PATH = path.resolve(arp.path, "src", "client", "tsconfig.json");
 
@@ -19,9 +20,25 @@ module.exports = {
             extensions: [".ts", ".tsx", ".vue", ".scss", ".css"]
         });
 
+        const normalModuleReplacementPlugin = new webpack.NormalModuleReplacementPlugin(/typeorm$/, function (result) {
+            result.request = result.request.replace(/typeorm/, "typeorm/browser");
+        });
+
+        const providePlugin = new webpack.ProvidePlugin({
+            'window.SQL': 'sql.js/dist/sql-wasm.js'
+        });
+
+        if (!config.plugins) {
+            config.plugins = [normalModuleReplacementPlugin, providePlugin];
+        } else config.plugins.push(normalModuleReplacementPlugin, providePlugin);
+
         if (config.resolve.plugins) {
             config.resolve.plugins.push(tsConfigPathsPlugin);
         } else config.resolve.plugins = [tsConfigPathsPlugin];
+
+        // For SqlJS
+        config.resolve.fallback = { fs: false, path: false, crypto: false, a: false };
+        config.experiments = { asyncWebAssembly: true, topLevelAwait: true };
 
         // Aliasing for templates
         config.resolve.alias.client = path.resolve(arp.path, "src", "client");

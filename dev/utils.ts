@@ -58,6 +58,10 @@ export function isTupleType(node?: ts.TypeNode | ts.PropertyDeclaration | ts.Pro
     return Boolean(node && ts.isTupleTypeNode(node));
 }
 
+export function isOptional(node?: ts.TypeNode | ts.PropertyDeclaration | ts.PropertySignature) {
+    return node && ts.isOptionalTypeNode(node);
+}
+
 export function isObject(type: ts.Type): type is ts.ObjectType {
     return (type.flags & ts.TypeFlags.Object) === ts.TypeFlags.Object;
 }

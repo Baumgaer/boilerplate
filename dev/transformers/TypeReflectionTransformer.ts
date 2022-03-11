@@ -77,7 +77,7 @@ export default function transformer(program: ts.Program) {
             if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
             if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isDate(type, attr)) return resolveDate();
-            if (utils.isTupleType(typeNode)) return resolveTupleType(type, attr, sourceFile, typeNode);
+            if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr)) return resolveArray(attr, sourceFile);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
@@ -155,10 +155,13 @@ export default function transformer(program: ts.Program) {
             return { isInterface: true, members };
         }
 
-        function resolveTupleType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode: ts.TupleTypeNode) {
+        function resolveTupleType(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode: ts.TupleTypeNode) {
             const subTypes: any[] = [];
             typeNode.elements.forEach((element) => {
-                subTypes.push(resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile, element));
+                const resolvedType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile, element);
+                if (utils.isOptional(element)) {
+                    subTypes.push({ isOptional: true, subType: resolvedType });
+                } else subTypes.push(resolvedType);
             });
             return { isTuple: true, subTypes };
         }

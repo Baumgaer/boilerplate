@@ -3,7 +3,7 @@ import { Attr } from "~common/utils/decorators";
 
 export default abstract class Example extends BaseModel {
 
-    @Attr({ alias: "tested" })
+    @Attr()
     protected test!: {
         prop1: string;
         prop2: number;
