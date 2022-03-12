@@ -1,7 +1,23 @@
 import { merge } from 'lodash';
-import { Column, PrimaryGeneratedColumn, OneToOne, OneToMany, ManyToOne, ManyToMany, JoinTable, JoinColumn, Generated, CreateDateColumn, UpdateDateColumn, DeleteDateColumn, VersionColumn } from "typeorm";
-import type BaseModel from "~common/lib/BaseModel";
 import { pascalCase } from "~common/utils/utils";
+import {
+    Column,
+    PrimaryGeneratedColumn,
+    OneToOne,
+    OneToMany,
+    ManyToOne,
+    ManyToMany,
+    JoinTable,
+    JoinColumn,
+    Generated,
+    CreateDateColumn,
+    UpdateDateColumn,
+    DeleteDateColumn,
+    VersionColumn
+} from "typeorm";
+import type BaseModel from "~common/lib/BaseModel";
+import type { ColumnOptions, RelationOptions } from "typeorm";
+import type { SimpleColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type { AttrOptions, AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
 import type { Constructor } from "type-fest";
@@ -12,6 +28,8 @@ interface IRelation<T extends Constructor<BaseModel>> {
     type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many",
     field?: keyof InstanceType<T>;
 }
+
+type AllColumnOptions = ColumnOptions & RelationOptions;
 
 export default class AttributeSchema<T extends Constructor<BaseModel>> implements AttrOptions<T> {
 
@@ -153,6 +171,12 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public primary?: AttrOptions<T>["primary"];
 
+    /**
+     * The type which was determined during compile time
+     *
+     * @private
+     * @memberof AttributeSchema
+     */
     private type!: IMetadata["type"];
 
     public constructor(ctor: T, attributeName: keyof InstanceType<T>, parameters: AttrOptionsPartialMetadataJson<T>) {
@@ -161,13 +185,126 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         this.parameters = parameters;
         this.collectModels();
         this.setConstants(parameters);
-        this.activateSchema(parameters.type);
+        this.buildSchema(parameters.type);
     }
 
+    /**
+     * updates the parameters and rebuilds constraints and schema depending
+     * on new parameters
+     *
+     * @param parameters Parameters of this attribute
+     * @memberof AttributeSchema
+     */
     public updateParameters(parameters: AttrOptionsPartialMetadataJson<T>) {
         merge(this.parameters, parameters);
         this.setConstants(parameters);
-        this.activateSchema(parameters.type);
+        this.buildSchema(parameters.type);
+    }
+
+    /**
+     * Determines if this attribute is somehow a string type.
+     * This includes arrays of strings!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a string type else false
+     * @memberof AttributeSchema
+     */
+    public isStringType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.isStringLiteral || type.identifier === "String" || this.isArrayType(type) && type.subTypes.every(this.isStringType.bind(this));
+    }
+
+    /**
+     * Determines if this attribute is somehow a number type.
+     * This includes arrays of numbers!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a number type else false
+     * @memberof AttributeSchema
+     */
+    public isNumberType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.isNumberLiteral || type.identifier === "Number" || this.isArrayType(type) && type.subTypes.every(this.isNumberType.bind(this));
+    }
+
+    /**
+     * Determines if this attribute is somehow a model type.
+     * This includes arrays of models!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a model type else false
+     * @memberof AttributeSchema
+     */
+    public isModelType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return Boolean(type.isModel || type.isArray && type.subTypes.every(this.isModelType.bind(this)));
+    }
+
+    /**
+     * Determines if this attribute is an array type. This includes tuples!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is an array type else false
+     * @memberof AttributeSchema
+     */
+    public isArrayType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.isArray || type.isTuple;
+    }
+
+    /**
+     * Determines if this attribute is somehow an object type.
+     * This includes arrays of objects and arrays itself as well as models!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a model type else false
+     * @memberof AttributeSchema
+     */
+    public isObjectLikeType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.isInterface || type.isIntersection || this.isModelType(type) || this.isArrayType(type) && type.subTypes.every(this.isObjectLikeType.bind(this));
+    }
+
+    /**
+     * Determines if this attribute is somehow a plain object type.
+     * This does **NOT** include arrays or models but arrays of plain objects!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a model type else false
+     * @memberof AttributeSchema
+     */
+    public isPlainObjectType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return Boolean(type.isInterface || this.isArrayType(type) && type.subTypes.length && type.subTypes.every(this.isPlainObjectType.bind(this)));
+    }
+
+    /**
+     * Determines if this attribute contains somehow an unresolved type.
+     * This includes arrays of unresolved types too. An array of unresolved
+     * types is given, if the array contains at least one unresolved type.
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a model type else false
+     * @memberof AttributeSchema
+     */
+    public isUnresolvedType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.isMixed || type.isUnresolvedType || this.isArrayType(type) && type.subTypes.some(this.isUnresolvedType.bind(this));
+    }
+
+    /**
+     * Determines the simple column type and its corresponding options.
+     * Both has to be compatible with the corresponding database of the
+     * environment.
+     *
+     * @protected
+     * @param _type the type of the attribute
+     * @param defaultOptions default options determined in the buildSchema() method of this attribute
+     * @returns an array with two elements. first is the type, second are the options
+     * @memberof AttributeSchema
+     */
+    protected getTypeNameAndOptions(_type: IMetadata["type"], defaultOptions: AllColumnOptions): [SimpleColumnType, AllColumnOptions] {
+        return ["text", defaultOptions];
     }
 
     private collectModels() {
@@ -208,25 +345,18 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         }
     }
 
-    private activateSchema(type: IMetadata["type"]) {
-        const typeMap: Record<string, any> = {
-            Number: "double",
-            String: "text",
-            Boolean: "boolean",
-            Date: "date",
-            Object: "json"
-        };
-
+    private buildSchema(type: IMetadata["type"]) {
         const attrName = this.attributeName.toString();
-        const options = {
+        const defaultOptions = {
             lazy: this.isLazy,
             cascade: this.cascade,
             createForeignKeyConstraints: this.createForeignKeyConstraints,
             nullable: !this.isRequired,
             orphanedRowAction: this.orphanedRowAction,
-            persistence: this.persistence,
-            array: type.isArray
+            persistence: this.persistence
         };
+
+        const [typeName, options] = this.getTypeNameAndOptions(type, defaultOptions);
 
         if (this.primary) {
             PrimaryGeneratedColumn("uuid")(this.ctor, attrName);
@@ -241,40 +371,34 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         } else if (this.isVersion) {
             VersionColumn(options)(this.ctor, attrName);
         } else {
-            let typeName = typeMap[type.identifier];
-            if (type.isInterface) {
-                typeName = "simple-json";
-            } else if (type.isArray || type.isTuple) {
-                typeName = "simple-array";
-            }
-
-            if (this.relation && this.isModel()) {
-                const identifier = this.type.identifier || (<any>this.type.subType)[0]?.identifier;
-                const field = this.relation.field;
-
-                const typeFunc = () => models[identifier];
-                // because we use the inverse func only when its a many relation,
-                // the field is definitely assigned
-                // eslint-disable-next-line
-                const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, field!);
-                if (this.relation.type === "one-to-one") {
-                    OneToOne(typeFunc, options)(this.ctor, attrName);
-                    if (this.isRelationOwner) JoinColumn()(this.ctor, attrName);
-                } else if (this.relation.type === "one-to-many") {
-                    OneToMany(typeFunc, inverseFunc, options)(this.ctor, attrName);
-                } else if (this.relation.type === "many-to-one") {
-                    ManyToOne(typeFunc, inverseFunc, options)(this.ctor, attrName);
-                } else {
-                    let inverse = undefined;
-                    if (field) inverse = (instance: InstanceType<T>) => Reflect.get(instance, field);
-                    ManyToMany(() => models[this.ctor.name], inverse, options)(this.ctor, attrName);
-                    if (this.isRelationOwner) JoinTable()(this.ctor, attrName);
-                }
+            if (this.relation && this.isModelType()) {
+                this.buildRelation(attrName, options);
             } else Column(typeName, options)(this.ctor, attrName);
         }
     }
 
-    private isModel() {
-        return this.type.isModel || this.type.isArray && this.type.subTypes.every((subType) => subType.isModel);
+    private buildRelation(attributeName: string, options: RelationOptions) {
+        if (!this.relation) return;
+        const identifier = this.type.identifier || (<any>this.type.subType)[0]?.identifier;
+        const field = this.relation.field;
+
+        const typeFunc = () => models[identifier];
+        // because we use the inverse func only when its a many relation,
+        // the field is definitely assigned
+        // eslint-disable-next-line
+        const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, field!);
+        if (this.relation.type === "one-to-one") {
+            OneToOne(typeFunc, options)(this.ctor, attributeName);
+            if (this.isRelationOwner) JoinColumn()(this.ctor, attributeName);
+        } else if (this.relation.type === "one-to-many") {
+            OneToMany(typeFunc, inverseFunc, options)(this.ctor, attributeName);
+        } else if (this.relation.type === "many-to-one") {
+            ManyToOne(typeFunc, inverseFunc, options)(this.ctor, attributeName);
+        } else {
+            let inverse = undefined;
+            if (field) inverse = (instance: InstanceType<T>) => Reflect.get(instance, field);
+            ManyToMany(() => models[this.ctor.name], inverse, options)(this.ctor, attributeName);
+            if (this.isRelationOwner) JoinTable()(this.ctor, attributeName);
+        }
     }
 }

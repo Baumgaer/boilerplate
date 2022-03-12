@@ -8,7 +8,7 @@ export default class AnotherExample extends AnotherCommonExample {
         super(params);
     }
 
-    @Attr({ deferrable: "INITIALLY IMMEDIATE" })
+    @Attr()
     public override name: string = "jojo";
 
     @Attr()
