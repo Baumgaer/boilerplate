@@ -2,6 +2,7 @@ import "reflect-metadata";
 import { createApp } from 'vue';
 import App from '~client/App.vue';
 import router from '~client/routes';
+import { pascalCase } from "~client/utils/utils";
 
 import { IonicVue } from '@ionic/vue';
 
@@ -27,17 +28,20 @@ import '~client/themes/default.css';
 /* Web database */
 import "sql.js/dist/sql-wasm.js";
 import { createConnection } from "typeorm";
-import type { Constructor } from "type-fest";
-import type BaseModel from "~common/lib/BaseModel";
 
-const models: Constructor<BaseModel>[] = [];
-const context = require.context("~client/models/", true, /.+\.ts/, "sync");
-context.keys().forEach((key) => models.push(context(key).default));
+global.MODEL_NAME_TO_MODEL_MAP = {};
+const context = require.context("~env/models/", true, /.+\.ts/, "sync");
+context.keys().forEach((key) => {
+    global.MODEL_NAME_TO_MODEL_MAP[pascalCase(key.substring(2, key.length - 3))] = context(key).default;
+});
 
 const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
 createConnection({
     type: "sqljs",
-    entities: models,
+    autoSave: true,
+    location: "test",
+    useLocalForage: true,
+    entities: Object.values(global.MODEL_NAME_TO_MODEL_MAP),
     synchronize: true,
     sqlJsConfig: {
         locateFile: () => sqlWasm.href

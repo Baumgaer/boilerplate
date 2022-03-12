@@ -26,6 +26,7 @@
         "app-root-path": "^3.0.0",
         "core-js": "^3.21.1",
         "deepdash-es": "^5.3.9",
+        "localforage": "^1.10.0",
         "lodash": "^4.17.21",
         "on-change": "^4.0.0",
         "reflect-metadata": "^0.1.13",

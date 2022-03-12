@@ -14,7 +14,7 @@ context.keys().forEach((key) => {
     attributes[camelCase(key.substring(2, key.length - 3))] = context(key).default;
 });
 
-export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T, _options: ModelOptions<T>) {
+export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor: T, options: ModelOptions<T>) {
 
     // Remove ModelClass from prototype chain of ctor to avoid double registration
     // of proxy and other ModelClass stuff
@@ -24,34 +24,13 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         if (classPrototype && (<any>prototype).isModelClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
     }
 
+    console.log(ctor);
+
     // Build attribute map to have access to raw declaration
     const attributeSchemaMap: Record<string, any> = {};
-    // Reflect.defineMetadata(`${ctor.name}:attributeSchemaMap`, attributeSchemaMap, ctor.prototype);
-    // const metadataKeys: string[] = Reflect.getMetadataKeys(ctor.prototype).reverse();
-    // for (const metadataKey of metadataKeys) {
-    //     if (!metadataKey.endsWith("definition")) continue;
-    //     for (const key in Reflect.getMetadata(metadataKey, ctor.prototype)) {
-    //         if (hasOwnProperty(Reflect.getMetadata(metadataKey, ctor.prototype), key)) {
-    //             const metadata: IMetadata = Reflect.getMetadata(metadataKey, ctor.prototype)[key];
-    //             if (!(key in attributeSchemaMap)) {
-    //                 attributeSchemaMap[key] = new AttributeSchema(ctor, key, metadata);
-    //             } else attributeSchemaMap[key].updateParameters(metadata);
-    //         }
-    //     }
-    // }
 
     // Create schema for data model
     const schemaDefinition = {};
-    // for (const key in attributeSchemaMap) {
-    //     if (hasOwnProperty(attributeSchemaMap, key)) {
-    //         const attribute = attributeSchemaMap[key];
-    //         Reflect.set(schemaDefinition, key, attribute.toSchemaPropertyDefinition());
-    //     }
-    // }
-
-    // const schema = new Schema<T>(<SchemaDefinition<SchemaDefinitionType<T>>>schemaDefinition);
-    // schema.post("init", (...args) => console.log("lalalalalalal", ...args));
-    // Reflect.defineMetadata(`${ctor.name}:schema`, schema, ctor.prototype);
 
     class ModelClass extends ctor {
 
@@ -123,6 +102,6 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         }
     }
 
-    Entity()(ModelClass);
+    Entity(options.collectionName, options)(ModelClass);
     return ModelClass;
 }

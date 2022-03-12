@@ -20,10 +20,10 @@ export default abstract class BaseModel extends BaseEntity {
     @Attr({ primary: true })
     public readonly id!: string;
 
-    public dummyId: string = "";
-
     @Attr()
     public name!: string;
+
+    public dummyId: string = "";
 
     protected backup: Partial<Record<keyof this, any>> = {};
 

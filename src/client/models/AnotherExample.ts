@@ -12,7 +12,7 @@ export default class AnotherExample extends AnotherCommonExample {
     public override name: string = "jojo";
 
     @Attr()
-    public anotherExampleClient!: Promise<[string, number, [AnotherExample, boolean]]>;
+    public anotherExampleClient!: Promise<number[]>;
 
     @AttrValidator("name")
     public validateName(value: string): boolean {

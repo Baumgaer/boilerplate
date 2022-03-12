@@ -25,7 +25,8 @@ module.exports = {
         });
 
         const providePlugin = new webpack.ProvidePlugin({
-            'window.SQL': 'sql.js/dist/sql-wasm.js'
+            'window.SQL': 'sql.js/dist/sql-wasm.js',
+            'window.localforage': 'localforage/dist/localforage.min.js'
         });
 
         if (!config.plugins) {

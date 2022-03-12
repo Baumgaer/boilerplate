@@ -1,5 +1,4 @@
 import { merge } from 'lodash';
-import { pascalCase } from "~common/utils/utils";
 import {
     Column,
     PrimaryGeneratedColumn,
@@ -21,8 +20,6 @@ import type { SimpleColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type { AttrOptions, AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
 import type { Constructor } from "type-fest";
-
-const models: Record<string, Constructor<BaseModel>> = {};
 
 interface IRelation<T extends Constructor<BaseModel>> {
     type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many",
@@ -183,7 +180,6 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         this.ctor = ctor;
         this.attributeName = attributeName;
         this.parameters = parameters;
-        this.collectModels();
         this.setConstants(parameters);
         this.buildSchema(parameters.type);
     }
@@ -307,14 +303,6 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         return ["text", defaultOptions];
     }
 
-    private collectModels() {
-        if (Object.keys(models).length) return;
-        const context = require.context("~env/models/", true, /.+\.ts/, "sync");
-        context.keys().forEach((key) => {
-            models[pascalCase(key.substring(2, key.length - 3))] = context(key).default;
-        });
-    }
-
     private setConstants(params: AttrOptionsPartialMetadataJson<T>) {
         this.isRequired = Boolean(params.isRequired);
         this.isImmutable = Boolean(params.isReadOnly);
@@ -381,6 +369,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         if (!this.relation) return;
         const identifier = this.type.identifier || (<any>this.type.subType)[0]?.identifier;
         const field = this.relation.field;
+        const models = global.MODEL_NAME_TO_MODEL_MAP;
 
         const typeFunc = () => models[identifier];
         // because we use the inverse func only when its a many relation,
