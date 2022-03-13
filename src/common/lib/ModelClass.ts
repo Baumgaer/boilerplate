@@ -28,11 +28,11 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
 
         public static isModelClass = true;
 
-        public isModelClass = true;
-
         public static readonly className = <string>options.className;
 
         public static readonly collectionName = <string>options.collectionName;
+
+        public isModelClass = true;
 
         public override readonly className = (<typeof ModelClass>this.constructor).className;
 
@@ -48,6 +48,24 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
             Object.assign(proxy, this.mergeProperties(args[0]));
             console.log(proxy);
             return proxy;
+        }
+
+        private get proxyHandler(): ProxyHandler<this> {
+            return {
+                get: this.get.bind(this),
+                set: this.set.bind(this),
+                defineProperty: (target, propertyName, attributes) => Reflect.defineProperty(target, propertyName, attributes),
+                deleteProperty: (target, propertyName) => Reflect.deleteProperty(target, propertyName),
+                apply: (target, thisArg, argArray) => Reflect.apply(<any>target, thisArg, argArray),
+                has: (target, propertyName) => Reflect.has(target, propertyName),
+                getOwnPropertyDescriptor: (target, propertyName) => Reflect.getOwnPropertyDescriptor(target, propertyName),
+                setPrototypeOf: (target, v) => Reflect.setPrototypeOf(target, v),
+                getPrototypeOf: (target) => Reflect.getPrototypeOf(target),
+                ownKeys: this.getPropertyNames.bind(this),
+                isExtensible: (target) => Reflect.isExtensible(target),
+                preventExtensions: (target) => Reflect.preventExtensions(target),
+                construct: (target, argArray) => Reflect.construct(<any>target, argArray)
+            };
         }
 
         private mergeProperties(properties: Record<string, any> = {}) {
@@ -88,23 +106,6 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
             return this.getAttribute(stringProperty).set(value);
         }
 
-        private get proxyHandler(): ProxyHandler<this> {
-            return {
-                get: this.get.bind(this),
-                set: this.set.bind(this),
-                defineProperty: (target, propertyName, attributes) => Reflect.defineProperty(target, propertyName, attributes),
-                deleteProperty: (target, propertyName) => Reflect.deleteProperty(target, propertyName),
-                apply: (target, thisArg, argArray) => Reflect.apply(<any>target, thisArg, argArray),
-                has: (target, propertyName) => Reflect.has(target, propertyName),
-                getOwnPropertyDescriptor: (target, propertyName) => Reflect.getOwnPropertyDescriptor(target, propertyName),
-                setPrototypeOf: (target, v) => Reflect.setPrototypeOf(target, v),
-                getPrototypeOf: (target) => Reflect.getPrototypeOf(target),
-                ownKeys: this.getPropertyNames.bind(this),
-                isExtensible: (target) => Reflect.isExtensible(target),
-                preventExtensions: (target) => Reflect.preventExtensions(target),
-                construct: (target, argArray) => Reflect.construct(<any>target, argArray)
-            };
-        }
     }
 
     Entity(options.collectionName, options)(ModelClass);

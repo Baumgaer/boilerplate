@@ -13,17 +13,17 @@ export default abstract class BaseModel extends BaseEntity {
 
     public static readonly collectionName: string = "BaseModels";
 
-    public readonly className = (<typeof BaseModel>this.constructor).className;
-
-    public readonly collectionName = (<typeof BaseModel>this.constructor).collectionName;
-
-    public readonly unProxyfiedModel!: typeof this;
-
     @Attr({ primary: true })
     public readonly id!: string;
 
     @Attr()
     public name!: string;
+
+    public readonly className = (<typeof BaseModel>this.constructor).className;
+
+    public readonly collectionName = (<typeof BaseModel>this.constructor).collectionName;
+
+    public readonly unProxyfiedModel!: typeof this;
 
     public dummyId: string = "";
 
@@ -31,6 +31,28 @@ export default abstract class BaseModel extends BaseEntity {
 
     public constructor(_params?: ConstructionParams<BaseModel>) {
         super();
+    }
+
+    public static getSchema() {
+        const metadataStore = new MetadataStore();
+        return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
+    }
+
+    public static getAttributeSchema<T extends Constructor<BaseModel>>(this: T, name: string): AttributeSchema<T> {
+        return Reflect.getMetadata(`${Object.getPrototypeOf(this).name}:attributeSchemaMap`, this.prototype)?.[name];
+    }
+
+    /**
+     * Removes the dummy id when the model is saved and got a real id
+     *
+     * @protected
+     * @param value the given id
+     * @memberof BaseModel
+     */
+    @AttrObserver("id", "change")
+    protected onIdChange(value: string): void {
+        if (!value) return;
+        this.dummyId = "";
     }
 
     public isNew(): boolean {
@@ -61,17 +83,8 @@ export default abstract class BaseModel extends BaseEntity {
         return obj;
     }
 
-    public static getSchema() {
-        const metadataStore = new MetadataStore();
-        return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
-    }
-
     public getSchema() {
         return <ModelSchema<Constructor<typeof this>>>(<typeof BaseModel>this.constructor).getSchema();
-    }
-
-    public static getAttributeSchema<T extends Constructor<BaseModel>>(this: T, name: string): AttributeSchema<T> {
-        return Reflect.getMetadata(`${Object.getPrototypeOf(this).name}:attributeSchemaMap`, this.prototype)?.[name];
     }
 
     public getAttribute<T extends BaseModel>(this: T, name: string): BaseAttribute<T> {
@@ -82,16 +95,4 @@ export default abstract class BaseModel extends BaseEntity {
         throw new Error("Not implemented");
     }
 
-    /**
-     * Removes the dummy id when the model is saved and got a real id
-     *
-     * @protected
-     * @param value the given id
-     * @memberof BaseModel
-     */
-    @AttrObserver("id", "change")
-    protected onIdChange(value: string): void {
-        if (!value) return;
-        this.dummyId = "";
-    }
 }

@@ -31,6 +31,10 @@ export default abstract class BaseAttribute<T extends BaseModel> {
         this.ctorName = Object.getPrototypeOf(this.unProxyfiedOwner.constructor).name;
     }
 
+    private get changeCallbackOptions(): Options & { pathAsArray: true } {
+        return { isShallow: true, pathAsArray: true, details: true };
+    }
+
     public get(): T[this["name"]] {
         const hookValue = this.callHook("getter");
         return hookValue !== undefined ? hookValue : this.observedValue ?? Reflect.get(this.unProxyfiedOwner, this.name);
@@ -75,9 +79,5 @@ export default abstract class BaseAttribute<T extends BaseModel> {
         Reflect.defineMetadata(activeHookMetaKey, false, this.unProxyfiedOwner);
 
         return value;
-    }
-
-    private get changeCallbackOptions(): Options & { pathAsArray: true } {
-        return { isShallow: true, pathAsArray: true, details: true };
     }
 }

@@ -4,15 +4,15 @@ import AnotherCommonExample from "~common/models/AnotherExample";
 @Model({ className: "AnotherExample", collectionName: "anotherExamples" })
 export default class AnotherExample extends AnotherCommonExample {
 
-    public constructor(params?: ConstructionParams<AnotherExample>) {
-        super(params);
-    }
-
     @Attr()
     public override name: string = "jojo";
 
     @Attr()
     public anotherExampleClient!: Promise<number[]>;
+
+    public constructor(params?: ConstructionParams<AnotherExample>) {
+        super(params);
+    }
 
     @AttrValidator("name")
     public validateName(value: string): boolean {
