@@ -1,8 +1,8 @@
 import "reflect-metadata";
-import { createApp } from 'vue';
 import App from '~client/App.vue';
 import router from '~client/routes';
 import { pascalCase } from "~client/utils/utils";
+import { createApp } from 'vue';
 
 import { IonicVue } from '@ionic/vue';
 

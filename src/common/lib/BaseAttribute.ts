@@ -1,10 +1,11 @@
-import { v4 as uuid } from "uuid";
-import onChange, { type ApplyData, type Options } from "on-change";
-import { reactive } from "vue";
 import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
-import type BaseModel from "~common/lib/BaseModel";
-import type AttributeSchema from "~common/lib/AttributeSchema";
+import onChange from "on-change";
+import { v4 as uuid } from "uuid";
+import { reactive } from "vue";
+import type { ApplyData, Options } from "on-change";
 import type { Constructor } from "type-fest";
+import type AttributeSchema from "~common/lib/AttributeSchema";
+import type BaseModel from "~common/lib/BaseModel";
 
 export default abstract class BaseAttribute<T extends BaseModel> {
 

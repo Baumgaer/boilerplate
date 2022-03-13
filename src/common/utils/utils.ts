@@ -1,6 +1,6 @@
+import addDeepdash from "deepdash-es";
 import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
-import addDeepdash from "deepdash-es";
 
 const lodash = addDeepdash(_);
 

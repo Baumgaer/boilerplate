@@ -3,9 +3,9 @@ import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
 import { BaseEntity } from "typeorm";
 import type ModelSchema from "./ModelSchema";
-import type BaseAttribute from "~common/lib/BaseAttribute";
-import type AttributeSchema from "~common/lib/AttributeSchema";
 import type { Constructor } from "type-fest";
+import type AttributeSchema from "~common/lib/AttributeSchema";
+import type BaseAttribute from "~common/lib/BaseAttribute";
 
 export default abstract class BaseModel extends BaseEntity {
 
@@ -63,7 +63,7 @@ export default abstract class BaseModel extends BaseEntity {
 
     public static getSchema() {
         const metadataStore = new MetadataStore();
-        return metadataStore.getModelDefinition(Object.getPrototypeOf(this), this.className);
+        return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
     }
 
     public getSchema() {

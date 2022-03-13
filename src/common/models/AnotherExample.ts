@@ -1,5 +1,5 @@
-import Example from "~env/models/Example";
 import { Attr, AttrObserver } from "~common/utils/decorators";
+import Example from "~env/models/Example";
 
 export default abstract class AnotherExample extends Example {
 

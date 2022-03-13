@@ -1,5 +1,5 @@
-import AnotherCommonExample from "~common/models/AnotherExample";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model } from "~client/utils/decorators";
+import AnotherCommonExample from "~common/models/AnotherExample";
 
 @Model({ className: "AnotherExample", collectionName: "anotherExamples" })
 export default class AnotherExample extends AnotherCommonExample {

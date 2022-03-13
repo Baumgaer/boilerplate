@@ -1,6 +1,6 @@
+import type { Constructor } from "type-fest";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
-import type { Constructor } from "type-fest";
 
 export default class ModelSchema<T extends Constructor<BaseModel>> {
 

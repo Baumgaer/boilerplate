@@ -14,12 +14,12 @@ import {
     DeleteDateColumn,
     VersionColumn
 } from "typeorm";
-import type BaseModel from "~common/lib/BaseModel";
+import type { Constructor } from "type-fest";
 import type { ColumnOptions, RelationOptions } from "typeorm";
 import type { SimpleColumnType } from 'typeorm/driver/types/ColumnTypes';
+import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
-import type { Constructor } from "type-fest";
 
 interface IRelation<T extends Constructor<BaseModel>> {
     type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many",
@@ -350,7 +350,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
     }
 
     private buildSchema(type: IMetadata["type"]) {
-        // Property decorators expect the prototype of the current constructor
+        // This is the correction described in decorator @Attr()
         const proto = this._ctor.prototype;
         const attrName = this.attributeName.toString();
         const defaultOptions = {

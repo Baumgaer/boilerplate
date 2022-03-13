@@ -1,5 +1,4 @@
 {
-    "root": true,
     "env": {
         "browser": true,
         "node": true
@@ -7,7 +6,8 @@
     "extends": [
         "plugin:vue/vue3-essential",
         "eslint:recommended",
-        "@vue/typescript/recommended"
+        "@vue/typescript/recommended",
+        "plugin:import/recommended"
     ],
     "overrides": [
         {
@@ -24,6 +24,7 @@
         "ecmaVersion": 2020,
         "project": "./tsconfig.json"
     },
+    "root": true,
     "rules": {
         "@typescript-eslint/ban-types": [
             "error",
@@ -52,16 +53,15 @@
                 "argsIgnorePattern": "^_"
             }
         ],
-        "@typescript-eslint/restrict-plus-operands": "error",
-        "@typescript-eslint/unbound-method": "error",
-        "no-use-before-define": "off",
         "@typescript-eslint/no-use-before-define": [
             "error",
             {
-                "ignoreTypeReferences": true,
-                "functions": false
+                "functions": false,
+                "ignoreTypeReferences": true
             }
         ],
+        "@typescript-eslint/restrict-plus-operands": "error",
+        "@typescript-eslint/unbound-method": "error",
         "arrow-spacing": [
             "error",
             {
@@ -80,6 +80,35 @@
         ],
         "dot-notation": "error",
         "guard-for-in": "error",
+        "import/named": "off",
+        "import/newline-after-import": "error",
+        "import/no-absolute-path": "error",
+        "import/no-relative-packages": "error",
+        "import/no-useless-path-segments": [
+            "error",
+            {
+                "noUselessIndex": true
+            }
+        ],
+        "import/order": [
+            "error",
+            {
+                "groups": [
+                    "index",
+                    "sibling",
+                    "parent",
+                    "internal",
+                    "external",
+                    "builtin",
+                    "object",
+                    "type"
+                ],
+                "alphabetize": {
+                    "order": "asc", /* sort in ascending order. Options: ['ignore', 'asc', 'desc'] */
+                    "caseInsensitive": true /* ignore case. Options: [true, false] */
+                }
+            }
+        ],
         "linebreak-style": [
             "error",
             "unix"
@@ -87,6 +116,7 @@
         "no-console": "off",
         "no-debugger": "off",
         "no-trailing-spaces": "error",
+        "no-use-before-define": "off",
         "semi": [
             "error",
             "always"
@@ -118,5 +148,23 @@
             }
         ],
         "vue/no-deprecated-slot-attribute": "off"
+    },
+    "settings": {
+        "import/parsers": {
+            "@typescript-eslint/parser": [
+                ".ts",
+                ".tsx"
+            ]
+        },
+        "import/resolver": {
+            "typescript": {
+                "alwaysTryTypes": true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
+                // use an array
+                "project": [
+                    "src/client/tsconfig.json",
+                    "src/server/tsconfig.json"
+                ]
+            }
+        }
     }
 }
