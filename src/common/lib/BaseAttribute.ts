@@ -32,7 +32,7 @@ export default abstract class BaseAttribute<T extends BaseModel> {
 
     public get(): T[this["name"]] {
         const hookValue = this.callHook("getter");
-        return hookValue !== undefined ? hookValue : this.observedValue ?? true; //Reflect.get(this.dataModel, this.name);
+        return hookValue !== undefined ? hookValue : this.observedValue ?? Reflect.get(this.unProxyfiedOwner, this.name);
     }
 
     public set(value: T[this["name"]]): boolean {
@@ -44,7 +44,7 @@ export default abstract class BaseAttribute<T extends BaseModel> {
             this.observedValue = newValue;
         } else delete this.observedValue;
 
-        const setResult = true; //Reflect.set(this.dataModel, this.name, newValue);
+        const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
         if (setResult && oldValue !== newValue) this.callHook("observer:change", newValue);
         return setResult;
     }

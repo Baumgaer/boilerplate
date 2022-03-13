@@ -31,11 +31,12 @@ type AllColumnOptions = ColumnOptions & RelationOptions;
 export default class AttributeSchema<T extends Constructor<BaseModel>> implements AttrOptions<T> {
 
     /**
-     * Holds the class object which created the schema
+     * Holds the class object which created the schema. This is only a valid
+     * value after processing the schema of the class!
      *
      * @memberof AttributeSchema
      */
-    public readonly ctor: T;
+    public readonly modelClass?: T;
 
     /**
      * The name of the attribute in the schema. Corresponds to the attribute
@@ -176,12 +177,27 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     private type!: IMetadata["type"];
 
+    /**
+     * This is the original class type which is used while construction.
+     * Use this.ctor during runtime, which is the evaluated version of this one
+     *
+     * @private
+     * @memberof AttributeSchema
+     */
+    private readonly _ctor: T;
+
     public constructor(ctor: T, attributeName: keyof InstanceType<T>, parameters: AttrOptionsPartialMetadataJson<T>) {
-        this.ctor = ctor;
+        this._ctor = ctor;
         this.attributeName = attributeName;
         this.parameters = parameters;
         this.setConstants(parameters);
         this.buildSchema(parameters.type);
+    }
+
+    public setModelClass(modelClass: T) {
+        if ((this._ctor as InstanceType<T>).className !== (modelClass as InstanceType<T>).className) return;
+        // @ts-expect-error this is needed to be able to provide the ctor at runtime after construction
+        this.modelClass = modelClass;
     }
 
     /**
@@ -334,6 +350,8 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
     }
 
     private buildSchema(type: IMetadata["type"]) {
+        // Property decorators expect the prototype of the current constructor
+        const proto = this._ctor.prototype;
         const attrName = this.attributeName.toString();
         const defaultOptions = {
             lazy: this.isLazy,
@@ -347,26 +365,27 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         const [typeName, options] = this.getTypeNameAndOptions(type, defaultOptions);
 
         if (this.primary) {
-            PrimaryGeneratedColumn("uuid")(this.ctor, attrName);
+            PrimaryGeneratedColumn("uuid")(proto, attrName);
         } else if (this.isGenerated) {
-            Generated(this.isGenerated)(this.ctor, attrName);
+            Generated(this.isGenerated)(proto, attrName);
         } else if (this.isCreationDate) {
-            CreateDateColumn(options)(this.ctor, attrName);
+            CreateDateColumn(options)(proto, attrName);
         } else if (this.isModifiedDate) {
-            UpdateDateColumn(options)(this.ctor, attrName);
+            UpdateDateColumn(options)(proto, attrName);
         } else if (this.isDeletedDate) {
-            DeleteDateColumn(options)(this.ctor, attrName);
+            DeleteDateColumn(options)(proto, attrName);
         } else if (this.isVersion) {
-            VersionColumn(options)(this.ctor, attrName);
+            VersionColumn(options)(proto, attrName);
         } else {
             if (this.relation && this.isModelType()) {
                 this.buildRelation(attrName, options);
-            } else Column(typeName, options)(this.ctor, attrName);
+            } else Column(typeName, options)(proto, attrName);
         }
     }
 
     private buildRelation(attributeName: string, options: RelationOptions) {
         if (!this.relation) return;
+        const proto = this._ctor.prototype;
         const identifier = this.type.identifier || (<any>this.type.subType)[0]?.identifier;
         const field = this.relation.field;
         const models = global.MODEL_NAME_TO_MODEL_MAP;
@@ -377,17 +396,17 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         // eslint-disable-next-line
         const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, field!);
         if (this.relation.type === "one-to-one") {
-            OneToOne(typeFunc, options)(this.ctor, attributeName);
-            if (this.isRelationOwner) JoinColumn()(this.ctor, attributeName);
+            OneToOne(typeFunc, options)(proto, attributeName);
+            if (this.isRelationOwner) JoinColumn()(proto, attributeName);
         } else if (this.relation.type === "one-to-many") {
-            OneToMany(typeFunc, inverseFunc, options)(this.ctor, attributeName);
+            OneToMany(typeFunc, inverseFunc, options)(proto, attributeName);
         } else if (this.relation.type === "many-to-one") {
-            ManyToOne(typeFunc, inverseFunc, options)(this.ctor, attributeName);
+            ManyToOne(typeFunc, inverseFunc, options)(proto, attributeName);
         } else {
             let inverse = undefined;
             if (field) inverse = (instance: InstanceType<T>) => Reflect.get(instance, field);
-            ManyToMany(() => models[this.ctor.name], inverse, options)(this.ctor, attributeName);
-            if (this.isRelationOwner) JoinTable()(this.ctor, attributeName);
+            ManyToMany(() => models[proto.name], inverse, options)(proto, attributeName);
+            if (this.isRelationOwner) JoinTable()(proto, attributeName);
         }
     }
 }

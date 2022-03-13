@@ -24,62 +24,67 @@ export default function ModelClassFactory<T extends Constructor<BaseModel>>(ctor
         if (classPrototype && (<any>prototype).isModelClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
     }
 
-    console.log(ctor);
-
-    // Build attribute map to have access to raw declaration
-    const attributeSchemaMap: Record<string, any> = {};
-
-    // Create schema for data model
-    const schemaDefinition = {};
-
     class ModelClass extends ctor {
 
         public static isModelClass = true;
 
         public isModelClass = true;
 
+        public static readonly className = <string>options.className;
+
+        public static readonly collectionName = <string>options.collectionName;
+
+        public override readonly className = (<typeof ModelClass>this.constructor).className;
+
+        public override readonly collectionName = (<typeof ModelClass>this.constructor).collectionName;
+
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedModel = this;
-            const proxy = reactive(new Proxy(this, this.proxyHandler)) as this;
+            let proxy = new Proxy(this, this.proxyHandler);
             this.createAttributes(proxy);
+            proxy = reactive(proxy) as this;
             Object.assign(proxy, this.mergeProperties(args[0]));
             console.log(proxy);
             return proxy;
         }
 
         private mergeProperties(properties: Record<string, any> = {}) {
+            const attributeSchemas = this.getSchema().attributeSchemas;
             const defaults: Record<string, any> = {};
             if (!properties.id) this.dummyId = uuid();
-            for (const key in schemaDefinition) {
-                if (hasOwnProperty(schemaDefinition, key)) defaults[key] = Reflect.get(this, key);
+            for (const key in attributeSchemas) {
+                if (hasOwnProperty(attributeSchemas, key)) defaults[key] = Reflect.get(this, key);
             }
             return Object.assign(defaults, properties);
         }
 
         private createAttributes(proxy: this) {
-            for (const key in schemaDefinition) {
-                if (Object.prototype.hasOwnProperty.call(schemaDefinition, key)) {
-                    const attribute = new (attributes[key] || DefaultAttribute)(proxy, key, attributeSchemaMap[key]);
+            const attributeSchemas = this.getSchema().attributeSchemas;
+            for (const key in attributeSchemas) {
+                if (Object.prototype.hasOwnProperty.call(attributeSchemas, key)) {
+                    const attribute = new (attributes[key] || DefaultAttribute)(proxy, key, attributeSchemas[key]);
                     Reflect.defineMetadata(`${ctor.name}:${key}:attribute`, attribute, this);
                 }
             }
         }
 
         private getPropertyNames() {
-            return Object.keys(schemaDefinition);
+            return Object.keys(this.getSchema().attributeSchemas || {});
         }
 
         private get(target: this, propertyName: string | symbol) {
+            const attributeSchemas = this.getSchema().attributeSchemas;
             const stringProperty = propertyName.toString();
-            if (!hasOwnProperty(schemaDefinition, stringProperty)) return Reflect.get(target, propertyName);
+            if (!hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
             return this.getAttribute(stringProperty).get();
         }
 
         private set(target: this, propertyName: string | symbol, value: any) {
+            const attributeSchemas = this.getSchema().attributeSchemas;
             const stringProperty = propertyName.toString();
-            if (!hasOwnProperty(schemaDefinition, stringProperty)) return Reflect.set(target, propertyName, value);
+            if (!hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
             return this.getAttribute(stringProperty).set(value);
         }
 

@@ -1,15 +1,17 @@
-import { Attr } from "~common/utils/decorators";
+import MetadataStore from "./MetadataStore";
+import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
 import { BaseEntity } from "typeorm";
+import type ModelSchema from "./ModelSchema";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type { Constructor } from "type-fest";
 
 export default abstract class BaseModel extends BaseEntity {
 
-    public static readonly className = "BaseModel";
+    public static readonly className: string = "BaseModel";
 
-    public static readonly collectionName = "BaseModels";
+    public static readonly collectionName: string = "BaseModels";
 
     public readonly className = (<typeof BaseModel>this.constructor).className;
 
@@ -32,15 +34,11 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public isNew(): boolean {
-        return this.hasId() && !this.dummyId;
+        return Boolean(!this.id && this.dummyId);
     }
 
     public toId() {
         return this.dummyId || this.id;
-    }
-
-    public override toString() {
-        return `${this.className}:${this.toId()}`;
     }
 
     public toJson() {
@@ -63,6 +61,15 @@ export default abstract class BaseModel extends BaseEntity {
         return obj;
     }
 
+    public static getSchema() {
+        const metadataStore = new MetadataStore();
+        return metadataStore.getModelDefinition(Object.getPrototypeOf(this), this.className);
+    }
+
+    public getSchema() {
+        return <ModelSchema<Constructor<typeof this>>>(<typeof BaseModel>this.constructor).getSchema();
+    }
+
     public static getAttributeSchema<T extends Constructor<BaseModel>>(this: T, name: string): AttributeSchema<T> {
         return Reflect.getMetadata(`${Object.getPrototypeOf(this).name}:attributeSchemaMap`, this.prototype)?.[name];
     }
@@ -71,15 +78,20 @@ export default abstract class BaseModel extends BaseEntity {
         return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:${name}:attribute`, this.unProxyfiedModel);
     }
 
-    public static getSchema() {
-        return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:schema`, this.prototype);
-    }
-
-    public getSchema() {
-        return (<typeof BaseModel>this.constructor).getSchema();
-    }
-
     public discard() {
         throw new Error("Not implemented");
+    }
+
+    /**
+     * Removes the dummy id when the model is saved and got a real id
+     *
+     * @protected
+     * @param value the given id
+     * @memberof BaseModel
+     */
+    @AttrObserver("id", "change")
+    protected onIdChange(value: string): void {
+        if (!value) return;
+        this.dummyId = "";
     }
 }

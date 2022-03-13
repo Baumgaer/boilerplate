@@ -7,12 +7,24 @@ import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetada
 import type { IMetadata } from "~common/types/MetadataTypes";
 import type { ModelOptions } from "~common/types/ModelClass";
 import type { Constructor } from "type-fest";
+import ModelSchema from "~common/lib/ModelSchema";
 
 export function Model<T extends BaseModel>(options: ModelOptions<T> = {}): ClassDecorator {
+    const metadataStore = new MetadataStore();
+
     return (target: any) => {
-        target.className = options.className;
-        target.collectionName = options.collectionName;
-        return <any>ModelClassFactory(<any>target, options);
+        // Set the class name and collectionName on prototype to have access to
+        // that properties on whole prototype chain
+        const proto = Object.getPrototypeOf(target);
+        proto.className = options.className;
+        proto.collectionName = options.collectionName;
+
+        const modelClass = <any>ModelClassFactory(<any>target, options);
+        const attributeDefinitions = metadataStore.getAttributeDefinitions(target);
+        for (const attributeDefinition of attributeDefinitions) attributeDefinition.setModelClass(modelClass);
+        const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions);
+        metadataStore.setModelDefinition(target, target.className, modelSchema);
+        return modelClass;
     };
 }
 
@@ -23,9 +35,9 @@ export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): Propert
     delete metadataOptions.metadataJson;
 
     return (target) => {
-        const theTarget = <Constructor<T>>target;
+        const theTarget = <Constructor<T>>target.constructor;
         const attrName = <keyof T>metadataOptions.name.toString();
-        const options = metadataStore.mergeAttributeDefinitionParams<Constructor<T>>(attrName, metadataOptions);
+        const options = metadataStore.constructAttributeDefinitionParams<Constructor<T>>(attrName, metadataOptions);
         const attributeDefinition = new AttributeSchema<Constructor<T>>(theTarget, attrName, options);
         metadataStore.setAttributeDefinition(theTarget, attrName, attributeDefinition);
     };
