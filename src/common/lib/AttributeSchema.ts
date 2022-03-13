@@ -393,7 +393,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      * environment.
      *
      * @protected
-     * @param _type the type of the attribute
+     * @param type the type of the attribute
      * @param defaultOptions default options determined in the buildSchema() method of this attribute
      * @returns an array with two elements. first is the type, second are the options
      * @memberof AttributeSchema
@@ -415,6 +415,15 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         return [typeName, defaultOptions];
     }
 
+    /**
+     * Checks if sub type containing types are all of same type checked by the checkFunc
+     *
+     * @private
+     * @param arrayLikeType type to check for same type sub types
+     * @param checkFunc function that will be called to check the sub types
+     * @returns true if all types are of type checked by checkFunc and false else
+     * @memberof AttributeSchema
+     */
     private checkSubTypes(arrayLikeType: IMetadata["type"], checkFunc: ((type?: IMetadata["type"]) => boolean)): boolean {
         if (this.isUnionType(arrayLikeType)) {
             return arrayLikeType.subTypes.every(checkFunc.bind(this));
