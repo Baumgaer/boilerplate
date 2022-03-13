@@ -1,9 +1,17 @@
-import type { RelationOptions, Generated } from "typeorm";
-import type { IMetadata } from "~common/types/MetadataTypes";
 import type { SetOptional } from "type-fest";
+import type { RelationOptions, Generated, ColumnOptions } from "typeorm";
+import type { ColumnCommonOptions } from "typeorm/decorator/options/ColumnCommonOptions";
+import type { ColumnEnumOptions } from "typeorm/decorator/options/ColumnEnumOptions";
+import type { ColumnHstoreOptions } from "typeorm/decorator/options/ColumnHstoreOptions";
+import type { ColumnNumericOptions } from "typeorm/decorator/options/ColumnNumericOptions";
+import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWithLengthOptions";
+import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
+import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
+import type { IMetadata } from "~common/types/MetadataTypes";
 
 export type allowedAttrFields = "cascade" | "createForeignKeyConstraints" | "deferrable" | "orphanedRowAction" | "persistence" | "primary";
 
+export type AllColumnOptions = ColumnOptions & ColumnCommonOptions & RelationOptions & SpatialColumnOptions & ColumnWithLengthOptions & ColumnWithWidthOptions & ColumnNumericOptions & ColumnEnumOptions & ColumnHstoreOptions;
 /**
  * The well known relations of relational databases.
  */

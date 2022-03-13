@@ -1,7 +1,7 @@
-import * as ts from "typescript";
 import path from "path";
 import arp from "app-root-path";
-import clientConfig from "./../src/client/tsconfig.json";
+import * as ts from "typescript";
+import clientConfig from "../src/client/tsconfig.json";
 
 export function isNull(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Null) === ts.TypeFlags.Null;

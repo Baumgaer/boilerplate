@@ -1,5 +1,5 @@
 import * as ts from "typescript";
-import * as utils from "./../utils";
+import * as utils from "../utils";
 
 let typeChecker!: ts.TypeChecker;
 

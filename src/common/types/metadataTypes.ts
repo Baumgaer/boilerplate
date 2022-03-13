@@ -1,6 +1,6 @@
 import type { LiteralUnion } from "type-fest";
 
-type MetadataType = IIdentifiedType & IModelType & IMixedType & IArrayType & IUnionOrIntersectionType & ILiteralType & IUnresolvedType & IInterfaceType & ITupleType;
+type MetadataType = IIdentifiedType & IModelType & IMixedType & IArrayType & IUnionOrIntersectionType & ILiteralType & IUnresolvedType & IInterfaceType & ITupleType & IOptionalType;
 
 export interface IIdentifiedType {
     identifier: LiteralUnion<"String" | "Number" | "Boolean" | "Date", string>;
@@ -39,7 +39,7 @@ export interface IArrayType {
 export interface IUnionOrIntersectionType {
     isUnion?: boolean;
     isIntersection?: boolean;
-    subTypes: (MetadataType)[]
+    subTypes: MetadataType[]
 }
 
 export interface IOptionalType {
@@ -49,7 +49,7 @@ export interface IOptionalType {
 
 export interface ITupleType {
     isTuple: boolean;
-    subTypes: (MetadataType | IOptionalType)[]
+    subTypes: MetadataType[]
 }
 
 export interface IMetadata {

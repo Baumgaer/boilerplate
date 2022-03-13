@@ -15,18 +15,16 @@ import {
     VersionColumn
 } from "typeorm";
 import type { Constructor } from "type-fest";
-import type { ColumnOptions, RelationOptions } from "typeorm";
-import type { SimpleColumnType } from 'typeorm/driver/types/ColumnTypes';
+import type { RelationOptions } from "typeorm";
+import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type BaseModel from "~common/lib/BaseModel";
-import type { AttrOptions, AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
+import type { AttrOptions, AttrOptionsPartialMetadataJson, AllColumnOptions } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
 
 interface IRelation<T extends Constructor<BaseModel>> {
     type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many",
     field?: keyof InstanceType<T>;
 }
-
-type AllColumnOptions = ColumnOptions & RelationOptions;
 
 export default class AttributeSchema<T extends Constructor<BaseModel>> implements AttrOptions<T> {
 
@@ -214,6 +212,45 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
     }
 
     /**
+     * Determines if this attribute is somehow a union type.
+     * This does **NOT** include arrays of unions!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a union type else false
+     * @memberof AttributeSchema
+     */
+    public isUnionType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return Boolean(type.isUnion);
+    }
+
+    /**
+     * Determines if this attribute is somehow a intersection type.
+     * This does **NOT** include arrays of intersections!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a intersection type else false
+     * @memberof AttributeSchema
+     */
+    public isIntersectionType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return Boolean(type.isIntersection);
+    }
+
+    /**
+     * Determines if this attribute is somehow a literal type.
+     * This includes arrays of literals!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a literal type else false
+     * @memberof AttributeSchema
+     */
+    public isLiteralType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.isLiteral || this.checkSubTypes(type, this.isLiteralType.bind(this));
+    }
+
+    /**
      * Determines if this attribute is somehow a string type.
      * This includes arrays of strings!
      *
@@ -223,7 +260,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public isStringType(altType?: IMetadata["type"]): boolean {
         const type = altType || this.type;
-        return type.isStringLiteral || type.identifier === "String" || this.isArrayType(type) && type.subTypes.every(this.isStringType.bind(this));
+        return type.isStringLiteral || type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
     }
 
     /**
@@ -236,7 +273,33 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public isNumberType(altType?: IMetadata["type"]): boolean {
         const type = altType || this.type;
-        return type.isNumberLiteral || type.identifier === "Number" || this.isArrayType(type) && type.subTypes.every(this.isNumberType.bind(this));
+        return type.isNumberLiteral || type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
+    }
+
+    /**
+     * Determines if this attribute is somehow a boolean type.
+     * This includes arrays of booleans!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a boolean type else false
+     * @memberof AttributeSchema
+     */
+    public isBooleanType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.identifier === "Boolean" || this.checkSubTypes(type, this.isBooleanType.bind(this));
+    }
+
+    /**
+     * Determines if this attribute is somehow a date type.
+     * This includes arrays of dates!
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a date type else false
+     * @memberof AttributeSchema
+     */
+    public isDateType(altType?: IMetadata["type"]): boolean {
+        const type = altType || this.type;
+        return type.identifier === "Date" || this.checkSubTypes(type, this.isDateType.bind(this));
     }
 
     /**
@@ -249,7 +312,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public isModelType(altType?: IMetadata["type"]): boolean {
         const type = altType || this.type;
-        return Boolean(type.isModel || type.isArray && type.subTypes.every(this.isModelType.bind(this)));
+        return Boolean(type.isModel || this.checkSubTypes(type, this.isModelType.bind(this)));
     }
 
     /**
@@ -274,7 +337,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public isObjectLikeType(altType?: IMetadata["type"]): boolean {
         const type = altType || this.type;
-        return type.isInterface || type.isIntersection || this.isModelType(type) || this.isArrayType(type) && type.subTypes.every(this.isObjectLikeType.bind(this));
+        return type.isInterface || type.isIntersection || this.isModelType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
     }
 
     /**
@@ -287,7 +350,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public isPlainObjectType(altType?: IMetadata["type"]): boolean {
         const type = altType || this.type;
-        return Boolean(type.isInterface || this.isArrayType(type) && type.subTypes.length && type.subTypes.every(this.isPlainObjectType.bind(this)));
+        return Boolean(type.isInterface || this.checkSubTypes(type, this.isPlainObjectType.bind(this)));
     }
 
     /**
@@ -301,7 +364,27 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     public isUnresolvedType(altType?: IMetadata["type"]): boolean {
         const type = altType || this.type;
-        return type.isMixed || type.isUnresolvedType || this.isArrayType(type) && type.subTypes.some(this.isUnresolvedType.bind(this));
+        return type.isMixed || type.isUnresolvedType || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
+    }
+
+    /**
+     * Returns the values of an union type when the type is a fully literal type
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns an empty array if is not a fully literal type and an array of strings or numbers else
+     * @memberof AttributeSchema
+     */
+    public getUnionTypeValues(altType?: IMetadata["type"]): (string | number)[] {
+        const type = altType || this.type;
+        const values: any[] = [];
+        if (!this.isUnionType(type)) return values;
+
+        for (const subType of type.subTypes) {
+            if (!this.isLiteralType(subType)) return [];
+            values.push(subType.value);
+        }
+
+        return values;
     }
 
     /**
@@ -315,8 +398,37 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      * @returns an array with two elements. first is the type, second are the options
      * @memberof AttributeSchema
      */
-    protected getTypeNameAndOptions(_type: IMetadata["type"], defaultOptions: AllColumnOptions): [SimpleColumnType, AllColumnOptions] {
-        return ["text", defaultOptions];
+    protected getTypeNameAndOptions(type: IMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
+        let typeName: ColumnType = "text";
+        if (this.isArrayType()) {
+            typeName = "simple-array";
+            defaultOptions.array = true;
+        }
+        if (this.isPlainObjectType(type)) typeName = "simple-json";
+        if (this.isNumberType(type)) typeName = "double"; // because every number in javascript is a double
+        if (this.isBooleanType(type)) typeName = "boolean";
+        if (this.isDateType(type)) typeName = "date";
+        if (this.isUnionType(type)) {
+            typeName = "simple-enum";
+            defaultOptions.enum = this.getUnionTypeValues(type);
+        }
+        return [typeName, defaultOptions];
+    }
+
+    private checkSubTypes(arrayLikeType: IMetadata["type"], checkFunc: ((type?: IMetadata["type"]) => boolean)): boolean {
+        if (this.isUnionType(arrayLikeType)) {
+            return arrayLikeType.subTypes.every(checkFunc.bind(this));
+        }
+
+        if (this.isArrayType(arrayLikeType)) {
+            if (arrayLikeType.isArray) return Boolean(this.isUnionType(arrayLikeType.subType) && arrayLikeType.subType.subTypes.every(checkFunc.bind(this)));
+            return arrayLikeType.subTypes.every((subType) => {
+                if (subType.isOptional) return checkFunc(subType.subType);
+                return checkFunc(subType);
+            });
+        }
+
+        return true;
     }
 
     private setConstants(params: AttrOptionsPartialMetadataJson<T>) {
@@ -379,7 +491,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         } else {
             if (this.relation && this.isModelType()) {
                 this.buildRelation(attrName, options);
-            } else Column(typeName, options)(proto, attrName);
+            } else Column(<any>typeName, options)(proto, attrName);
         }
     }
 
