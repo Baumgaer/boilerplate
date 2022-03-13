@@ -1,7 +1,7 @@
-import type AttributeSchema from "./AttributeSchema";
-import type BaseModel from "./BaseModel";
-import type ModelSchema from "./ModelSchema";
 import type { Constructor } from "type-fest";
+import type AttributeSchema from "~common/lib/AttributeSchema";
+import type BaseModel from "~common/lib/BaseModel";
+import type ModelSchema from "~common/lib/ModelSchema";
 import type { AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
 
 export default class MetadataStore {

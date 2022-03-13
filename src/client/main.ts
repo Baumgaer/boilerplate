@@ -1,10 +1,10 @@
 import "reflect-metadata";
+import { IonicVue } from '@ionic/vue';
+import { createConnection } from "typeorm";
+import { createApp } from 'vue';
 import App from '~client/App.vue';
 import router from '~client/routes';
 import { pascalCase } from "~client/utils/utils";
-import { createApp } from 'vue';
-
-import { IonicVue } from '@ionic/vue';
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -27,7 +27,6 @@ import '~client/themes/default.css';
 
 /* Web database */
 import "sql.js/dist/sql-wasm.js";
-import { createConnection } from "typeorm";
 
 global.MODEL_NAME_TO_MODEL_MAP = {};
 const context = require.context("~env/models/", true, /.+\.ts/, "sync");

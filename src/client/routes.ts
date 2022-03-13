@@ -1,5 +1,5 @@
-import HomePage from '~client/components/HomePage.vue';
 import { createRouter, createWebHistory } from '@ionic/vue-router';
+import HomePage from '~client/components/HomePage.vue';
 import type { RouteRecordRaw } from 'vue-router';
 
 const routes: Array<RouteRecordRaw> = [

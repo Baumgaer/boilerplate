@@ -1,11 +1,11 @@
-import MetadataStore from "./MetadataStore";
+import { BaseEntity } from "typeorm";
+import MetadataStore from "~common/lib/MetadataStore";
 import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
-import { BaseEntity } from "typeorm";
-import type ModelSchema from "./ModelSchema";
 import type { Constructor } from "type-fest";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseAttribute from "~common/lib/BaseAttribute";
+import type ModelSchema from "~common/lib/ModelSchema";
 
 export default abstract class BaseModel extends BaseEntity {
 

@@ -93,19 +93,29 @@
         "import/order": [
             "error",
             {
+                "pathGroups": [
+                    {
+                        "pattern": "reflect-metadata",
+                        "group": "external",
+                        "position": "before"
+                    }
+                ],
+                "pathGroupsExcludedImportTypes": [
+                    "reflect-metadata"
+                ],
                 "groups": [
-                    "index",
-                    "sibling",
-                    "parent",
-                    "internal",
-                    "external",
                     "builtin",
+                    "external",
+                    "internal",
+                    "parent",
+                    "sibling",
+                    "index",
                     "object",
                     "type"
                 ],
                 "alphabetize": {
                     "order": "asc", /* sort in ascending order. Options: ['ignore', 'asc', 'desc'] */
-                    "caseInsensitive": true /* ignore case. Options: [true, false] */
+                    "caseInsensitive": false /* ignore case. Options: [true, false] */
                 }
             }
         ],

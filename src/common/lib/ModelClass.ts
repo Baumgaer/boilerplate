@@ -1,8 +1,8 @@
-import { hasOwnProperty, camelCase } from "~common/utils/utils";
-import DefaultAttribute from "~env/attributes/DefaultAttribute";
 import { Entity } from "typeorm";
 import { v4 as uuid } from "uuid";
 import { reactive } from "vue";
+import { hasOwnProperty, camelCase } from "~common/utils/utils";
+import DefaultAttribute from "~env/attributes/DefaultAttribute";
 import type { Constructor } from "type-fest";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 import type BaseModel from "~common/lib/BaseModel";

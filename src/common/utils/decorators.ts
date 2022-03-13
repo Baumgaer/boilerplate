@@ -1,8 +1,8 @@
+import { mergeWith } from "lodash";
 import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
 import ModelSchema from "~common/lib/ModelSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
-import { mergeWith } from "lodash";
 import type { Constructor } from "type-fest";
 import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/types/AttributeSchema";
