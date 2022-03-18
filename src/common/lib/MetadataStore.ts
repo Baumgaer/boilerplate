@@ -1,4 +1,3 @@
-import type { Constructor } from "type-fest";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
 import type ModelSchema from "~common/lib/ModelSchema";
@@ -18,7 +17,7 @@ export default class MetadataStore {
         return this;
     }
 
-    public setAttributeSchema<T extends Constructor<BaseModel>>(target: T, attributeName: keyof InstanceType<T>, definition: AttributeSchema<T>) {
+    public setAttributeSchema<T extends typeof BaseModel>(target: T, attributeName: keyof T, definition: AttributeSchema<T>) {
         const attrStr = attributeName.toString();
         if (!this.attributeDefinitions[attrStr]) {
             this.attributeDefinitions[attrStr] = [definition];
@@ -26,11 +25,11 @@ export default class MetadataStore {
         Reflect.defineMetadata(`${target.name}:${attributeName}:definition`, definition, target);
     }
 
-    public getAttributeSchema<T extends Constructor<BaseModel>>(target: T, attributeName: keyof InstanceType<T>): AttributeSchema<T> | null {
+    public getAttributeSchema<T extends typeof BaseModel>(target: T, attributeName: keyof T): AttributeSchema<T> | null {
         return Reflect.getMetadata(`${target.name}:${attributeName}:definition`, target) || null;
     }
 
-    public getAttributeSchemas<T extends Constructor<BaseModel>>(target: T): AttributeSchema<T>[] {
+    public getAttributeSchemas<T extends typeof BaseModel>(target: T): AttributeSchema<T>[] {
         const attributeDefinitions: Record<string, AttributeSchema<T>> = {};
         const metadataKeys = Reflect.getMetadataKeys(target).slice().reverse();
         for (const key of metadataKeys) {
@@ -40,7 +39,7 @@ export default class MetadataStore {
         return Object.values(attributeDefinitions);
     }
 
-    public constructAttributeSchemaParams<T extends Constructor<BaseModel>>(attributeName: keyof InstanceType<T>, params: AttrOptionsPartialMetadataJson<T>) {
+    public constructAttributeSchemaParams<T extends typeof BaseModel>(attributeName: keyof T, params: AttrOptionsPartialMetadataJson<T>) {
         const newParams = {};
         this.attributeDefinitions[attributeName.toString()]?.forEach((attributeDefinition) => {
             Object.assign(newParams, attributeDefinition.parameters);
@@ -49,12 +48,12 @@ export default class MetadataStore {
         return <AttrOptionsPartialMetadataJson<T>>newParams;
     }
 
-    public setModelSchema<T extends Constructor<BaseModel>>(target: T, schemaName: string, schema: ModelSchema<T>) {
+    public setModelSchema<T extends typeof BaseModel>(target: T, schemaName: string, schema: ModelSchema<T>) {
         this.modelDefinitions[schemaName] = schema;
         Reflect.defineMetadata(`${target.constructor.name}:schema`, schema, target);
     }
 
-    public getModelSchema<T extends Constructor<BaseModel>>(target?: T, schemaName?: string): ModelSchema<T> | null {
+    public getModelSchema<T extends typeof BaseModel>(target?: T, schemaName?: string): ModelSchema<T> | null {
         if (schemaName && this.modelDefinitions[schemaName]) return this.modelDefinitions[schemaName];
         if (target) return Reflect.getMetadata(`${target.constructor.name}:schema`, target) || null;
         return null;

@@ -14,19 +14,14 @@ import {
     DeleteDateColumn,
     VersionColumn
 } from "typeorm";
-import type { Constructor } from "type-fest";
+import { getModelClassByName } from "~common/utils/utils";
 import type { RelationOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsPartialMetadataJson, AllColumnOptions } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
 
-interface IRelation<T extends Constructor<BaseModel>> {
-    type: "one-to-one" | "one-to-many" | "many-to-one" | "many-to-many",
-    field?: keyof InstanceType<T>;
-}
-
-export default class AttributeSchema<T extends Constructor<BaseModel>> implements AttrOptions<T> {
+export default class AttributeSchema<T extends typeof BaseModel> implements AttrOptions<T> {
 
     /**
      * Holds the class object which created the schema. This is only a valid
@@ -42,7 +37,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      *
      * @memberof AttributeSchema
      */
-    public readonly attributeName: keyof InstanceType<T>;
+    public readonly attributeName: keyof T;
 
     /**
      * The parameters which initializes the schema
@@ -123,7 +118,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      *
      * @memberof AttributeSchema
      */
-    public relation!: IRelation<T> | false;
+    public relationColumn?: string;
 
     /**
      * If true, the column will be used as the relation column
@@ -184,7 +179,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      */
     private readonly _ctor: T;
 
-    public constructor(ctor: T, attributeName: keyof InstanceType<T>, parameters: AttrOptionsPartialMetadataJson<T>) {
+    public constructor(ctor: T, attributeName: keyof T, parameters: AttrOptionsPartialMetadataJson<T>) {
         this._ctor = ctor;
         this.attributeName = attributeName;
         this.parameters = parameters;
@@ -387,6 +382,27 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         return values;
     }
 
+    public getTypeIdentifier(altType?: IMetadata["type"]) {
+        const type = altType || this.type;
+        if (this.isArrayType(type)) return type.subType.identifier;
+        return type.identifier;
+    }
+
+    public getRelationType() {
+        if (!this.isModelType()) return null;
+        const otherModel = getModelClassByName(this.getTypeIdentifier());
+        const otherAttributeSchema = otherModel && otherModel.getAttributeSchema(this.relationColumn as keyof ConstructionParams<InstanceType<typeof otherModel>>);
+        if (!otherAttributeSchema) return null;
+        if (!this.isArrayType()) {
+            if (!this.relationColumn) return "OneToOne"; // owner is determined automatically
+            if (otherAttributeSchema.isArrayType()) return "ManyToOne"; // owner not needed
+        } else if (this.relationColumn) {
+            if (!otherAttributeSchema.isArrayType()) return "OneToMany"; // owner not needed
+            return "ManyToMany"; // owner has to be specified
+        }
+        return null;
+    }
+
     /**
      * Determines the simple column type and its corresponding options.
      * Both has to be compatible with the corresponding database of the
@@ -398,7 +414,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
      * @returns an array with two elements. first is the type, second are the options
      * @memberof AttributeSchema
      */
-    protected getTypeNameAndOptions(type: IMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
+    protected getColumnTypeNameAndOptions(type: IMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
         let typeName: ColumnType = "text";
         if (this.isArrayType()) {
             typeName = "simple-array";
@@ -450,32 +466,23 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
         this.isModifiedDate = Boolean(params.isModifiedDate);
         this.isDeletedDate = Boolean(params.isDeletedDate);
         this.isVersion = Boolean(params.isVersion);
-        this.persistence = Boolean(params.persistence);
+        this.persistence = params.persistence ?? true;
 
         this.isGenerated = params.isGenerated;
-        this.cascade = params.cascade;
-        this.orphanedRowAction = params.orphanedRowAction;
+        this.cascade = params.cascade ?? true;
+        this.orphanedRowAction = params.orphanedRowAction ?? "delete";
         this.type = params.type;
-
-        const fieldRelations = params.oneToMany || params.manyToOne || params.manyToMany;
-        if (fieldRelations || params.oneToOne) {
-            let type: IRelation<T>["type"] = "many-to-many";
-            if (params.oneToOne) {
-                type = "one-to-one";
-            } else if (params.oneToMany) {
-                type = "one-to-many";
-            } else if (params.manyToOne) type = "many-to-one";
-            this.relation = { type };
-            if (typeof fieldRelations === "string") this.relation.field = <keyof InstanceType<T>>fieldRelations;
-        }
+        this.isRelationOwner = Boolean(params.isRelationOwner);
+        this.relationColumn = params.relationColumn;
     }
 
     private buildSchema(type: IMetadata["type"]) {
         // This is the correction described in decorator @Attr()
         const proto = this._ctor.prototype;
         const attrName = this.attributeName.toString();
-        const defaultOptions = {
+        const defaultOptions: AllColumnOptions = {
             lazy: this.isLazy,
+            eager: !this.isLazy,
             cascade: this.cascade,
             createForeignKeyConstraints: this.createForeignKeyConstraints,
             nullable: !this.isRequired,
@@ -483,7 +490,7 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
             persistence: this.persistence
         };
 
-        const [typeName, options] = this.getTypeNameAndOptions(type, defaultOptions);
+        const [typeName, options] = this.getColumnTypeNameAndOptions(type, defaultOptions);
 
         if (this.primary) {
             PrimaryGeneratedColumn("uuid")(proto, attrName);
@@ -497,37 +504,31 @@ export default class AttributeSchema<T extends Constructor<BaseModel>> implement
             DeleteDateColumn(options)(proto, attrName);
         } else if (this.isVersion) {
             VersionColumn(options)(proto, attrName);
-        } else {
-            if (this.relation && this.isModelType()) {
-                this.buildRelation(attrName, options);
-            } else Column(<any>typeName, options)(proto, attrName);
-        }
+        } else if (!this.buildRelation(attrName, options)) Column(<any>typeName, options)(proto, attrName); // TODO Determine embedded entity (needs to be transformed first as a type)
     }
 
     private buildRelation(attributeName: string, options: RelationOptions) {
-        if (!this.relation) return;
         const proto = this._ctor.prototype;
-        const identifier = this.type.identifier || (<any>this.type.subType)[0]?.identifier;
-        const field = this.relation.field;
-        const models = global.MODEL_NAME_TO_MODEL_MAP;
-
-        const typeFunc = () => models[identifier];
-        // because we use the inverse func only when its a many relation,
-        // the field is definitely assigned
+        const typeFunc = () => getModelClassByName(this.getTypeIdentifier());
         // eslint-disable-next-line
-        const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, field!);
-        if (this.relation.type === "one-to-one") {
-            OneToOne(typeFunc, options)(proto, attributeName);
-            if (this.isRelationOwner) JoinColumn()(proto, attributeName);
-        } else if (this.relation.type === "one-to-many") {
-            OneToMany(typeFunc, inverseFunc, options)(proto, attributeName);
-        } else if (this.relation.type === "many-to-one") {
-            ManyToOne(typeFunc, inverseFunc, options)(proto, attributeName);
-        } else {
-            let inverse = undefined;
-            if (field) inverse = (instance: InstanceType<T>) => Reflect.get(instance, field);
-            ManyToMany(() => models[proto.name], inverse, options)(proto, attributeName);
-            if (this.isRelationOwner) JoinTable()(proto, attributeName);
-        }
+        const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, this.relationColumn!);
+
+        let inverse = undefined;
+        if (this.relationColumn) inverse = inverseFunc;
+
+        const relationTypes = {
+            OneToOne: OneToOne(typeFunc, options),
+            OneToMany: OneToMany(typeFunc, inverseFunc, options),
+            ManyToOne: ManyToOne(typeFunc, inverseFunc, options),
+            ManyToMany: ManyToMany(typeFunc, inverse, options)
+        };
+        const relationType = this.getRelationType();
+        if (!relationType) return false;
+
+        relationTypes[relationType](proto, attributeName);
+        if (relationType === "OneToOne") {
+            JoinColumn()(proto, attributeName);
+        } else if (this.isRelationOwner) JoinTable()(proto, attributeName);
+        return true;
     }
 }

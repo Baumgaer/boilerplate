@@ -3,27 +3,26 @@ import { v4 as uuid } from "uuid";
 import { reactive } from "vue";
 import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { ApplyData, Options } from "on-change";
-import type { Constructor } from "type-fest";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
 
-export default abstract class BaseAttribute<T extends BaseModel> {
+export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
     public readonly id: string = uuid();
 
-    public readonly owner: T;
+    public readonly owner: InstanceType<T>;
 
-    public readonly name: keyof T;
+    public readonly name: keyof InstanceType<T>;
 
-    public readonly schema: AttributeSchema<Constructor<T>>;
+    public readonly schema: AttributeSchema<T>;
 
-    protected readonly unProxyfiedOwner: T;
+    protected readonly unProxyfiedOwner: InstanceType<T>;
 
     private readonly ctorName: string;
 
-    private observedValue?: T[this["name"]];
+    private observedValue?: InstanceType<T>[this["name"]];
 
-    public constructor(owner: T, name: keyof T, attributeSchema: AttributeSchema<Constructor<T>>) {
+    public constructor(owner: InstanceType<T>, name: keyof InstanceType<T>, attributeSchema: AttributeSchema<T>) {
         this.owner = owner;
         this.unProxyfiedOwner = owner.unProxyfiedModel;
         this.name = name;
@@ -35,12 +34,12 @@ export default abstract class BaseAttribute<T extends BaseModel> {
         return { isShallow: true, pathAsArray: true, details: true };
     }
 
-    public get(): T[this["name"]] {
+    public get(): InstanceType<T>[this["name"]] {
         const hookValue = this.callHook("getter");
         return hookValue !== undefined ? hookValue : this.observedValue ?? Reflect.get(this.unProxyfiedOwner, this.name);
     }
 
-    public set(value: T[this["name"]]): boolean {
+    public set(value: InstanceType<T>[this["name"]]): boolean {
         const hookValue = this.callHook("setter", value);
         const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;

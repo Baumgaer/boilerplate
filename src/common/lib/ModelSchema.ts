@@ -1,8 +1,7 @@
-import type { Constructor } from "type-fest";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
 
-export default class ModelSchema<T extends Constructor<BaseModel>> {
+export default class ModelSchema<T extends typeof BaseModel> {
 
     public readonly ctor: T;
 

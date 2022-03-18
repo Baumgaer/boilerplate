@@ -7,6 +7,7 @@ import type { ColumnNumericOptions } from "typeorm/decorator/options/ColumnNumer
 import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWithLengthOptions";
 import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
+import type BaseModel from "~common/lib/BaseModel";
 import type { IMetadata } from "~common/types/MetadataTypes";
 
 export type allowedAttrFields = "cascade" | "createForeignKeyConstraints" | "deferrable" | "orphanedRowAction" | "persistence" | "primary";
@@ -17,24 +18,9 @@ export type AllColumnOptions = ColumnOptions & ColumnCommonOptions & RelationOpt
  */
 export interface IRelations {
     /**
-     * One current model A can only have one model B
+     * The column of the target type where the relation is connected to
      */
-    oneToOne?: boolean;
-
-    /**
-     * One current model A can habe multiple models B
-     */
-    oneToMany?: string;
-
-    /**
-     * Many current models A can have exactly one model B
-     */
-    manyToOne?: string;
-
-    /**
-     * Many current models A can have many model B
-     */
-    manyToMany?: boolean | string;
+    relationColumn?: string;
 
     /**
      * Defines the current model as owner of the relation
@@ -70,7 +56,7 @@ export interface ISpecialColumns {
     isGenerated?: Parameters<typeof Generated>["0"]
 }
 
-export type AttrOptions<T> = Pick<RelationOptions, allowedAttrFields> & IRelations & ISpecialColumns & ThisType<T>
-export type AttrOptionsWithMetadataJson<T> = AttrOptions<T> & { metadataJson: string }
-export type AttrOptionsPartialMetadataJson<T> = IMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
+export type AttrOptions<T extends typeof BaseModel> = Pick<RelationOptions, allowedAttrFields> & IRelations & ISpecialColumns & ThisType<T>
+export type AttrOptionsWithMetadataJson<T extends typeof BaseModel> = AttrOptions<T> & { metadataJson: string }
+export type AttrOptionsPartialMetadataJson<T extends typeof BaseModel> = IMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
 export type AttrObserverTypes = "add" | "remove" | "change"

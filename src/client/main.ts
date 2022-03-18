@@ -4,7 +4,6 @@ import { createConnection } from "typeorm";
 import { createApp } from 'vue';
 import App from '~client/App.vue';
 import router from '~client/routes';
-import { pascalCase } from "~client/utils/utils";
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -31,7 +30,7 @@ import "sql.js/dist/sql-wasm.js";
 global.MODEL_NAME_TO_MODEL_MAP = {};
 const context = require.context("~env/models/", true, /.+\.ts/, "sync");
 context.keys().forEach((key) => {
-    global.MODEL_NAME_TO_MODEL_MAP[pascalCase(key.substring(2, key.length - 3))] = context(key).default;
+    global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = context(key).default;
 });
 
 const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);

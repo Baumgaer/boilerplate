@@ -3,7 +3,6 @@ import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
 import ModelSchema from "~common/lib/ModelSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
-import type { Constructor } from "type-fest";
 import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
@@ -28,7 +27,7 @@ export function Model<T extends BaseModel>(options: ModelOptions<T> = {}): Class
     };
 }
 
-export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): PropertyDecorator {
+export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): PropertyDecorator {
     const metadataStore = new MetadataStore();
     const metadata: IMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
     const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, <AttrOptionsWithMetadataJson<T>>options, metadata);
@@ -40,10 +39,10 @@ export function Attr<T extends BaseModel>(options: AttrOptions<T> = {}): Propert
         // decorators of third party tools are used later on. In this case we
         // need the prototype property (not the prototype of the chain)
         // of this constructor
-        const theTarget = <Constructor<T>>target.constructor;
+        const theTarget = <T>target.constructor;
         const attrName = <keyof T>metadataOptions.name.toString();
-        const options = metadataStore.constructAttributeSchemaParams<Constructor<T>>(attrName, metadataOptions);
-        const attributeDefinition = new AttributeSchema<Constructor<T>>(theTarget, attrName, options);
+        const options = metadataStore.constructAttributeSchemaParams<T>(attrName, metadataOptions);
+        const attributeDefinition = new AttributeSchema<T>(theTarget, attrName, options);
         metadataStore.setAttributeSchema(theTarget, attrName, attributeDefinition);
     };
 }

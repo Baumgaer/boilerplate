@@ -6,6 +6,15 @@ const lodash = addDeepdash(_);
 
 type eachDeepParams = Required<Parameters<typeof lodash.eachDeep>>;
 
+export function getModelClassByName(name: string) {
+    try {
+        // eslint-disable-next-line @typescript-eslint/no-var-requires
+        return require("~env/models/" + name)?.default;
+    } catch (error) {
+        return;
+    }
+}
+
 export function eachDeep(obj: any, callback: eachDeepParams["1"], options: eachDeepParams["2"] = {}): ReturnType<typeof lodash.eachDeep> {
     return lodash.eachDeep(obj, (value, key, parentValue, context) => {
         if (context.isCircular) return false;

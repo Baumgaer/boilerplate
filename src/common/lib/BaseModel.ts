@@ -2,10 +2,7 @@ import { BaseEntity } from "typeorm";
 import MetadataStore from "~common/lib/MetadataStore";
 import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
-import type { Constructor } from "type-fest";
-import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseAttribute from "~common/lib/BaseAttribute";
-import type ModelSchema from "~common/lib/ModelSchema";
 
 export default abstract class BaseModel extends BaseEntity {
 
@@ -35,11 +32,12 @@ export default abstract class BaseModel extends BaseEntity {
 
     public static getSchema() {
         const metadataStore = new MetadataStore();
-        return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
+        return metadataStore.getModelSchema<typeof this>(Object.getPrototypeOf(this), this.className);
     }
 
-    public static getAttributeSchema<T extends Constructor<BaseModel>>(this: T, name: string): AttributeSchema<T> {
-        return Reflect.getMetadata(`${Object.getPrototypeOf(this).name}:attributeSchemaMap`, this.prototype)?.[name];
+    public static getAttributeSchema<T extends typeof BaseModel>(this: T, name: keyof ConstructionParams<InstanceType<T>>) {
+        const metadataStore = new MetadataStore();
+        return metadataStore.getAttributeSchema(Object.getPrototypeOf(this), name);
     }
 
     /**
@@ -84,10 +82,10 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public getSchema() {
-        return <ModelSchema<Constructor<typeof this>>>(<typeof BaseModel>this.constructor).getSchema();
+        return (<typeof BaseModel>this.constructor).getSchema();
     }
 
-    public getAttribute<T extends BaseModel>(this: T, name: string): BaseAttribute<T> {
+    public getAttribute<T extends typeof BaseModel>(this: InstanceType<T>, name: string): BaseAttribute<T> {
         return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:${name}:attribute`, this.unProxyfiedModel);
     }
 
