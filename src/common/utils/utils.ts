@@ -1,6 +1,7 @@
 import addDeepdash from "deepdash-es";
 import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
+import type BaseModel from "~common/lib/BaseModel";
 
 const lodash = addDeepdash(_);
 
@@ -9,9 +10,19 @@ type eachDeepParams = Required<Parameters<typeof lodash.eachDeep>>;
 export function getModelClassByName(name: string) {
     try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        return require("~env/models/" + name)?.default;
+        let module = require("~env/models/" + name);
+        return new Promise<typeof BaseModel>((resolve) => {
+            const interval = setInterval(() => {
+                if (!module.default) {
+                    module = require("~env/models/" + name);
+                    return;
+                }
+                clearInterval(interval);
+                resolve(module.default);
+            });
+        });
     } catch (error) {
-        return;
+        return null;
     }
 }
 

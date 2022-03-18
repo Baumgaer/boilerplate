@@ -179,12 +179,24 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     private readonly _ctor: T;
 
+    private _constructed = false;
+
     public constructor(ctor: T, attributeName: keyof T, parameters: AttrOptionsPartialMetadataJson<T>) {
         this._ctor = ctor;
         this.attributeName = attributeName;
         this.parameters = parameters;
         this.setConstants(parameters);
         this.buildSchema(parameters.type);
+    }
+
+    public awaitConstruction() {
+        return new Promise((resolve) => {
+            const interval = setInterval(() => {
+                if (!this._constructed) return;
+                clearInterval(interval);
+                resolve(true);
+            });
+        });
     }
 
     public setModelClass(modelClass: T) {
@@ -388,16 +400,16 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return type.identifier;
     }
 
-    public getRelationType() {
+    public async getRelationType() {
         if (!this.isModelType()) return null;
-        const otherModel = getModelClassByName(this.getTypeIdentifier());
+        const otherModel = await getModelClassByName(this.getTypeIdentifier());
         const otherAttributeSchema = otherModel && otherModel.getAttributeSchema(this.relationColumn as keyof ConstructionParams<InstanceType<typeof otherModel>>);
-        if (!otherAttributeSchema) return null;
+
         if (!this.isArrayType()) {
             if (!this.relationColumn) return "OneToOne"; // owner is determined automatically
-            if (otherAttributeSchema.isArrayType()) return "ManyToOne"; // owner not needed
+            if (otherAttributeSchema && otherAttributeSchema.isArrayType()) return "ManyToOne"; // owner not needed
         } else if (this.relationColumn) {
-            if (!otherAttributeSchema.isArrayType()) return "OneToMany"; // owner not needed
+            if (otherAttributeSchema && !otherAttributeSchema.isArrayType()) return "OneToMany"; // owner not needed
             return "ManyToMany"; // owner has to be specified
         }
         return null;
@@ -446,14 +458,16 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         }
 
         if (this.isArrayType(arrayLikeType)) {
-            if (arrayLikeType.isArray) return Boolean(this.isUnionType(arrayLikeType.subType) && arrayLikeType.subType.subTypes.every(checkFunc.bind(this)));
+            if (arrayLikeType.isArray) {
+                return Boolean(this.isUnionType(arrayLikeType.subType) && arrayLikeType.subType.subTypes.every(checkFunc.bind(this)) || arrayLikeType.subType.isModel);
+            }
             return arrayLikeType.subTypes.every((subType) => {
                 if (subType.isOptional) return checkFunc(subType.subType);
                 return checkFunc(subType);
             });
         }
 
-        return true;
+        return false;
     }
 
     private setConstants(params: AttrOptionsPartialMetadataJson<T>) {
@@ -476,7 +490,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.relationColumn = params.relationColumn;
     }
 
-    private buildSchema(type: IMetadata["type"]) {
+    private async buildSchema(type: IMetadata["type"]) {
         // This is the correction described in decorator @Attr()
         const proto = this._ctor.prototype;
         const attrName = this.attributeName.toString();
@@ -504,12 +518,16 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             DeleteDateColumn(options)(proto, attrName);
         } else if (this.isVersion) {
             VersionColumn(options)(proto, attrName);
-        } else if (!this.buildRelation(attrName, options)) Column(<any>typeName, options)(proto, attrName); // TODO Determine embedded entity (needs to be transformed first as a type)
+        } else if (!await this.buildRelation(attrName, options)) Column(<any>typeName, options)(proto, attrName); // TODO Determine embedded entity (needs to be transformed first as a type)
+        this._constructed = true;
     }
 
-    private buildRelation(attributeName: string, options: RelationOptions) {
+    private async buildRelation(attributeName: string, options: RelationOptions) {
         const proto = this._ctor.prototype;
-        const typeFunc = () => getModelClassByName(this.getTypeIdentifier());
+        const otherModel = await getModelClassByName(this.getTypeIdentifier());
+        if (!otherModel) return;
+
+        const typeFunc = () => otherModel;
         // eslint-disable-next-line
         const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, this.relationColumn!);
 
@@ -522,7 +540,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             ManyToOne: ManyToOne(typeFunc, inverseFunc, options),
             ManyToMany: ManyToMany(typeFunc, inverse, options)
         };
-        const relationType = this.getRelationType();
+        const relationType = await this.getRelationType();
         if (!relationType) return false;
 
         relationTypes[relationType](proto, attributeName);

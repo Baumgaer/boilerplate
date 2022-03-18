@@ -21,7 +21,7 @@ export function Model<T extends BaseModel>(options: ModelOptions<T> = {}): Class
         const modelClass = <any>ModelClassFactory(<any>target, options);
         const attributeDefinitions = metadataStore.getAttributeSchemas(target);
         for (const attributeDefinition of attributeDefinitions) attributeDefinition.setModelClass(modelClass);
-        const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions);
+        const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions, options);
         metadataStore.setModelSchema(target, target.className, modelSchema);
         return modelClass;
     };

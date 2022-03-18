@@ -34,12 +34,16 @@ context.keys().forEach((key) => {
 });
 
 const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
+
+// Wait for all model schemas constructed to ensure all models have correct relations
+const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
+await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
 createConnection({
     type: "sqljs",
     autoSave: true,
     location: "test",
     useLocalForage: true,
-    entities: Object.values(global.MODEL_NAME_TO_MODEL_MAP),
+    entities: modelClasses,
     synchronize: true,
     sqlJsConfig: {
         locateFile: () => sqlWasm.href

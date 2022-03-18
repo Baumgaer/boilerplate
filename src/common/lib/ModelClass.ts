@@ -1,4 +1,3 @@
-import { Entity } from "typeorm";
 import { v4 as uuid } from "uuid";
 import { reactive } from "vue";
 import { hasOwnProperty, camelCase } from "~common/utils/utils";
@@ -25,7 +24,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, o
     }
 
     // @ts-expect-error Typescript does not recognize the constructor with the single rest parameter...
-    class ModelClass extends ctor {
+    return class ModelClass extends ctor {
 
         public static isModelClass = true;
 
@@ -107,8 +106,5 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, o
             return this.getAttribute(stringProperty).set(value);
         }
 
-    }
-
-    Entity(options.collectionName, options)(ModelClass);
-    return ModelClass;
+    };
 }
