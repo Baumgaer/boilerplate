@@ -1,4 +1,3 @@
-import { merge } from 'lodash';
 import {
     Column,
     PrimaryGeneratedColumn,
@@ -12,10 +11,11 @@ import {
     CreateDateColumn,
     UpdateDateColumn,
     DeleteDateColumn,
-    VersionColumn
+    VersionColumn,
+    Index
 } from "typeorm";
-import { getModelClassByName } from "~common/utils/utils";
-import type { RelationOptions } from "typeorm";
+import { merge, getModelClassByName } from "~common/utils/utils";
+import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsPartialMetadataJson, AllColumnOptions } from "~common/types/AttributeSchema";
@@ -149,6 +149,20 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     public orphanedRowAction: AttrOptions<T>["orphanedRowAction"];
 
     /**
+     * Determines if this attribute is used as an index row in the database
+     *
+     * @memberof AttributeSchema
+     */
+    public isIndex!: boolean;
+
+    /**
+     * @see IndexOptions
+     *
+     * @memberof AttributeSchema
+     */
+    public indexOptions: IndexOptions = {};
+
+    /**
      * @inheritdoc
      *
      * @memberof AttributeSchema
@@ -179,6 +193,12 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     private readonly _ctor: T;
 
+    /**
+     * Internal state which determines if the schema is fully built or not
+     *
+     * @private
+     * @memberof AttributeSchema
+     */
     private _constructed = false;
 
     public constructor(ctor: T, attributeName: keyof T, parameters: AttrOptionsPartialMetadataJson<T>) {
@@ -189,6 +209,13 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.buildSchema(parameters.type);
     }
 
+    /**
+     * Returns a promise which resolves when the schema was built the first time.
+     * Useful to ensure the correct order of decorator execution during setup.
+     *
+     * @returns a resolving promise
+     * @memberof AttributeSchema
+     */
     public awaitConstruction() {
         return new Promise((resolve) => {
             const interval = setInterval(() => {
@@ -199,6 +226,12 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         });
     }
 
+    /**
+     * Sets the model class for later use to be able to navigate through the models
+     *
+     * @param modelClass the class of the model to set
+     * @memberof AttributeSchema
+     */
     public setModelClass(modelClass: T) {
         if ((this._ctor as InstanceType<T>).className !== (modelClass as InstanceType<T>).className) return;
         // @ts-expect-error this is needed to be able to provide the ctor at runtime after construction
@@ -394,12 +427,26 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return values;
     }
 
+    /**
+     * Determines a flat version of the type identifier. The max depth is 1
+     *
+     * @param [altType] alternative type to get identifier from
+     * @returns the name of the identifier if exists
+     * @memberof AttributeSchema
+     */
     public getTypeIdentifier(altType?: IMetadata["type"]) {
         const type = altType || this.type;
         if (this.isArrayType(type)) return type.subType.identifier;
         return type.identifier;
     }
 
+    /**
+     * Determines the relation type based on the type of both relation ends
+     * and the relation column
+     *
+     * @returns null if no relation was found and the name corresponding to typeORMs relation names else
+     * @memberof AttributeSchema
+     */
     public async getRelationType() {
         if (!this.isModelType()) return null;
         const otherModel = await getModelClassByName(this.getTypeIdentifier());
@@ -480,6 +527,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.isModifiedDate = Boolean(params.isModifiedDate);
         this.isDeletedDate = Boolean(params.isDeletedDate);
         this.isVersion = Boolean(params.isVersion);
+        this.isIndex = Boolean(params.index);
         this.persistence = params.persistence ?? true;
 
         this.isGenerated = params.isGenerated;
@@ -488,8 +536,18 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.type = params.type;
         this.isRelationOwner = Boolean(params.isRelationOwner);
         this.relationColumn = params.relationColumn;
+        if (params.index && typeof params.index !== "boolean") this.indexOptions = params.index;
     }
 
+    /**
+     * Determines some default option for each column and the type of the column.
+     * If the type is somehow a model, it will build the corresponding relation,
+     * based on the type of both relation ends.
+     *
+     * @private
+     * @param type the type which should be used to build the schema
+     * @memberof AttributeSchema
+     */
     private async buildSchema(type: IMetadata["type"]) {
         // This is the correction described in decorator @Attr()
         const proto = this._ctor.prototype;
@@ -519,13 +577,26 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         } else if (this.isVersion) {
             VersionColumn(options)(proto, attrName);
         } else if (!await this.buildRelation(attrName, options)) Column(<any>typeName, options)(proto, attrName); // TODO Determine embedded entity (needs to be transformed first as a type)
+
+        if (this.isIndex) Index(this.indexOptions)(proto as any);
         this._constructed = true;
     }
 
+    /**
+     * Builds the relation when the attribute is somehow a model and takes
+     * the relation column into account. It also determines the
+     * relation column / relation table if possible.
+     *
+     * @private
+     * @param attributeName the name of the attribute to find relation for
+     * @param options options for the relation
+     * @returns true if a relation was build and false else
+     * @memberof AttributeSchema
+     */
     private async buildRelation(attributeName: string, options: RelationOptions) {
         const proto = this._ctor.prototype;
         const otherModel = await getModelClassByName(this.getTypeIdentifier());
-        if (!otherModel) return;
+        if (!otherModel) return false;
 
         const typeFunc = () => otherModel;
         // eslint-disable-next-line

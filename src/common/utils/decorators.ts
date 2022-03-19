@@ -8,7 +8,7 @@ import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetada
 import type { IMetadata } from "~common/types/MetadataTypes";
 import type { ModelOptions } from "~common/types/ModelClass";
 
-export function Model<T extends BaseModel>(options: ModelOptions<T> = {}): ClassDecorator {
+export function Model<T extends typeof BaseModel>(options: ModelOptions<T>): ClassDecorator {
     const metadataStore = new MetadataStore();
 
     return (target: any) => {
@@ -18,7 +18,7 @@ export function Model<T extends BaseModel>(options: ModelOptions<T> = {}): Class
         proto.className = options.className;
         proto.collectionName = options.collectionName;
 
-        const modelClass = <any>ModelClassFactory(<any>target, options);
+        const modelClass = ModelClassFactory(target, options);
         const attributeDefinitions = metadataStore.getAttributeSchemas(target);
         for (const attributeDefinition of attributeDefinitions) attributeDefinition.setModelClass(modelClass);
         const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions, options);

@@ -7,6 +7,15 @@ const lodash = addDeepdash(_);
 
 type eachDeepParams = Required<Parameters<typeof lodash.eachDeep>>;
 
+/**
+ * Loads the corresponding model class by its name, even if it is not loaded yet.
+ * To ensure the model class is loaded, this function checks if there is an
+ * export defined
+ *
+ * @export
+ * @param name name of the model class
+ * @returns a promise which resolves the model class if exists
+ */
 export function getModelClassByName(name: string) {
     try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires

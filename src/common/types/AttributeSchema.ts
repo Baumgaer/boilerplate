@@ -1,5 +1,5 @@
 import type { SetOptional } from "type-fest";
-import type { RelationOptions, Generated, ColumnOptions } from "typeorm";
+import type { RelationOptions, Generated, ColumnOptions, IndexOptions } from "typeorm";
 import type { ColumnCommonOptions } from "typeorm/decorator/options/ColumnCommonOptions";
 import type { ColumnEnumOptions } from "typeorm/decorator/options/ColumnEnumOptions";
 import type { ColumnHstoreOptions } from "typeorm/decorator/options/ColumnHstoreOptions";
@@ -56,7 +56,18 @@ export interface ISpecialColumns {
     isGenerated?: Parameters<typeof Generated>["0"]
 }
 
-export type AttrOptions<T extends typeof BaseModel> = Pick<RelationOptions, allowedAttrFields> & IRelations & ISpecialColumns & ThisType<T>
+export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, ThisType<T> {
+
+    /**
+     * Defines the attribute as an index column which can be used additionally
+     * with multi row index on model
+     *
+     * @memberof AttrOptions
+     */
+    index?: true | IndexOptions;
+}
+
+//export type AttrOptions<T extends typeof BaseModel> = Pick<RelationOptions, allowedAttrFields> & IRelations & ISpecialColumns & ThisType<T>
 export type AttrOptionsWithMetadataJson<T extends typeof BaseModel> = AttrOptions<T> & { metadataJson: string }
 export type AttrOptionsPartialMetadataJson<T extends typeof BaseModel> = IMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
 export type AttrObserverTypes = "add" | "remove" | "change"
