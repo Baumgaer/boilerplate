@@ -1,11 +1,10 @@
 import { v4 as uuid } from "uuid";
 import { reactive } from "vue";
-import { hasOwnProperty, camelCase } from "~common/utils/utils";
-import DefaultAttribute from "~env/attributes/DefaultAttribute";
+import BaseAttribute from "~env/lib/BaseAttribute";
+import { hasOwnProperty, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
-import type BaseAttribute from "~common/lib/BaseAttribute";
-import type BaseModel from "~common/lib/BaseModel";
 import type { ModelOptions } from "~common/types/ModelClass";
+import type BaseModel from "~env/lib/BaseModel";
 
 const attributes: Record<string, Constructor<BaseAttribute<typeof BaseModel>>> = {};
 const context = require.context("~env/attributes/", true, /.+\.ts/, "sync");
@@ -82,7 +81,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, o
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             for (const key in attributeSchemas) {
                 if (Object.prototype.hasOwnProperty.call(attributeSchemas, key)) {
-                    const attribute = new (attributes[key] || DefaultAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
+                    const attribute = new (attributes[key] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
                     Reflect.defineMetadata(`${ctor.name}:${key}:attribute`, attribute, this);
                 }
             }

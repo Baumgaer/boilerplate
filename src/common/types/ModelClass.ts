@@ -1,7 +1,7 @@
 import type { EntityOptions, IndexOptions } from "typeorm";
 import type BaseModel from "~common/lib/BaseModel";
 
-export type allowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";
+export type AllowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";
 
 export interface IMultiRowIndex {
 
@@ -46,4 +46,4 @@ export interface IExtraOptions {
     indexes?: [IMultiRowIndex, ...IMultiRowIndex[]];
 }
 
-export type ModelOptions<T extends typeof BaseModel> = Pick<EntityOptions, allowedModelFields> & IExtraOptions & ThisType<T>;
+export type ModelOptions<T extends typeof BaseModel> = Pick<EntityOptions, AllowedModelFields> & IExtraOptions & ThisType<T>;

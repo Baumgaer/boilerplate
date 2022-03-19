@@ -1,6 +1,5 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
-import { reactive } from "vue";
 import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { ApplyData, Options } from "on-change";
 import type AttributeSchema from "~common/lib/AttributeSchema";
@@ -44,7 +43,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;
         if (this.mustObserveChanges(newValue)) {
-            newValue = reactive(onChange(newValue, (...args) => this.changeCallback(...args), this.changeCallbackOptions));
+            newValue = this.addReactivity(onChange(newValue, (...args) => this.changeCallback(...args), this.changeCallbackOptions));
             this.observedValue = newValue;
         } else delete this.observedValue;
 
@@ -53,7 +52,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         return setResult;
     }
 
-    private changeCallback(path: (string | symbol)[], value: unknown, previousValue: unknown, _applyData: ApplyData): void {
+    protected changeCallback(path: (string | symbol)[], value: unknown, previousValue: unknown, _applyData: ApplyData): void {
         if (this.schema.isArrayType()) {
             if (path[0] === "length") return;
             if (previousValue === undefined && value !== undefined) {
@@ -67,17 +66,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         } else this.callHook("observer:change", value, { path, oldValue: previousValue });
     }
 
-    private mustObserveChanges(value: any) {
-        return this.hasHook(["observer:add", "observer:remove"]) && isChangeObservable(value) && !isChangeObserved(value);
-    }
-
-    private hasHook(hookName: string | string[]) {
-        const check = (name: string) => Boolean(Reflect.getMetadata(`${this.name}:${name}`, this.owner));
-        if (hookName instanceof Array) return hookName.some((name) => check(name));
-        return check(hookName);
-    }
-
-    private callHook(name: string, value?: any, parameters?: ObserverParameters<any>) {
+    protected callHook(name: string, value?: any, parameters?: ObserverParameters<any>) {
         const activeHookMetaKey = `${this.ctorName}:${this.name}:active${name}`;
         const hook = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
         if (!hook || Reflect.getMetadata(activeHookMetaKey, this.unProxyfiedOwner)) return;
@@ -88,4 +77,26 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
         return value;
     }
+
+    protected hasHook(hookName: string | string[]) {
+        const check = (name: string) => Boolean(Reflect.getMetadata(`${this.name}:${name}`, this.owner));
+        if (hookName instanceof Array) return hookName.some((name) => check(name));
+        return check(hookName);
+    }
+
+    private mustObserveChanges(value: any) {
+        return this.hasHook(["observer:add", "observer:remove"]) && isChangeObservable(value) && !isChangeObserved(value);
+    }
+
+    /**
+     * Adds additionally reactivity to an observable value.
+     * This can be used for example to add the reactivity of a frontend framework.
+     *
+     * @protected
+     * @abstract
+     * @param value the value to be reactive
+     * @returns the reactivated value
+     * @memberof BaseAttribute
+     */
+    protected abstract addReactivity(value: InstanceType<T>[this["name"]]): InstanceType<T>[this["name"]];
 }
