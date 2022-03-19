@@ -45,6 +45,7 @@ createConnection({
     useLocalForage: true,
     entities: modelClasses,
     synchronize: true,
+    logging: ["schema", "log", "migration"],
     sqlJsConfig: {
         locateFile: () => sqlWasm.href
     }

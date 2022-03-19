@@ -43,7 +43,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         const hookValue = this.callHook("setter", value);
         const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;
-        if (this.musstObserveChanges(newValue)) {
+        if (this.mustObserveChanges(newValue)) {
             newValue = reactive(onChange(newValue, (...args) => this.changeCallback(...args), this.changeCallbackOptions));
             this.observedValue = newValue;
         } else delete this.observedValue;
@@ -53,28 +53,37 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         return setResult;
     }
 
-    private changeCallback(path: (string | symbol)[], value: unknown, previousValue: unknown, applyData: ApplyData): void {
-        Reflect.set(Reflect.get(this.owner, "dataModel"), this.name, this.observedValue);
-        console.log(this.name, path, value, previousValue, applyData);
+    private changeCallback(path: (string | symbol)[], value: unknown, previousValue: unknown, _applyData: ApplyData): void {
+        if (this.schema.isArrayType()) {
+            if (path[0] === "length") return;
+            if (previousValue === undefined && value !== undefined) {
+                this.callHook("observer:add", value, { path, oldValue: previousValue });
+            } else if (previousValue !== undefined && value === undefined) {
+                this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
+            } else if (previousValue !== undefined && value !== undefined) {
+                this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
+                this.callHook("observer:add", value, { path, oldValue: previousValue });
+            }
+        } else this.callHook("observer:change", value, { path, oldValue: previousValue });
     }
 
-    private musstObserveChanges(value: any) {
+    private mustObserveChanges(value: any) {
         return this.hasHook(["observer:add", "observer:remove"]) && isChangeObservable(value) && !isChangeObserved(value);
     }
 
     private hasHook(hookName: string | string[]) {
-        const check = (name: string) => Boolean(Reflect.getMetadata(`${this.name}:${name}`, Object.getPrototypeOf(this.owner)));
+        const check = (name: string) => Boolean(Reflect.getMetadata(`${this.name}:${name}`, this.owner));
         if (hookName instanceof Array) return hookName.some((name) => check(name));
         return check(hookName);
     }
 
-    private callHook(name: string, value?: any) {
+    private callHook(name: string, value?: any, parameters?: ObserverParameters<any>) {
         const activeHookMetaKey = `${this.ctorName}:${this.name}:active${name}`;
-        const hook = Reflect.getMetadata(`${this.name}:${name}`, Object.getPrototypeOf(this.owner));
+        const hook = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
         if (!hook || Reflect.getMetadata(activeHookMetaKey, this.unProxyfiedOwner)) return;
 
         Reflect.defineMetadata(activeHookMetaKey, true, this.unProxyfiedOwner);
-        value = hook.value.call(this.owner, value);
+        value = hook.value.call(this.owner, value, parameters);
         Reflect.defineMetadata(activeHookMetaKey, false, this.unProxyfiedOwner);
 
         return value;

@@ -7,7 +7,7 @@ export default abstract class AnotherExample extends Example {
     public anotherExampleCommon: number[] = [];
 
     @AttrObserver("anotherExampleCommon", "add")
-    protected onAnotherExampleCommonAdd(value: number) {
-        console.log(value);
+    protected onAnotherExampleCommonAdd(value: number, parameters?: ObserverParameters<number>) {
+        console.log(value, parameters);
     }
 }

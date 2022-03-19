@@ -66,7 +66,7 @@ export function AttrSetter<T>(attributeName: keyof T) {
 }
 
 export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: any) => void>) => {
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: any, parameters?: ObserverParameters<any>) => void>) => {
         Reflect.defineMetadata(`${attributeName}:observer:${type}`, descriptor, target);
     };
 }
