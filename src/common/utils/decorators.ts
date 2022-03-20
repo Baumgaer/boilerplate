@@ -3,10 +3,10 @@ import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
 import ModelSchema from "~common/lib/ModelSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
-import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/types/AttributeSchema";
 import type { IMetadata } from "~common/types/MetadataTypes";
 import type { ModelOptions } from "~common/types/ModelClass";
+import type BaseModel from "~env/lib/BaseModel";
 
 export function Model<T extends typeof BaseModel>(options: ModelOptions<T>): ClassDecorator {
     const metadataStore = new MetadataStore();

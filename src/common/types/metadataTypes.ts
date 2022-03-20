@@ -17,7 +17,7 @@ export interface IMixedType {
 
 export interface IInterfaceType {
     isInterface: boolean,
-    members: Record<string, MetadataType>
+    members: Record<string, IMetadata>
 }
 
 export interface IUnresolvedType {

@@ -74,11 +74,11 @@ export default function transformer(program: ts.Program) {
             if (utils.isBoolean(type)) return resolveBoolean();
             if (utils.isLiteral(type)) return resolveLiteral(type);
             if (utils.isModel(type, sourceFile)) return resolveModel(type);
-            if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
             if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isDate(type, attr)) return resolveDate();
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr)) return resolveArray(attr, sourceFile);
+            if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
         }
@@ -148,8 +148,8 @@ export default function transformer(program: ts.Program) {
                 if ("valueDeclaration" in member) {
                     signature = <ts.PropertySignature>member.valueDeclaration;
                 } else signature = <ts.PropertySignature>member;
-                const type = typeChecker.getTypeAtLocation(signature);
-                members[signature.name.getText()] = resolveType(type, signature, sourceFile);
+                //const type = typeChecker.getTypeAtLocation(signature);
+                members[signature.name.getText()] = JSON.parse(processAttr(signature as unknown as any, sourceFile));
             });
 
             return { isInterface: true, members };

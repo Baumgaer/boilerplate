@@ -84,8 +84,10 @@ export function hasTypeLiteral(property: ts.PropertyDeclaration | ts.PropertySig
     return Boolean(kind && (kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral);
 }
 
-export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature) {
-    return Boolean(property.type && type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) || hasTypeLiteral(property));
+export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature): boolean {
+    return Boolean(property.type && type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) ||
+        hasTypeLiteral(property) ||
+        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property));
 }
 
 export function isTypeParameter(type: ts.Type): type is ts.TypeParameter {

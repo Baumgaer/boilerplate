@@ -23,7 +23,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, o
     }
 
     // @ts-expect-error Typescript does not recognize the constructor with the single rest parameter...
-    return class ModelClass extends ctor {
+    return new Proxy(class ModelClass extends ctor {
 
         public static isModelClass = true;
 
@@ -105,5 +105,5 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, o
             return this.getAttribute(stringProperty).set(value);
         }
 
-    };
+    }, { get: (target, property) => property === "name" ? options.className : Reflect.get(target, property) });
 }

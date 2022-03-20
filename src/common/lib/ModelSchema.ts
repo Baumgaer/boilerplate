@@ -85,9 +85,10 @@ export default class ModelSchema<T extends typeof BaseModel> {
         // Wait for all attribute schemas constructed to ensure order of decorators
         await Promise.all(Object.values(this.attributeSchemas).map((attributeSchema) => attributeSchema.awaitConstruction()));
         const proto = Object.getPrototypeOf(this.modelClass);
-        Entity(this.options.collectionName, {})(this.modelClass);
+        const options = Object.assign({}, this.options, { name: this.options.collectionName });
+        Entity(options.collectionName, options)(this.modelClass);
         if (proto.collectionName === this.modelClass.collectionName) TableInheritance({ column: { type: "varchar", name: "className" } })(this.modelClass);
-        if (this.options.indexes) for (const index of this.options.indexes) Index(index.columns, index.options)(proto);
+        if (options.indexes) for (const index of options.indexes) Index(index.columns, index.options)(proto);
         this._constructed = true;
     }
 }

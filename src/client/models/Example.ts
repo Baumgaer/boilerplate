@@ -11,6 +11,6 @@ export default class Example extends CommonExample {
     @Attr()
     public exampleClient: string = "test";
 
-    @Attr({ relationColumn: "oneToManyRelation", cascade: false })
+    @Attr({ relationColumn: "oneToManyRelation" })
     public manyToOneRelation!: YetAnotherExample;
 }

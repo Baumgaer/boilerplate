@@ -6,7 +6,7 @@
     "scripts": {
         "dev": "npm-run-all -p dev:*",
         "dev:app": "ionic cap run android -l --external",
-        "serve": "vue-cli-service serve",
+        "serve": "vue-cli-service serve --env development --deep-monitoring --source-map-support",
         "build": "vue-cli-service build",
         "test:unit": "vue-cli-service test:unit",
         "test:e2e": "vue-cli-service test:e2e",

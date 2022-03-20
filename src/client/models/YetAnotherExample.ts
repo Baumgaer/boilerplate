@@ -5,6 +5,6 @@ import type Example from "~client/models/Example";
 @Model({ className: "YetAnotherExample", collectionName: "yetAnotherExamples" })
 export default class YetAnotherExample extends CommonYetAnotherExample {
 
-    @Attr({ relationColumn: "manyToOneRelation" })
-    public oneToManyRelation?: Example[];
+    @Attr({ relationColumn: "manyToOneRelation", isRelationOwner: true })
+    public oneToManyRelation!: Example[];
 }

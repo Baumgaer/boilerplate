@@ -78,6 +78,13 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     public isLazy: boolean = false;
 
     /**
+     * @see AllColumnOptions["eager"]
+     *
+     * @memberof AttributeSchema
+     */
+    public isEager: boolean = false;
+
+    /**
      * @inheritdoc
      *
      * @memberof AttributeSchema
@@ -475,7 +482,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     protected getColumnTypeNameAndOptions(type: IMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
         let typeName: ColumnType = "text";
-        if (this.isArrayType()) {
+        if (this.isArrayType(type)) {
             typeName = "simple-array";
             defaultOptions.array = true;
         }
@@ -488,6 +495,10 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             defaultOptions.enum = this.getUnionTypeValues(type);
         }
         return [typeName, defaultOptions];
+    }
+
+    protected buildEmbeddedEntity(_attributeName: string, _type: IMetadata["type"]): any {
+        throw new Error("Not implemented!");
     }
 
     /**
@@ -531,11 +542,16 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.persistence = params.persistence ?? true;
 
         this.isGenerated = params.isGenerated;
-        this.cascade = params.cascade ?? true;
         this.orphanedRowAction = params.orphanedRowAction ?? "delete";
         this.type = params.type;
         this.isRelationOwner = Boolean(params.isRelationOwner);
         this.relationColumn = params.relationColumn;
+
+        if (!this.isRelationOwner) {
+            this.isEager = !this.isLazy;
+            this.cascade = params.cascade ?? true;
+        } else this.cascade = params.cascade ?? false;
+
         if (params.index && typeof params.index !== "boolean") this.indexOptions = params.index;
     }
 
@@ -548,13 +564,13 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @param type the type which should be used to build the schema
      * @memberof AttributeSchema
      */
-    private async buildSchema(type: IMetadata["type"]) {
+    private async buildSchema(type: IMetadata["type"], altProto?: object, altAttrName?: string) {
         // This is the correction described in decorator @Attr()
-        const proto = this._ctor.prototype;
-        const attrName = this.attributeName.toString();
+        const proto = altProto || this._ctor.prototype;
+        const attrName = altAttrName || this.attributeName.toString();
         const defaultOptions: AllColumnOptions = {
             lazy: this.isLazy,
-            eager: !this.isLazy,
+            eager: this.isEager,
             cascade: this.cascade,
             createForeignKeyConstraints: this.createForeignKeyConstraints,
             nullable: !this.isRequired,
@@ -576,7 +592,14 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             DeleteDateColumn(options)(proto, attrName);
         } else if (this.isVersion) {
             VersionColumn(options)(proto, attrName);
-        } else if (!await this.buildRelation(attrName, options)) Column(<any>typeName, options)(proto, attrName); // TODO Determine embedded entity (needs to be transformed first as a type)
+        } else if (!await this.buildRelation(attrName, options)) {
+            const embeddedEntity = this.buildEmbeddedEntity(attrName, type);
+            // eslint-disable-next-line @typescript-eslint/ban-types
+            let usedType: ColumnType | (() => Function) = typeName;
+            if (embeddedEntity) usedType = () => embeddedEntity;
+            console.debug(`Creating column ${this._ctor.name}#${attrName}: ${usedType} = ${JSON.stringify(options)}`);
+            Column(<any>usedType, options)(proto, attrName);
+        }
 
         if (this.isIndex) Index(this.indexOptions)(proto as any);
         this._constructed = true;
@@ -613,7 +636,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         };
         const relationType = await this.getRelationType();
         if (!relationType) return false;
-
+        console.debug(`Creating column ${this._ctor.name}#${attributeName}: ${otherModel.name} = ${relationType}#${JSON.stringify(options)}`);
         relationTypes[relationType](proto, attributeName);
         if (relationType === "OneToOne") {
             JoinColumn()(proto, attributeName);
