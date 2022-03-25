@@ -89,6 +89,7 @@ export default class ModelSchema<T extends typeof BaseModel> {
 
         if (proto.getSchema().isAbstract) {
             ChildEntity(this.modelName)(this.modelClass);
+            // @ts-expect-error 123
         } else if (this.isMother) { // TODO inject abstract info into model decorator as well as collectionName and className
             Entity(options.collectionName, options)(this.modelClass);
             TableInheritance({ column: { type: "varchar", name: "className" } })(this.modelClass);
