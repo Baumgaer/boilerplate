@@ -1,4 +1,4 @@
-import { Entity, Index, TableInheritance } from "typeorm";
+import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
 import type { ModelOptions } from "~common/types/ModelClass";
@@ -86,8 +86,13 @@ export default class ModelSchema<T extends typeof BaseModel> {
         await Promise.all(Object.values(this.attributeSchemas).map((attributeSchema) => attributeSchema.awaitConstruction()));
         const proto = Object.getPrototypeOf(this.modelClass);
         const options = Object.assign({}, this.options, { name: this.options.collectionName });
-        Entity(options.collectionName, options)(this.modelClass);
-        if (proto.collectionName === this.modelClass.collectionName) TableInheritance({ column: { type: "varchar", name: "className" } })(this.modelClass);
+
+        if (proto.getSchema().isAbstract) {
+            ChildEntity(this.modelName)(this.modelClass);
+        } else if (this.isMother) { // TODO inject abstract info into model decorator as well as collectionName and className
+            Entity(options.collectionName, options)(this.modelClass);
+            TableInheritance({ column: { type: "varchar", name: "className" } })(this.modelClass);
+        } else Entity(options.collectionName, options)(this.modelClass);
         if (options.indexes) for (const index of options.indexes) Index(index.columns, index.options)(proto);
         this._constructed = true;
     }
