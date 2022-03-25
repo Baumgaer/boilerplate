@@ -19,7 +19,7 @@ import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type BaseModel from "~common/lib/BaseModel";
 import type { AttrOptions, AttrOptionsPartialMetadataJson, AllColumnOptions } from "~common/types/AttributeSchema";
-import type { IMetadata } from "~common/types/MetadataTypes";
+import type { IAttrMetadata } from "~common/types/MetadataTypes";
 
 export default class AttributeSchema<T extends typeof BaseModel> implements AttrOptions<T> {
 
@@ -189,7 +189,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @private
      * @memberof AttributeSchema
      */
-    private type!: IMetadata["type"];
+    private type!: IAttrMetadata["type"];
 
     /**
      * This is the original class type which is used while construction.
@@ -266,7 +266,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a union type else false
      * @memberof AttributeSchema
      */
-    public isUnionType(altType?: IMetadata["type"]): boolean {
+    public isUnionType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return Boolean(type.isUnion);
     }
@@ -279,7 +279,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a intersection type else false
      * @memberof AttributeSchema
      */
-    public isIntersectionType(altType?: IMetadata["type"]): boolean {
+    public isIntersectionType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return Boolean(type.isIntersection);
     }
@@ -292,7 +292,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a literal type else false
      * @memberof AttributeSchema
      */
-    public isLiteralType(altType?: IMetadata["type"]): boolean {
+    public isLiteralType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.isLiteral || this.checkSubTypes(type, this.isLiteralType.bind(this));
     }
@@ -305,7 +305,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a string type else false
      * @memberof AttributeSchema
      */
-    public isStringType(altType?: IMetadata["type"]): boolean {
+    public isStringType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.isStringLiteral || type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
     }
@@ -318,7 +318,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a number type else false
      * @memberof AttributeSchema
      */
-    public isNumberType(altType?: IMetadata["type"]): boolean {
+    public isNumberType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.isNumberLiteral || type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
     }
@@ -331,7 +331,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a boolean type else false
      * @memberof AttributeSchema
      */
-    public isBooleanType(altType?: IMetadata["type"]): boolean {
+    public isBooleanType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.identifier === "Boolean" || this.checkSubTypes(type, this.isBooleanType.bind(this));
     }
@@ -344,7 +344,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a date type else false
      * @memberof AttributeSchema
      */
-    public isDateType(altType?: IMetadata["type"]): boolean {
+    public isDateType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.identifier === "Date" || this.checkSubTypes(type, this.isDateType.bind(this));
     }
@@ -357,7 +357,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a model type else false
      * @memberof AttributeSchema
      */
-    public isModelType(altType?: IMetadata["type"]): boolean {
+    public isModelType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return Boolean(type.isModel || this.checkSubTypes(type, this.isModelType.bind(this)));
     }
@@ -369,7 +369,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is an array type else false
      * @memberof AttributeSchema
      */
-    public isArrayType(altType?: IMetadata["type"]): boolean {
+    public isArrayType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.isArray || type.isTuple;
     }
@@ -382,7 +382,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a model type else false
      * @memberof AttributeSchema
      */
-    public isObjectLikeType(altType?: IMetadata["type"]): boolean {
+    public isObjectLikeType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.isInterface || type.isIntersection || this.isModelType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
     }
@@ -395,7 +395,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a model type else false
      * @memberof AttributeSchema
      */
-    public isPlainObjectType(altType?: IMetadata["type"]): boolean {
+    public isPlainObjectType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return Boolean(type.isInterface || this.checkSubTypes(type, this.isPlainObjectType.bind(this)));
     }
@@ -409,7 +409,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if it is a model type else false
      * @memberof AttributeSchema
      */
-    public isUnresolvedType(altType?: IMetadata["type"]): boolean {
+    public isUnresolvedType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
         return type.isMixed || type.isUnresolvedType || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
     }
@@ -421,7 +421,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns an empty array if is not a fully literal type and an array of strings or numbers else
      * @memberof AttributeSchema
      */
-    public getUnionTypeValues(altType?: IMetadata["type"]): (string | number)[] {
+    public getUnionTypeValues(altType?: IAttrMetadata["type"]): (string | number)[] {
         const type = altType || this.type;
         const values: any[] = [];
         if (!this.isUnionType(type)) return values;
@@ -441,7 +441,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns the name of the identifier if exists
      * @memberof AttributeSchema
      */
-    public getTypeIdentifier(altType?: IMetadata["type"]) {
+    public getTypeIdentifier(altType?: IAttrMetadata["type"]) {
         const type = altType || this.type;
         if (this.isArrayType(type)) return type.subType.identifier;
         return type.identifier;
@@ -480,7 +480,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns an array with two elements. first is the type, second are the options
      * @memberof AttributeSchema
      */
-    protected getColumnTypeNameAndOptions(type: IMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
+    protected getColumnTypeNameAndOptions(type: IAttrMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
         let typeName: ColumnType = "text";
         if (this.isArrayType(type)) {
             typeName = "simple-array";
@@ -497,7 +497,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return [typeName, defaultOptions];
     }
 
-    protected buildEmbeddedEntity(_attributeName: string, _type: IMetadata["type"]): any {
+    protected buildEmbeddedEntity(_attributeName: string, _type: IAttrMetadata["type"]): any {
         throw new Error("Not implemented!");
     }
 
@@ -510,7 +510,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if all types are of type checked by checkFunc and false else
      * @memberof AttributeSchema
      */
-    private checkSubTypes(arrayLikeType: IMetadata["type"], checkFunc: ((type?: IMetadata["type"]) => boolean)): boolean {
+    private checkSubTypes(arrayLikeType: IAttrMetadata["type"], checkFunc: ((type?: IAttrMetadata["type"]) => boolean)): boolean {
         if (this.isUnionType(arrayLikeType)) {
             return arrayLikeType.subTypes.every(checkFunc.bind(this));
         }
@@ -564,7 +564,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @param type the type which should be used to build the schema
      * @memberof AttributeSchema
      */
-    private async buildSchema(type: IMetadata["type"], altProto?: object, altAttrName?: string) {
+    private async buildSchema(type: IAttrMetadata["type"], altProto?: object, altAttrName?: string) {
         // This is the correction described in decorator @Attr()
         const proto = altProto || this._ctor.prototype;
         const attrName = altAttrName || this.attributeName.toString();

@@ -171,7 +171,7 @@ export function isValidSourceFile(sourceFile: ts.SourceFile): boolean {
     return validSourceFiles.some((path) => sourceFile.fileName.includes(path));
 }
 
-export function isValidAttrIdentifier(identifier: ts.Identifier, typeChecker: ts.TypeChecker) {
+export function isValidDecoratorImport(identifier: ts.Identifier, typeChecker: ts.TypeChecker) {
     const symbol = typeChecker.getSymbolAtLocation(identifier);
     if (!symbol) return false;
 
@@ -182,8 +182,17 @@ export function isValidAttrIdentifier(identifier: ts.Identifier, typeChecker: ts
 
     const importPath = importDeclaration.moduleSpecifier.text;
     const validAttrImports = ["~client/utils/decorators", "~common/utils/decorators", "~server/utils/decorators"];
-    const isValidImport = validAttrImports.some((attrImport) => importPath === attrImport);
-    return isValidImport;
+    return validAttrImports.some((attrImport) => importPath === attrImport);
+}
+
+export function isValidModelIdentifier(identifier: ts.Identifier, typeChecker: ts.TypeChecker) {
+    const isValidImport = isValidDecoratorImport(identifier, typeChecker);
+    return isValidImport && identifier.escapedText === "Model";
+}
+
+export function isValidAttrIdentifier(identifier: ts.Identifier, typeChecker: ts.TypeChecker) {
+    const isValidImport = isValidDecoratorImport(identifier, typeChecker);
+    return isValidImport && identifier.escapedText === "Attr";
 }
 
 export function resolveImportPath(importPath: string) {

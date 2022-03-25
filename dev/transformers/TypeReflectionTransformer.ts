@@ -1,3 +1,4 @@
+import { camelCase } from "lodash";
 import * as ts from "typescript";
 import * as utils from "../utils";
 
@@ -11,12 +12,19 @@ export default function transformer(program: ts.Program) {
 
         function processCallExpression(node: ts.CallExpression, sourceFile: ts.SourceFile) {
             if (!ts.isDecorator(node.parent)) return node;
-            if (!ts.isPropertyDeclaration(node.parent.parent)) return node;
-            if (ts.isIdentifier(node.expression) && !utils.isValidAttrIdentifier(node.expression, typeChecker)) return node;
 
-            const metadataJson = processAttr(node.parent.parent, sourceFile);
+            let metadataJson;
+            if (ts.isPropertyDeclaration(node.parent.parent)) {
+                if (!ts.isIdentifier(node.expression) || !utils.isValidAttrIdentifier(node.expression, typeChecker)) return node;
+                metadataJson = processAttr(node.parent.parent, sourceFile);
+            } else if (ts.isClassDeclaration(node.parent.parent)) {
+                if (!ts.isIdentifier(node.expression) || !utils.isValidModelIdentifier(node.expression, typeChecker)) return node;
+                metadataJson = processModel(node.parent.parent, sourceFile);
+            }
+
+            if (!metadataJson) return node;
+
             const argument = <ts.ObjectLiteralExpression>node.arguments[0];
-
             let objectLiteralExpression = null;
             if (!argument) {
                 objectLiteralExpression = ts.factory.createObjectLiteralExpression([ts.factory.createPropertyAssignment(
@@ -35,13 +43,22 @@ export default function transformer(program: ts.Program) {
             return ts.factory.updateCallExpression(node, node.expression, node.typeArguments, [objectLiteralExpression]);
         }
 
+        function processModel(model: ts.ClassDeclaration, _sourceFile: ts.SourceFile) {
+            const name = model.name?.getText();
+            console.info(`processing model ${name}`);
+
+            const isAbstract = model.modifiers?.some((modifier) => modifier.kind === ts.SyntaxKind.AbstractKeyword);
+            const className = name;
+            const collectionName = `${camelCase(name)}s`;
+
+            return JSON.stringify({ isAbstract, className, collectionName });
+        }
+
         function processAttr(attr: ts.PropertyDeclaration, sourceFile: ts.SourceFile) {
 
             const name = attr.name.getText();
             console.info(`processing attribute ${name}`);
             const type = resolveType(typeChecker.getTypeAtLocation(attr), attr, sourceFile);
-
-            //console.log(attr.name.getText(), JSON.stringify(type));
 
             const isRequired = !attr.questionToken && !attr.initializer || attr.exclamationToken && !attr.initializer;
             const isReadOnly = attr.modifiers?.some((modifier) => modifier?.kind === ts.SyntaxKind.ReadonlyKeyword);

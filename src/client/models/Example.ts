@@ -2,7 +2,7 @@ import { Attr, Model } from "~client/utils/decorators";
 import CommonExample from "~common/models/Example";
 import type YetAnotherExample from "~client/models/YetAnotherExample";
 
-@Model({ className: "Example", collectionName: "examples" })
+@Model()
 export default class Example extends CommonExample {
 
     @Attr()

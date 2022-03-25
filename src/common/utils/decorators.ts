@@ -4,16 +4,20 @@ import ModelClassFactory from "~common/lib/ModelClass";
 import ModelSchema from "~common/lib/ModelSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/types/AttributeSchema";
-import type { IMetadata } from "~common/types/MetadataTypes";
-import type { ModelOptions } from "~common/types/ModelClass";
+import type { IAttrMetadata, IModelMetadata } from "~common/types/MetadataTypes";
+import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~common/types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
-export function Model<T extends typeof BaseModel>(options: ModelOptions<T>): ClassDecorator {
+export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {}): ClassDecorator {
     const metadataStore = new MetadataStore();
+    const metadata: IModelMetadata = JSON.parse((<ModelOptionsWithMetadataJson<T>>options).metadataJson);
+    const metadataOptions: ModelOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <ModelOptionsWithMetadataJson<T>>options);
+    delete metadataOptions.metadataJson;
 
     return (target: any) => {
         // Set the class name and collectionName on prototype to have access to
         // that properties on whole prototype chain
+        const options = metadataOptions;
         const proto = Object.getPrototypeOf(target);
         proto.className = options.className;
         proto.collectionName = options.collectionName;
@@ -29,8 +33,8 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T>): Cla
 
 export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): PropertyDecorator {
     const metadataStore = new MetadataStore();
-    const metadata: IMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
-    const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, <AttrOptionsWithMetadataJson<T>>options, metadata);
+    const metadata: IAttrMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
+    const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <AttrOptionsWithMetadataJson<T>>options);
     delete metadataOptions.metadataJson;
 
     return (target) => {

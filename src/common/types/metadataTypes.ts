@@ -17,7 +17,7 @@ export interface IMixedType {
 
 export interface IInterfaceType {
     isInterface: boolean,
-    members: Record<string, IMetadata>
+    members: Record<string, IAttrMetadata>
 }
 
 export interface IUnresolvedType {
@@ -52,7 +52,13 @@ export interface ITupleType {
     subTypes: MetadataType[]
 }
 
-export interface IMetadata {
+export interface IModelMetadata {
+    className: string;
+    collectionName: string;
+    isAbstract: boolean;
+}
+
+export interface IAttrMetadata {
     name: string;
     isInternal: boolean;
     isReadOnly: boolean;

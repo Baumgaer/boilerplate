@@ -1,6 +1,6 @@
 import "reflect-metadata";
 import { IonicVue } from '@ionic/vue';
-import { createConnection } from "typeorm";
+import { DataSource } from "typeorm";
 import { createApp } from 'vue';
 import App from '~client/App.vue';
 import router from '~client/routes';
@@ -38,7 +38,7 @@ const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
 // Wait for all model schemas constructed to ensure all models have correct relations
 const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
 await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
-createConnection({
+await new DataSource({
     type: "sqljs",
     autoSave: true,
     location: "test",
@@ -49,7 +49,7 @@ createConnection({
     sqlJsConfig: {
         locateFile: () => sqlWasm.href
     }
-});
+}).initialize();
 
 const app = createApp(App)
     .use(IonicVue)

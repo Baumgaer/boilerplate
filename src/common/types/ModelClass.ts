@@ -1,5 +1,7 @@
+import type { SetOptional } from "type-fest";
 import type { EntityOptions, IndexOptions } from "typeorm";
 import type BaseModel from "~common/lib/BaseModel";
+import type { IModelMetadata } from "~common/types/MetadataTypes";
 
 export type AllowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";
 
@@ -39,6 +41,12 @@ export interface IExtraOptions {
     collectionName?: string;
 
     /**
+     * Marks a model explicitly as an abstract class which enables single
+     * table model inheritance.
+     */
+    isAbstract?: boolean;
+
+    /**
      * Defines multi row indexes. The order defines the importance
      *
      * @memberof IExtraOptions
@@ -47,3 +55,5 @@ export interface IExtraOptions {
 }
 
 export type ModelOptions<T extends typeof BaseModel> = Pick<EntityOptions, AllowedModelFields> & IExtraOptions & ThisType<T>;
+export type ModelOptionsWithMetadataJson<T extends typeof BaseModel> = ModelOptions<T> & { metadataJson: string }
+export type ModelOptionsPartialMetadataJson<T extends typeof BaseModel> = IModelMetadata & SetOptional<ModelOptionsWithMetadataJson<T>, "metadataJson">;
