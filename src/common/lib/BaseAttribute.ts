@@ -4,6 +4,7 @@ import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { ApplyData, Options } from "on-change";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
+import type { IAttributeChange } from "~common/types/AttributeSchema";
 
 export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
@@ -17,16 +18,18 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
     protected readonly unProxyfiedOwner: InstanceType<T>;
 
-    private readonly ctorName: string;
+    private readonly ownerName: string;
 
     private observedValue?: InstanceType<T>[this["name"]];
+
+    private changes: IAttributeChange[] = [];
 
     public constructor(owner: InstanceType<T>, name: keyof InstanceType<T>, attributeSchema: AttributeSchema<T>) {
         this.owner = owner;
         this.unProxyfiedOwner = owner.unProxyfiedModel;
         this.name = name;
         this.schema = attributeSchema;
-        this.ctorName = (<typeof BaseModel>Object.getPrototypeOf(this.unProxyfiedOwner.constructor)).name;
+        this.ownerName = (<typeof BaseModel>Object.getPrototypeOf(this.unProxyfiedOwner.constructor)).name;
     }
 
     private get changeCallbackOptions(): Options & { pathAsArray: true } {
@@ -50,26 +53,55 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         } else delete this.observedValue;
 
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
-        if (setResult && oldValue !== newValue) this.callHook("observer:change", newValue);
+        if (setResult && oldValue !== newValue) {
+            this.callHook("observer:change", newValue);
+            this.changes.push({ type: "change", path: [], value: newValue });
+        }
         return setResult;
+    }
+
+    public hasChanges() {
+        return Boolean(this.changes.length);
+    }
+
+    public getChanges() {
+        return this.changes.slice();
+    }
+
+    public removeChanges() {
+        this.changes = [];
+    }
+
+    public undoChanges() {
+        throw new Error("Not implemented");
     }
 
     protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]], _applyData: ApplyData): void {
         if (this.schema.isArrayType()) {
             if (path[0] === "length") return;
+            const changePath = path.slice(0, path.length);
+            const index = parseInt(path[path.length - 1].toString());
+
             if (previousValue === undefined && value !== undefined) {
                 this.callHook("observer:add", value, { path, oldValue: previousValue });
+                this.changes.push({ type: "add", path: changePath, index, value });
             } else if (previousValue !== undefined && value === undefined) {
                 this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
+                this.changes.push({ type: "remove", path: changePath, index, value });
             } else if (previousValue !== undefined && value !== undefined) {
                 this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
+                this.changes.push({ type: "remove", path: changePath, index, value });
                 this.callHook("observer:add", value, { path, oldValue: previousValue });
+                this.changes.push({ type: "add", path: changePath, index, value });
             }
-        } else this.callHook("observer:change", value, { path, oldValue: previousValue });
+        } else {
+            this.callHook("observer:change", value, { path, oldValue: previousValue });
+            this.changes.push({ type: "change", path, value });
+        }
     }
 
     protected callHook(name: string, value?: InstanceType<T>[this["name"]], parameters?: ObserverParameters<unknown>) {
-        const activeHookMetaKey = `${this.ctorName}:${this.name}:active${name}`;
+        const activeHookMetaKey = `${this.ownerName}:${this.name}:active${name}`;
         const hook: any | undefined = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
         if (!hook || Reflect.getMetadata(activeHookMetaKey, this.unProxyfiedOwner)) return;
 
@@ -94,11 +126,8 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * Adds additionally reactivity to an observable value.
      * This can be used for example to add the reactivity of a frontend framework.
      *
-     * @protected
-     * @abstract
      * @param value the value to be reactive
      * @returns the reactivated value
-     * @memberof BaseAttribute
      */
     protected abstract addReactivity(value: InstanceType<T>[this["name"]]): InstanceType<T>[this["name"]];
 }

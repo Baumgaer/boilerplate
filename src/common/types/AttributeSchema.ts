@@ -70,6 +70,13 @@ export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOp
     primary?: boolean;
 }
 
+export interface IAttributeChange {
+    type: AttrObserverTypes;
+    path: (string | symbol)[];
+    index?: number;
+    value: unknown
+}
+
 //export type AttrOptions<T extends typeof BaseModel> = Pick<RelationOptions, allowedAttrFields> & IRelations & ISpecialColumns & ThisType<T>
 export type AttrOptionsWithMetadataJson<T extends typeof BaseModel> = AttrOptions<T> & { metadataJson: string }
 export type AttrOptionsPartialMetadataJson<T extends typeof BaseModel> = IAttrMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;

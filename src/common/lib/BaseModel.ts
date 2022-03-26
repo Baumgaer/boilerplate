@@ -3,6 +3,7 @@ import MetadataStore from "~common/lib/MetadataStore";
 import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
 import type BaseAttribute from "~common/lib/BaseAttribute";
+import type { IAttributeChange } from "~common/types/AttributeSchema";
 
 export default abstract class BaseModel extends BaseEntity {
 
@@ -101,8 +102,48 @@ export default abstract class BaseModel extends BaseEntity {
         return Reflect.getMetadata(`${(<typeof BaseModel>Object.getPrototypeOf(this.constructor)).name}:${name}:attribute`, this.unProxyfiedModel);
     }
 
-    public discard() {
-        throw new Error("Not implemented");
+    public getAttributes<T extends typeof BaseModel>(this: InstanceType<T>) {
+        const schema = this.getSchema();
+        if (!schema?.attributeSchemas) return [];
+        const attributes: BaseAttribute<T>[] = [];
+        for (const attrName of Object.keys(schema.attributeSchemas)) {
+            attributes.push(this.getAttribute(attrName));
+        }
+        return attributes;
+    }
+
+    public hasChanges() {
+        const attributes = this.getAttributes();
+        for (const attribute of attributes) {
+            if (attribute.hasChanges()) return true;
+        }
+        return false;
+    }
+
+    public getChanges() {
+        const changes = {} as Record<keyof this, IAttributeChange[]>;
+        if (!this.hasChanges()) return changes;
+
+        const attributes = this.getAttributes();
+        for (const attribute of attributes) {
+            if (!attribute.hasChanges()) continue;
+            changes[attribute.name] = attribute.getChanges();
+        }
+        return changes;
+    }
+
+    public removeChanges() {
+        const attributes = this.getAttributes();
+        for (const attribute of attributes) {
+            attribute.removeChanges();
+        }
+    }
+
+    public undoChanges() {
+        const attributes = this.getAttributes();
+        for (const attribute of attributes) {
+            attribute.undoChanges();
+        }
     }
 
 }
