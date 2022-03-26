@@ -9,7 +9,7 @@ export default class ModelSchema<T extends typeof BaseModel> {
      * Holds the class object which created the schema. This is only a valid
      * value after processing the schema of the class!
      */
-    public readonly modelClass: T;
+    public readonly owner: T;
 
     /**
      * The name of the class in the schema. Corresponds to the model
@@ -44,7 +44,7 @@ export default class ModelSchema<T extends typeof BaseModel> {
     private _constructed = false;
 
     public constructor(modelClass: T, name: string, schemas: AttributeSchema<T>[], options: ModelOptions<T>) {
-        this.modelClass = modelClass;
+        this.owner = modelClass;
         this.modelName = name;
         this.collectionName = options.collectionName as string;
         this.isAbstract = options.isAbstract as boolean;
@@ -85,15 +85,15 @@ export default class ModelSchema<T extends typeof BaseModel> {
     private async applyEntity() {
         // Wait for all attribute schemas constructed to ensure order of decorators
         await Promise.all(Object.values(this.attributeSchemas).map((attributeSchema) => attributeSchema.awaitConstruction()));
-        const proto: typeof BaseModel = Object.getPrototypeOf(this.modelClass);
+        const proto: typeof BaseModel = Object.getPrototypeOf(this.owner);
         const options = Object.assign({}, this.options, { name: this.options.collectionName });
 
         if (proto.getSchema()?.isAbstract) {
-            ChildEntity(this.modelName)(this.modelClass);
+            ChildEntity(this.modelName)(this.owner);
         } else if (this.isAbstract) {
-            Entity(options.collectionName, options)(this.modelClass);
-            TableInheritance({ column: { type: "varchar", name: "className" } })(this.modelClass);
-        } else Entity(options.collectionName, options)(this.modelClass);
+            Entity(options.collectionName, options)(this.owner);
+            TableInheritance({ column: { type: "varchar", name: "className" } })(this.owner);
+        } else Entity(options.collectionName, options)(this.owner);
         if (options.indexes) for (const index of options.indexes) Index(index.columns, index.options)(proto);
         this._constructed = true;
     }

@@ -13,6 +13,18 @@ export default abstract class BaseModel extends BaseEntity {
     @Attr({ primary: true })
     public readonly id!: string;
 
+    @Attr({ isCreationDate: true })
+    public readonly createdAt: Date = new Date();
+
+    @Attr({ isModifiedDate: true })
+    public readonly modifiedAt: Date = new Date();
+
+    @Attr({ isDeletedDate: true })
+    public readonly deletedAt!: Date;
+
+    @Attr({ isVersion: true })
+    public readonly version: number = 0;
+
     @Attr()
     public name!: string;
 
@@ -67,7 +79,7 @@ export default abstract class BaseModel extends BaseEntity {
 
     public toObject() {
         const obj: Partial<ConstructionParams<this>> = {};
-        eachDeep(this, (value, key, parentValue, context) => {
+        eachDeep(this, (value: unknown, key, parentValue: unknown, context) => {
             if (parentValue instanceof BaseModel) {
                 const attribute = parentValue.getAttribute(key.toString());
                 if (!attribute || attribute.schema.isInternal) return false;
@@ -86,7 +98,7 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public getAttribute<T extends typeof BaseModel>(this: InstanceType<T>, name: string): BaseAttribute<T> {
-        return Reflect.getMetadata(`${Object.getPrototypeOf(this.constructor).name}:${name}:attribute`, this.unProxyfiedModel);
+        return Reflect.getMetadata(`${(<typeof BaseModel>Object.getPrototypeOf(this.constructor)).name}:${name}:attribute`, this.unProxyfiedModel);
     }
 
     public discard() {

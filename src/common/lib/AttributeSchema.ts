@@ -29,7 +29,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @memberof AttributeSchema
      */
-    public readonly modelClass?: T;
+    public readonly owner?: T;
 
     /**
      * The name of the attribute in the schema. Corresponds to the attribute
@@ -236,13 +236,13 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     /**
      * Sets the model class for later use to be able to navigate through the models
      *
-     * @param modelClass the class of the model to set
+     * @param owner the class of the model to set
      * @memberof AttributeSchema
      */
-    public setModelClass(modelClass: T) {
-        if ((this._ctor as InstanceType<T>).className !== (modelClass as InstanceType<T>).className) return;
+    public setOwner(owner: T) {
+        if ((this._ctor as InstanceType<T>).className !== (owner as InstanceType<T>).className) return;
         // @ts-expect-error this is needed to be able to provide the ctor at runtime after construction
-        this.modelClass = modelClass;
+        this.owner = owner;
     }
 
     /**

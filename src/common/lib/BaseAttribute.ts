@@ -26,7 +26,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         this.unProxyfiedOwner = owner.unProxyfiedModel;
         this.name = name;
         this.schema = attributeSchema;
-        this.ctorName = Object.getPrototypeOf(this.unProxyfiedOwner.constructor).name;
+        this.ctorName = (<typeof BaseModel>Object.getPrototypeOf(this.unProxyfiedOwner.constructor)).name;
     }
 
     private get changeCallbackOptions(): Options & { pathAsArray: true } {
@@ -43,7 +43,9 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;
         if (this.mustObserveChanges(newValue)) {
-            newValue = this.addReactivity(onChange(newValue, (...args) => this.changeCallback(...args), this.changeCallbackOptions));
+            newValue = this.addReactivity(onChange(newValue, (path, value, previousValue, applyData) => {
+                this.changeCallback(path, value as InstanceType<T>[this["name"]], previousValue as InstanceType<T>[this["name"]], applyData);
+            }, this.changeCallbackOptions));
             this.observedValue = newValue;
         } else delete this.observedValue;
 
@@ -52,7 +54,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         return setResult;
     }
 
-    protected changeCallback(path: (string | symbol)[], value: unknown, previousValue: unknown, _applyData: ApplyData): void {
+    protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]], _applyData: ApplyData): void {
         if (this.schema.isArrayType()) {
             if (path[0] === "length") return;
             if (previousValue === undefined && value !== undefined) {
@@ -66,9 +68,9 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         } else this.callHook("observer:change", value, { path, oldValue: previousValue });
     }
 
-    protected callHook(name: string, value?: any, parameters?: ObserverParameters<any>) {
+    protected callHook(name: string, value?: InstanceType<T>[this["name"]], parameters?: ObserverParameters<unknown>) {
         const activeHookMetaKey = `${this.ctorName}:${this.name}:active${name}`;
-        const hook = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
+        const hook: any | undefined = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
         if (!hook || Reflect.getMetadata(activeHookMetaKey, this.unProxyfiedOwner)) return;
 
         Reflect.defineMetadata(activeHookMetaKey, true, this.unProxyfiedOwner);
@@ -84,7 +86,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         return check(hookName);
     }
 
-    private mustObserveChanges(value: any) {
+    private mustObserveChanges(value: unknown): value is object {
         return this.hasHook(["observer:add", "observer:remove"]) && isChangeObservable(value) && !isChangeObserved(value);
     }
 

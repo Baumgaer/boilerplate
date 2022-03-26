@@ -31,7 +31,7 @@ export default class MetadataStore {
 
     public getAttributeSchemas<T extends typeof BaseModel>(target: T): AttributeSchema<T>[] {
         const attributeDefinitions: Record<string, AttributeSchema<T>> = {};
-        const metadataKeys = Reflect.getMetadataKeys(target).slice().reverse();
+        const metadataKeys: string[] = Reflect.getMetadataKeys(target).slice().reverse();
         for (const key of metadataKeys) {
             const attributeName = key.split(":")[1];
             if (key.endsWith("definition")) attributeDefinitions[attributeName] = Reflect.getMetadata(key, target);

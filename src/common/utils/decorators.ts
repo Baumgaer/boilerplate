@@ -18,13 +18,15 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {})
         // Set the class name and collectionName on prototype to have access to
         // that properties on whole prototype chain
         const options = metadataOptions;
-        const proto = Object.getPrototypeOf(target);
+        const proto: typeof BaseModel = Object.getPrototypeOf(target);
+        // @ts-expect-error This is readonly to prevent setting it while normal development
         proto.className = options.className;
+        // @ts-expect-error This is readonly to prevent setting it while normal development
         proto.collectionName = options.collectionName;
 
         const modelClass = ModelClassFactory(target, options);
         const attributeDefinitions = metadataStore.getAttributeSchemas(target);
-        for (const attributeDefinition of attributeDefinitions) attributeDefinition.setModelClass(modelClass);
+        for (const attributeDefinition of attributeDefinitions) attributeDefinition.setOwner(modelClass);
         const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions, options);
         metadataStore.setModelSchema(target, target.className, modelSchema);
         return modelClass;
@@ -52,7 +54,7 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
 }
 
 export function AttrValidator<T>(attributeName: keyof T) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => boolean>) => {
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], boolean>>) => {
         Reflect.defineMetadata(`${attributeName}:validator`, descriptor, target);
     };
 }
@@ -64,19 +66,19 @@ export function AttrGetter<T>(attributeName: keyof T) {
 }
 
 export function AttrSetter<T>(attributeName: keyof T) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName]) => T[typeof attributeName]>) => {
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], T[typeof attributeName]>>) => {
         Reflect.defineMetadata(`${attributeName}:setter`, descriptor, target);
     };
 }
 
 export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: any, parameters?: ObserverParameters<any>) => void>) => {
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<ObserverHookFunction<any>>) => {
         Reflect.defineMetadata(`${attributeName}:observer:${type}`, descriptor, target);
     };
 }
 
 export function AttrTransformer<T>(attributeName: keyof T, type: AttrObserverTypes) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<(value: T[typeof attributeName], user: any) => T[typeof attributeName]>) => {
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<TransformerHookFunction<T[typeof attributeName], unknown>>) => {
         Reflect.defineMetadata(`${attributeName}:transformer:${type}`, descriptor, target);
     };
 }

@@ -19,10 +19,10 @@ type eachDeepParams = Required<Parameters<typeof lodash.eachDeep>>;
 export function getModelClassByName(name: string) {
     try {
         // eslint-disable-next-line @typescript-eslint/no-var-requires
-        let module = require("~env/models/" + name);
+        let module: ModuleLike<typeof BaseModel> = require("~env/models/" + name);
         return new Promise<typeof BaseModel>((resolve) => {
             const interval = setInterval(() => {
-                if (!module.default) {
+                if (!module || !module.default) {
                     module = require("~env/models/" + name);
                     return;
                 }
@@ -35,8 +35,8 @@ export function getModelClassByName(name: string) {
     }
 }
 
-export function eachDeep(obj: any, callback: eachDeepParams["1"], options: eachDeepParams["2"] = {}): ReturnType<typeof lodash.eachDeep> {
-    return lodash.eachDeep(obj, (value, key, parentValue, context) => {
+export function eachDeep(obj: object, callback: eachDeepParams["1"], options: eachDeepParams["2"] = {}): ReturnType<typeof lodash.eachDeep> {
+    return lodash.eachDeep(obj, (value: unknown, key, parentValue: unknown, context) => {
         if (context.isCircular) return false;
         return callback(value, key, parentValue, context);
     }, Object.assign({ pathFormat: "array", checkCircular: true, includeRoot: false }, options));
@@ -71,7 +71,7 @@ export function resolveProxy<T>(value: T): T {
     return resolveProxy(onChange.target(value));
 }
 
-export function hasOwnProperty(value: any, key: string) {
+export function hasOwnProperty(value: object, key: string) {
     if (!isObjectLike(value)) return false;
     return Object.prototype.hasOwnProperty.call(value, key);
 }
@@ -80,9 +80,9 @@ export function isChangeObservable(value: unknown) {
     return value instanceof Array || value instanceof Set || value instanceof Map;
 }
 
-export function isChangeObserved(value: any) {
-    if (!isValue(value)) return false;
-    if (onChange.target(value) === value) return false;
+export function isChangeObserved(value: unknown) {
+    if (!isValue(value) || !isObjectLike(value)) return false;
+    if (onChange.target(value as object) === value) return false;
     return true;
 }
 
@@ -90,7 +90,7 @@ export function isUndefined(...args: Parameters<typeof _["isUndefined"]>): Retur
     return _.isUndefined(...args);
 }
 
-export function isValue(value: any): boolean {
+export function isValue(value: unknown): boolean {
     return !isUndefined(value) && !isNull(value);
 }
 

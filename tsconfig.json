@@ -50,7 +50,8 @@
         "src/**/*.vue",
         "dev/**/*.ts",
         "tests/**/*.ts",
-        "tests/**/*.tsx"
+        "tests/**/*.tsx",
+        "src/client/shims-vue.d.ts"
     ],
     "exclude": [
         "node_modules"

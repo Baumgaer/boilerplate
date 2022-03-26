@@ -9,23 +9,22 @@ import type BaseModel from "~env/lib/BaseModel";
 const attributes: Record<string, Constructor<BaseAttribute<typeof BaseModel>>> = {};
 const context = require.context("~env/attributes/", true, /.+\.ts/, "sync");
 context.keys().forEach((key) => {
-    attributes[camelCase(key.substring(2, key.length - 3))] = context(key).default;
+    attributes[camelCase(key.substring(2, key.length - 3))] = (<ModuleLike<Constructor<BaseAttribute<typeof BaseModel>>>>context(key)).default;
 });
 
-export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, options: ModelOptions<T>) {
+export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & { isModelClass: boolean }, options: ModelOptions<T>) {
 
     // Remove ModelClass from prototype chain of ctor to avoid double registration
     // of proxy and other ModelClass stuff
-    if ((<any>ctor).isModelClass) {
+    if (ctor.isModelClass) {
         const classPrototype = Reflect.getPrototypeOf(ctor);
-        const prototype: any = classPrototype && Reflect.getPrototypeOf(classPrototype);
-        if (classPrototype && (<any>prototype).isModelClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
+        const prototype = classPrototype && Reflect.getPrototypeOf(classPrototype) as typeof ctor | null;
+        if (classPrototype && prototype && prototype.isModelClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
     }
 
-    // @ts-expect-error Typescript does not recognize the constructor with the single rest parameter...
     return new Proxy(class ModelClass extends ctor {
 
-        public static isModelClass = true;
+        public static override isModelClass = true;
 
         public static override readonly className = options.className as string;
 
@@ -94,14 +93,14 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T, o
         private get(target: this, propertyName: string | symbol) {
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
-            if (!hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
+            if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
             return this.getAttribute(stringProperty).get();
         }
 
         private set(target: this, propertyName: string | symbol, value: any) {
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
-            if (!hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
+            if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
             return this.getAttribute(stringProperty).set(value);
         }
 
