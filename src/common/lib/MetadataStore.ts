@@ -1,4 +1,5 @@
 import type AttributeSchema from "~common/lib/AttributeSchema";
+import type BaseAttribute from "~common/lib/BaseAttribute";
 import type BaseModel from "~common/lib/BaseModel";
 import type ModelSchema from "~common/lib/ModelSchema";
 import type { AttrOptionsPartialMetadataJson } from "~common/types/AttributeSchema";
@@ -10,6 +11,8 @@ export default class MetadataStore {
     private attributeDefinitions: Record<string, AttributeSchema<any>[]> = {};
 
     private modelDefinitions: Record<string, ModelSchema<any>> = {};
+
+    private attributes = new WeakMap<BaseModel, Record<string, BaseAttribute<any>>>();
 
     public constructor() {
         if (MetadataStore.instance) return MetadataStore.instance;
@@ -57,5 +60,19 @@ export default class MetadataStore {
         if (schemaName && this.modelDefinitions[schemaName]) return this.modelDefinitions[schemaName];
         if (target) return Reflect.getMetadata(`${target.constructor.name}:schema`, target) || null;
         return null;
+    }
+
+    public setAttribute<T extends typeof BaseModel>(target: InstanceType<T>, attributeName: string, attribute: BaseAttribute<T>) {
+        if (!this.attributes.has(target)) this.attributes.set(target, {});
+        const attributes = this.attributes.get(target);
+        if (attributes) Reflect.set(attributes, attributeName, attribute);
+    }
+
+    public getAttribute<T extends typeof BaseModel>(target: InstanceType<T>, attributeName: string): BaseAttribute<T> | undefined {
+        return this.attributes.get(target)?.[attributeName];
+    }
+
+    public getAttributes<T extends typeof BaseModel>(target: InstanceType<T>): BaseAttribute<T>[] {
+        return Object.values(this.attributes.get(target) ?? {});
     }
 }

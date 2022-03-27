@@ -6,9 +6,9 @@ import { Controller } from "~client/utils/decorators";
 @Controller({ components: { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } })
 export default class HomePage extends BaseController {
 
-    public model = new AnotherExample({ baseModelClient: "Test", anotherExampleClient: [1, 2, 3] });
+    public model = new AnotherExample({ name: "waddehaddeduddeda", baseModelClient: "Test", anotherExampleClient: [1, 2, 3] });
 
     public override mounted() {
-        console.log(this.model.toObject());
+        console.log(this.model, this.model.toObject());
     }
 }

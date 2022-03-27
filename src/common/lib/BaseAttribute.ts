@@ -1,6 +1,6 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
-import { isChangeObservable, isChangeObserved } from "~common/utils/utils";
+import { getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { ApplyData, Options } from "on-change";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
@@ -29,7 +29,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         this.unProxyfiedOwner = owner.unProxyfiedModel;
         this.name = name;
         this.schema = attributeSchema;
-        this.ownerName = (<typeof BaseModel>Object.getPrototypeOf(this.unProxyfiedOwner.constructor)).name;
+        this.ownerName = owner.className;
     }
 
     private get changeCallbackOptions(): Options & { pathAsArray: true } {
@@ -42,6 +42,8 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     }
 
     public set(value: InstanceType<T>[this["name"]]): boolean {
+        let changeType: IAttributeChange["type"] = "change";
+        if (this.unProxyfiedOwner[this.name] === undefined) changeType = "init";
         const hookValue = this.callHook("setter", value);
         const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;
@@ -55,7 +57,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
         if (setResult && oldValue !== newValue) {
             this.callHook("observer:change", newValue);
-            this.changes.push({ type: "change", path: [], value: newValue });
+            this.changes.push({ type: changeType, path: [], value: newValue });
         }
         return setResult;
     }
@@ -79,24 +81,24 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]], _applyData: ApplyData): void {
         if (this.schema.isArrayType()) {
             if (path[0] === "length") return;
-            const changePath = path.slice(0, path.length);
-            const index = parseInt(path[path.length - 1].toString());
 
             if (previousValue === undefined && value !== undefined) {
                 this.callHook("observer:add", value, { path, oldValue: previousValue });
-                this.changes.push({ type: "add", path: changePath, index, value });
+                this.changes.push({ type: "add", path, value });
             } else if (previousValue !== undefined && value === undefined) {
                 this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
-                this.changes.push({ type: "remove", path: changePath, index, value });
+                this.changes.push({ type: "remove", path, value });
             } else if (previousValue !== undefined && value !== undefined) {
                 this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
-                this.changes.push({ type: "remove", path: changePath, index, value });
+                this.changes.push({ type: "remove", path, value });
                 this.callHook("observer:add", value, { path, oldValue: previousValue });
-                this.changes.push({ type: "add", path: changePath, index, value });
+                this.changes.push({ type: "add", path, value });
             }
         } else {
+            let changeType: IAttributeChange["type"] = "change";
+            if (getValue(this.unProxyfiedOwner[this.name], path) === undefined) changeType = "init";
             this.callHook("observer:change", value, { path, oldValue: previousValue });
-            this.changes.push({ type: "change", path, value });
+            this.changes.push({ type: changeType, path, value });
         }
     }
 

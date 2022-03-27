@@ -1,5 +1,6 @@
 import { v4 as uuid } from "uuid";
 import { reactive } from "vue";
+import MetadataStore from "~common/lib/MetadataStore";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import { hasOwnProperty, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
@@ -22,7 +23,10 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         if (classPrototype && prototype && prototype.isModelClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
     }
 
-    return new Proxy(class ModelClass extends ctor {
+    // eslint-disable-next-line prefer-const
+    let constructorProxy: any;
+
+    class ModelClass extends ctor {
 
         public static override isModelClass = true;
 
@@ -32,19 +36,21 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
 
         public isModelClass = true;
 
-        public override readonly className: string = (<typeof ModelClass>this.constructor).className;
+        public override readonly className: string = options.className as string;
 
-        public override readonly collectionName: string = (<typeof ModelClass>this.constructor).collectionName;
+        public override readonly collectionName: string = options.collectionName as string;
 
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedModel = this;
             let proxy = new Proxy(this, this.proxyHandler);
-            this.createAttributes(proxy);
             proxy = reactive(proxy) as this;
-            Object.assign(proxy, this.mergeProperties(args[0]));
-            console.log(proxy);
+            this.createAttributes(proxy);
+            Object.assign(proxy, this.mergeProperties(args?.[0]));
+            // If this is an initialization of an existing model, we dont
+            // want to have the changes
+            if (args?.[0]?.id) proxy.removeChanges();
             return proxy;
         }
 
@@ -77,11 +83,12 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         }
 
         private createAttributes(proxy: this) {
-            const attributeSchemas = this.getSchema()?.attributeSchemas;
+            const metadataStore = new MetadataStore();
+            const attributeSchemas = this.getSchema()?.attributeSchemas || {};
             for (const key in attributeSchemas) {
-                if (Object.prototype.hasOwnProperty.call(attributeSchemas, key)) {
+                if (hasOwnProperty(attributeSchemas, key)) {
                     const attribute = new (attributes[key] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
-                    Reflect.defineMetadata(`${ctor.name}:${key}:attribute`, attribute, this);
+                    metadataStore.setAttribute(proxy, key, attribute);
                 }
             }
         }
@@ -90,19 +97,32 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             return Object.keys(this.getSchema()?.attributeSchemas || {});
         }
 
-        private get(target: this, propertyName: string | symbol) {
+        private get(target: this, propertyName: string | symbol, receiver: this) {
+            // because we manipulate the constructor name on the fly, we need to
+            // return that manipulating proxy (see below) to ensure that behavior
+            if (propertyName === "constructor") return constructorProxy;
+
+            const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
-            return this.getAttribute(stringProperty).get();
+            return metadataStore.getAttribute(receiver, stringProperty)?.get();
         }
 
-        private set(target: this, propertyName: string | symbol, value: any) {
+        private set(target: this, propertyName: string | symbol, value: any, receiver: this) {
+            const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
-            return this.getAttribute(stringProperty).set(value);
+            return metadataStore.getAttribute(receiver, stringProperty)?.set(value) ?? false;
         }
 
-    }, { get: (target, property) => property === "name" ? options.className : Reflect.get(target, property) });
+    }
+
+    // Manipulate the constructor name to be able to store the data in the
+    // database the right way and to be able to minify the className on compile time
+    // We need to disable that lint on this line to be able to provide the variable above
+    // eslint-disable-next-line prefer-const
+    constructorProxy = new Proxy(ModelClass, { get: (target, property) => property === "name" ? options.className : Reflect.get(target, property) });
+    return constructorProxy;
 }

@@ -71,9 +71,8 @@ export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOp
 }
 
 export interface IAttributeChange {
-    type: AttrObserverTypes;
+    type: AttrObserverTypes | "init";
     path: (string | symbol)[];
-    index?: number;
     value: unknown
 }
 

@@ -29,9 +29,9 @@ export default abstract class BaseModel extends BaseEntity {
     @Attr()
     public name!: string;
 
-    public readonly className = (<typeof BaseModel>this.constructor).className;
+    public readonly className!: string;
 
-    public readonly collectionName = (<typeof BaseModel>this.constructor).collectionName;
+    public readonly collectionName!: string;
 
     public readonly unProxyfiedModel!: typeof this;
 
@@ -98,18 +98,14 @@ export default abstract class BaseModel extends BaseEntity {
         return (<typeof BaseModel>this.constructor).getSchema();
     }
 
-    public getAttribute<T extends typeof BaseModel>(this: InstanceType<T>, name: string): BaseAttribute<T> {
-        return Reflect.getMetadata(`${(<typeof BaseModel>Object.getPrototypeOf(this.constructor)).name}:${name}:attribute`, this.unProxyfiedModel);
+    public getAttribute<T extends typeof BaseModel>(this: InstanceType<T>, name: string): BaseAttribute<T> | undefined {
+        const metadataStore = new MetadataStore();
+        return metadataStore.getAttribute(this, name);
     }
 
     public getAttributes<T extends typeof BaseModel>(this: InstanceType<T>) {
-        const schema = this.getSchema();
-        if (!schema?.attributeSchemas) return [];
-        const attributes: BaseAttribute<T>[] = [];
-        for (const attrName of Object.keys(schema.attributeSchemas)) {
-            attributes.push(this.getAttribute(attrName));
-        }
-        return attributes;
+        const metadataStore = new MetadataStore();
+        return metadataStore.getAttributes(this);
     }
 
     public hasChanges() {
