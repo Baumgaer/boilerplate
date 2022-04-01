@@ -148,4 +148,8 @@ export default abstract class BaseModel extends BaseEntity {
         }
     }
 
+    protected addReactivity(_value: this): this {
+        throw new Error("Not implemented");
+    }
+
 }

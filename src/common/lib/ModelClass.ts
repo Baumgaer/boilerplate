@@ -1,5 +1,4 @@
 import { v4 as uuid } from "uuid";
-import { reactive } from "vue";
 import MetadataStore from "~common/lib/MetadataStore";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import { hasOwnProperty, camelCase } from "~env/utils/utils";
@@ -45,7 +44,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedModel = this;
             let proxy = new Proxy(this, this.proxyHandler);
-            proxy = reactive(proxy) as this;
+            proxy = this.addReactivity(proxy);
             this.createAttributes(proxy);
             Object.assign(proxy, this.mergeProperties(args?.[0]));
             // If this is an initialization of an existing model, we dont
