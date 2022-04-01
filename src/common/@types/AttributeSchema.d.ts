@@ -7,12 +7,19 @@ import type { ColumnNumericOptions } from "typeorm/decorator/options/ColumnNumer
 import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWithLengthOptions";
 import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
+import type { IAttrMetadata } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
-import type { IAttrMetadata } from "~common/types/MetadataTypes";
 
+/**
+ * All attribute field names of typeorm which are allowed to use in column options
+ */
 export type allowedAttrFields = "cascade" | "createForeignKeyConstraints" | "deferrable" | "orphanedRowAction" | "persistence";
 
+/**
+ * All column options combined to one object
+ */
 export type AllColumnOptions = ColumnOptions & ColumnCommonOptions & RelationOptions & SpatialColumnOptions & ColumnWithLengthOptions & ColumnWithWidthOptions & ColumnNumericOptions & ColumnEnumOptions & ColumnHstoreOptions;
+
 /**
  * The well known relations of relational databases.
  */
@@ -76,7 +83,11 @@ export interface IAttributeChange {
     value: unknown
 }
 
-//export type AttrOptions<T extends typeof BaseModel> = Pick<RelationOptions, allowedAttrFields> & IRelations & ISpecialColumns & ThisType<T>
+export interface IEmbeddedEntity {
+    static className: string;
+}
+
+export type SchemaNameByModelClass<T> = keyof ConstructionParams<InstanceType<T>>
 export type AttrOptionsWithMetadataJson<T extends typeof BaseModel> = AttrOptions<T> & { metadataJson: string }
 export type AttrOptionsPartialMetadataJson<T extends typeof BaseModel> = IAttrMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
 export type AttrObserverTypes = "add" | "remove" | "change"

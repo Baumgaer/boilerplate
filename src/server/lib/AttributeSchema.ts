@@ -1,12 +1,13 @@
 import CommonAttributeSchema from "~common/lib/AttributeSchema";
 import MetadataStore from "~common/lib/MetadataStore";
 import { hasOwnProperty, pascalCase } from "~common/utils/utils";
+import type { IEmbeddedEntity } from "~server/../common/@types/AttributeSchema";
+import type { IAttrMetadata } from "~server/@types/MetadataTypes";
 import type BaseModel from "~server/lib/BaseModel";
-import type { IMetadata } from "~server/types/MetadataTypes";
 
 export default class AttributeSchema<T extends typeof BaseModel> extends CommonAttributeSchema<T> {
 
-    protected override buildEmbeddedEntity(attributeName: string, type: IMetadata["type"]) {
+    protected override buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): IEmbeddedEntity | null {
         if (!this.isPlainObjectType(type)) return null;
         if (this.isArrayType(type)) type = type.subType;
 

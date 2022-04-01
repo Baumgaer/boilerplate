@@ -2,8 +2,8 @@ import { BaseEntity } from "typeorm";
 import MetadataStore from "~common/lib/MetadataStore";
 import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
+import type { AttributeSchemaName, ModelChanges, RawObject } from "~common/@types/BaseModel";
 import type BaseAttribute from "~common/lib/BaseAttribute";
-import type { IAttributeChange } from "~common/types/AttributeSchema";
 
 export default abstract class BaseModel extends BaseEntity {
 
@@ -48,7 +48,7 @@ export default abstract class BaseModel extends BaseEntity {
         return metadataStore.getModelSchema<typeof this>(Object.getPrototypeOf(this), this.className);
     }
 
-    public static getAttributeSchema<T extends typeof BaseModel>(this: T, name: keyof ConstructionParams<InstanceType<T>>) {
+    public static getAttributeSchema<T extends typeof BaseModel>(this: T, name: AttributeSchemaName<T>) {
         const metadataStore = new MetadataStore();
         return metadataStore.getAttributeSchema(Object.getPrototypeOf(this), name);
     }
@@ -79,7 +79,7 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public toObject() {
-        const obj: Partial<ConstructionParams<this>> = {};
+        const obj: RawObject<this> = {};
         eachDeep(this, (value: unknown, key, parentValue: unknown, context) => {
             if (parentValue instanceof BaseModel) {
                 const attribute = parentValue.getAttribute(key.toString());
@@ -117,7 +117,7 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public getChanges() {
-        const changes = {} as Record<keyof this, IAttributeChange[]>;
+        const changes = {} as ModelChanges<this>;
         if (!this.hasChanges()) return changes;
 
         const attributes = this.getAttributes();

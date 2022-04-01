@@ -2,9 +2,9 @@ import onChange from "on-change";
 import { v4 as uuid } from "uuid";
 import { getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { ApplyData, Options } from "on-change";
+import type { IAttributeChange } from "~common/@types/AttributeSchema";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
-import type { IAttributeChange } from "~common/types/AttributeSchema";
 
 export default abstract class BaseAttribute<T extends typeof BaseModel> {
 

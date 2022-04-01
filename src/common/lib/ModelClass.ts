@@ -4,7 +4,7 @@ import MetadataStore from "~common/lib/MetadataStore";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import { hasOwnProperty, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
-import type { ModelOptions } from "~common/types/ModelClass";
+import type { ModelOptions } from "~common/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
 const attributes: Record<string, Constructor<BaseAttribute<typeof BaseModel>>> = {};

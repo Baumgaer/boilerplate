@@ -1,7 +1,7 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
+import type { ModelOptions } from "~common/@types/ModelClass";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
-import type { ModelOptions } from "~common/types/ModelClass";
 
 export default class ModelSchema<T extends typeof BaseModel> {
 

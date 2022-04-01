@@ -1,12 +1,13 @@
 import CommonAttributeSchema from "~common/lib/AttributeSchema";
 import MetadataStore from "~common/lib/MetadataStore";
 import { hasOwnProperty, pascalCase } from "~common/utils/utils";
+import type { IEmbeddedEntity } from "~client/../common/@types/AttributeSchema";
+import type { IAttrMetadata } from "~client/@types/MetadataTypes";
 import type BaseModel from "~client/lib/BaseModel";
-import type { IAttrMetadata } from "~client/types/MetadataTypes";
 
 export default class AttributeSchema<T extends typeof BaseModel> extends CommonAttributeSchema<T> {
 
-    protected override buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]) {
+    protected override buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): IEmbeddedEntity | null {
         if (!this.isPlainObjectType(type)) return null;
         if (this.isArrayType(type)) type = type.subType;
 
@@ -19,8 +20,8 @@ export default class AttributeSchema<T extends typeof BaseModel> extends CommonA
         for (const memberKey in type.members) {
             if (hasOwnProperty(type.members, memberKey)) {
                 const memberType = type.members[memberKey];
-                const attr = new AttributeSchema(EmbeddedEntity as any, memberKey as any, memberType);
-                metadataStore.setAttributeSchema(EmbeddedEntity as any, memberKey as any, attr);
+                const attr = new AttributeSchema(EmbeddedEntity as any, memberKey, memberType);
+                metadataStore.setAttributeSchema(EmbeddedEntity as any, memberKey, attr);
             }
         }
 

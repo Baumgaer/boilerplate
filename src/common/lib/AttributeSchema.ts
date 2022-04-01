@@ -17,9 +17,9 @@ import {
 import { merge, getModelClassByName } from "~common/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
+import type { AttrOptions, AllColumnOptions, AttrOptionsPartialMetadataJson, IEmbeddedEntity, SchemaNameByModelClass } from "~common/@types/AttributeSchema";
+import type { IAttrMetadata } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
-import type { AttrOptions, AttrOptionsPartialMetadataJson, AllColumnOptions } from "~common/types/AttributeSchema";
-import type { IAttrMetadata } from "~common/types/MetadataTypes";
 
 export default class AttributeSchema<T extends typeof BaseModel> implements AttrOptions<T> {
 
@@ -457,7 +457,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     public async getRelationType() {
         if (!this.isModelType()) return null;
         const otherModel = await getModelClassByName(this.getTypeIdentifier());
-        const otherAttributeSchema = otherModel && otherModel.getAttributeSchema(this.relationColumn as keyof ConstructionParams<InstanceType<typeof otherModel>>);
+        const otherAttributeSchema = otherModel && otherModel.getAttributeSchema(this.relationColumn as SchemaNameByModelClass<typeof otherModel>);
 
         if (!this.isArrayType()) {
             if (!this.relationColumn) return "OneToOne"; // owner is determined automatically
@@ -497,7 +497,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return [typeName, defaultOptions];
     }
 
-    protected buildEmbeddedEntity(_attributeName: string, _type: IAttrMetadata["type"]): any {
+    protected buildEmbeddedEntity(_attributeName: string, _type: IAttrMetadata["type"]): IEmbeddedEntity | null {
         throw new Error("Not implemented!");
     }
 
@@ -595,10 +595,10 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         } else if (!await this.buildRelation(attrName, options)) {
             const embeddedEntity = this.buildEmbeddedEntity(attrName, type);
             // eslint-disable-next-line @typescript-eslint/ban-types
-            let usedType: ColumnType | (() => Function) = typeName;
+            let usedType: ColumnType | (() => Function | IEmbeddedEntity) = typeName;
             if (embeddedEntity) usedType = () => embeddedEntity;
             console.debug(`Creating column ${this._ctor.name}#${attrName}: ${usedType} = ${JSON.stringify(options)}`);
-            Column(<any>usedType, options)(proto, attrName);
+            Column(usedType as any, options)(proto, attrName);
         }
 
         if (this.isIndex) Index(this.indexOptions)(proto as any);
@@ -625,7 +625,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         // eslint-disable-next-line
         const inverseFunc = (instance: InstanceType<ReturnType<typeof typeFunc>>) => Reflect.get(instance, this.relationColumn!);
 
-        let inverse = undefined;
+        let inverse: typeof inverseFunc | undefined = undefined;
         if (this.relationColumn) inverse = inverseFunc;
 
         const relationTypes = {

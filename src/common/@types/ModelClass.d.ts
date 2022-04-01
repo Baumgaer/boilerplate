@@ -1,7 +1,7 @@
 import type { SetOptional } from "type-fest";
 import type { EntityOptions, IndexOptions } from "typeorm";
+import type { IModelMetadata } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
-import type { IModelMetadata } from "~common/types/MetadataTypes";
 
 export type AllowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";
 
