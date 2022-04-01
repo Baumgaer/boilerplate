@@ -130,14 +130,22 @@ export default abstract class BaseModel extends BaseEntity {
 
     public removeChanges() {
         const attributes = this.getAttributes();
-        for (const attribute of attributes) {
-            attribute.removeChanges();
-        }
+        for (const attribute of attributes) attribute.removeChanges();
     }
 
     public undoChanges() {
         const attributes = this.getAttributes();
         for (const attribute of attributes) attribute.undoChanges();
+    }
+
+    public applyChanges(changes: ModelChanges<this>) {
+        for (const attributeName in changes) {
+            if (Object.prototype.hasOwnProperty.call(changes, attributeName)) {
+                const attributeChanges = changes[attributeName];
+                const attribute = this.getAttribute(attributeName);
+                if (attribute) attribute.applyChanges(attributeChanges);
+            }
+        }
     }
 
 }

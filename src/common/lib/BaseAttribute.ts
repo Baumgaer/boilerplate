@@ -1,7 +1,7 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
 import { setValue, getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
-import type { ApplyData, Options } from "on-change";
+import type { Options } from "on-change";
 import type { IAttributeChange } from "~common/@types/AttributeSchema";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
@@ -24,7 +24,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
     private changes: IAttributeChange[] = [];
 
-    private undoingChanges: boolean = false;
+    private processingChanges: boolean = false;
 
     public constructor(owner: InstanceType<T>, name: keyof InstanceType<T>, attributeSchema: AttributeSchema<T>) {
         this.owner = owner;
@@ -35,7 +35,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     }
 
     private get changeCallbackOptions(): Options & { pathAsArray: true } {
-        return { isShallow: true, pathAsArray: true, details: true };
+        return { isShallow: !this.schema.isPlainObjectType(), pathAsArray: true };
     }
 
     public get(): InstanceType<T>[this["name"]] {
@@ -52,8 +52,8 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         let newValue = hookValue !== undefined ? hookValue : value;
 
         if (this.mustObserveChanges(newValue)) {
-            newValue = this.addReactivity(onChange(newValue, (path, value, previousValue, applyData) => {
-                this.changeCallback(path, value as InstanceType<T>[this["name"]], previousValue as InstanceType<T>[this["name"]], applyData);
+            newValue = this.addReactivity(onChange(newValue, (path, value, previousValue) => {
+                this.changeCallback(path, value as InstanceType<T>[this["name"]], previousValue as InstanceType<T>[this["name"]]);
             }, this.changeCallbackOptions));
             this.observedValue = newValue;
         } else delete this.observedValue;
@@ -80,29 +80,48 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     }
 
     public undoChanges() {
-        this.undoingChanges = true;
+        this.processingChanges = true;
 
         for (const change of this.changes) {
-            const obj = getValue(this.owner, [this.name].concat(change.path.slice(0, -1) as this["name"][]));
+            const path = [this.name].concat(change.path as this["name"][]);
+            const obj = getValue(this.owner, path.slice(0, -1));
             if (change.type === "init") {
-                setValue(this.owner, [this.name].concat(change.path as this["name"][]), undefined);
+                setValue(this.owner, path, undefined);
             } else if (obj instanceof Array) {
                 if (change.type === "add") {
-                    obj.splice(Number(change.path[0]), 1);
-                } else if (change.type === "remove") obj.splice(Number(change.path[0]), 0, change.previousValue);
-            } else if (change.type === "change") this.owner[this.name] = change.previousValue as any;
+                    obj.splice(Number(path.slice(-1)), 1);
+                } else if (change.type === "remove") obj.splice(Number(path.slice(-1)), 0, change.previousValue);
+            } else if (change.type === "change") setValue(this.owner, path, change.previousValue);
         }
 
         this.removeChanges();
-        this.undoingChanges = false;
+        this.processingChanges = false;
+    }
+
+    public applyChanges(changes: IAttributeChange[]) {
+        this.processingChanges = true;
+
+        for (const change of changes) {
+            const path = [this.name].concat(change.path as this["name"][]);
+            const obj = getValue(this.owner, path.slice(0, -1));
+            if (change.type === "init") {
+                setValue(this.owner, path, change.value);
+            } else if (obj instanceof Array) {
+                if (change.type === "add") {
+                    obj.splice(Number(path.slice(-1)), 0, change.value);
+                } else if (change.type === "remove") obj.splice(Number(path.slice(-1)), 1);
+            } else if (change.type === "change") setValue(this.owner, path, change.value);
+        }
+
+        this.processingChanges = false;
     }
 
     protected addChange(change: IAttributeChange) {
-        if (this.undoingChanges) return;
+        if (this.processingChanges) return;
         this.changes.push(change);
     }
 
-    protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]], _applyData: ApplyData): void {
+    protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]]): void {
         if (this.schema.isArrayType()) {
             if (path[0] === "length") return;
             if (previousValue === undefined && value !== undefined) {
