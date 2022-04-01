@@ -1,6 +1,6 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
-import { getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
+import { setValue, getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { ApplyData, Options } from "on-change";
 import type { IAttributeChange } from "~common/@types/AttributeSchema";
 import type AttributeSchema from "~common/lib/AttributeSchema";
@@ -24,6 +24,8 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
     private changes: IAttributeChange[] = [];
 
+    private undoingChanges: boolean = false;
+
     public constructor(owner: InstanceType<T>, name: keyof InstanceType<T>, attributeSchema: AttributeSchema<T>) {
         this.owner = owner;
         this.unProxyfiedOwner = owner.unProxyfiedModel;
@@ -44,9 +46,11 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     public set(value: InstanceType<T>[this["name"]]): boolean {
         let changeType: IAttributeChange["type"] = "change";
         if (this.unProxyfiedOwner[this.name] === undefined) changeType = "init";
+
         const hookValue = this.callHook("setter", value);
-        const oldValue = null; //this.observedValue ?? Reflect.get(this.dataModel, this.name);
+        const oldValue = this.observedValue ?? Reflect.get(this.owner, this.name);
         let newValue = hookValue !== undefined ? hookValue : value;
+
         if (this.mustObserveChanges(newValue)) {
             newValue = this.addReactivity(onChange(newValue, (path, value, previousValue, applyData) => {
                 this.changeCallback(path, value as InstanceType<T>[this["name"]], previousValue as InstanceType<T>[this["name"]], applyData);
@@ -57,8 +61,9 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
         if (setResult && oldValue !== newValue) {
             this.callHook("observer:change", newValue);
-            this.changes.push({ type: changeType, path: [], value: newValue });
+            this.addChange({ type: changeType, path: [], value: newValue, previousValue: oldValue });
         }
+
         return setResult;
     }
 
@@ -75,30 +80,48 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     }
 
     public undoChanges() {
-        throw new Error("Not implemented");
+        this.undoingChanges = true;
+
+        for (const change of this.changes) {
+            const obj = getValue(this.owner, [this.name].concat(change.path.slice(0, -1) as this["name"][]));
+            if (change.type === "init") {
+                setValue(this.owner, [this.name].concat(change.path as this["name"][]), undefined);
+            } else if (obj instanceof Array) {
+                if (change.type === "add") {
+                    obj.splice(Number(change.path[0]), 1);
+                } else if (change.type === "remove") obj.splice(Number(change.path[0]), 0, change.previousValue);
+            } else if (change.type === "change") this.owner[this.name] = change.previousValue as any;
+        }
+
+        this.removeChanges();
+        this.undoingChanges = false;
+    }
+
+    protected addChange(change: IAttributeChange) {
+        if (this.undoingChanges) return;
+        this.changes.push(change);
     }
 
     protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]], _applyData: ApplyData): void {
         if (this.schema.isArrayType()) {
             if (path[0] === "length") return;
-
             if (previousValue === undefined && value !== undefined) {
                 this.callHook("observer:add", value, { path, oldValue: previousValue });
-                this.changes.push({ type: "add", path, value });
+                this.addChange({ type: "add", path, value, previousValue });
             } else if (previousValue !== undefined && value === undefined) {
                 this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
-                this.changes.push({ type: "remove", path, value });
+                this.addChange({ type: "remove", path, value, previousValue });
             } else if (previousValue !== undefined && value !== undefined) {
                 this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
-                this.changes.push({ type: "remove", path, value });
+                this.addChange({ type: "remove", path, value, previousValue });
                 this.callHook("observer:add", value, { path, oldValue: previousValue });
-                this.changes.push({ type: "add", path, value });
+                this.addChange({ type: "add", path, value, previousValue });
             }
         } else {
             let changeType: IAttributeChange["type"] = "change";
             if (getValue(this.unProxyfiedOwner[this.name], path) === undefined) changeType = "init";
             this.callHook("observer:change", value, { path, oldValue: previousValue });
-            this.changes.push({ type: changeType, path, value });
+            this.addChange({ type: changeType, path, value, previousValue });
         }
     }
 

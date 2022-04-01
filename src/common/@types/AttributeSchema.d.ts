@@ -80,7 +80,8 @@ export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOp
 export interface IAttributeChange {
     type: AttrObserverTypes | "init";
     path: (string | symbol)[];
-    value: unknown
+    value: unknown,
+    previousValue: unknown
 }
 
 export interface IEmbeddedEntity {

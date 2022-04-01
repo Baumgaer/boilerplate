@@ -21,7 +21,7 @@ export default abstract class BaseModel extends BaseEntity {
     public readonly modifiedAt: Date = new Date();
 
     @Attr({ isDeletedDate: true })
-    public readonly deletedAt!: Date;
+    public readonly deletedAt?: Date;
 
     @Attr({ isVersion: true })
     public readonly version: number = 0;
@@ -137,9 +137,7 @@ export default abstract class BaseModel extends BaseEntity {
 
     public undoChanges() {
         const attributes = this.getAttributes();
-        for (const attribute of attributes) {
-            attribute.undoChanges();
-        }
+        for (const attribute of attributes) attribute.undoChanges();
     }
 
 }
