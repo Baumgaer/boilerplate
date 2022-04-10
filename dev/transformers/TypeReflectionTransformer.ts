@@ -1,5 +1,6 @@
 import { camelCase } from "lodash";
 import * as ts from "typescript";
+import { customTypes } from "../CustomTypes";
 import * as utils from "../utils";
 
 let typeChecker!: ts.TypeChecker;
@@ -58,14 +59,22 @@ export default function transformer(program: ts.Program) {
 
             const name = attr.name.getText();
             console.info(`processing attribute ${name}`);
-            const type = resolveType(typeChecker.getTypeAtLocation(attr), attr, sourceFile);
+            let type = resolveType(typeChecker.getTypeAtLocation(attr), attr, sourceFile);
+
+            if (!type || type.isUnresolvedType) throw new Error(`Can not resolve type for ${name}`);
+
+            let properties = {};
+            if (type.isCustomType) {
+                properties = type.properties ?? properties;
+                type = type.type;
+            }
 
             const isRequired = !attr.questionToken && !attr.initializer || attr.exclamationToken && !attr.initializer;
             const isReadOnly = attr.modifiers?.some((modifier) => modifier?.kind === ts.SyntaxKind.ReadonlyKeyword);
             const isInternal = attr.modifiers?.every((modifier) => modifier?.kind !== ts.SyntaxKind.PublicKeyword);
             const isLazy = utils.isPromise(attr.type);
 
-            return JSON.stringify({ name, isInternal, isReadOnly, isRequired, isLazy, type });
+            return JSON.stringify(Object.assign({ name, isInternal, isReadOnly, isRequired, isLazy, type }, properties));
         }
 
         function resolveType(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, useAsTypeNode?: ts.TypeNode): any {
@@ -78,11 +87,7 @@ export default function transformer(program: ts.Program) {
                 type = typeChecker.getTypeAtLocation(typeNode);
             }
 
-            if (utils.isPromise(typeNode)) {
-                if (!typeNode.typeArguments?.[0]) return { isUnresolvedType: true };
-                typeNode = typeNode.typeArguments[0];
-                type = typeChecker.getTypeAtLocation(typeNode);
-            }
+            if (utils.isCustomType(typeNode)) return resolveCustomType(typeNode, attr, sourceFile);
 
             if (utils.isNull(type)) return resolveNull();
             if (utils.isUndefined(type)) return resolveUndefined();
@@ -94,8 +99,8 @@ export default function transformer(program: ts.Program) {
             if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isDate(type, attr)) return resolveDate();
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
-            if (utils.isArray(attr)) return resolveArray(attr, sourceFile);
-            if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile);
+            if (utils.isArray(attr, typeNode)) return resolveArray(attr, sourceFile, typeNode);
+            if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
         }
@@ -139,13 +144,13 @@ export default function transformer(program: ts.Program) {
             return { isModel: true, identifier: typeChecker.typeToString(type) };
         }
 
-        function resolveUnionOrIntersection(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
+        function resolveUnionOrIntersection(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode?: ts.TypeNode) {
             const isUnion = utils.isUnion(type);
             const isIntersection = utils.isIntersection(type);
 
             const subTypes = [];
             for (const subType of (<ts.UnionOrIntersectionType>type).types) {
-                subTypes.push(resolveType(subType, attr, sourceFile));
+                subTypes.push(resolveType(subType, attr, sourceFile, typeNode));
             }
             return { isUnion, isIntersection, subTypes };
         }
@@ -165,7 +170,6 @@ export default function transformer(program: ts.Program) {
                 if ("valueDeclaration" in member) {
                     signature = <ts.PropertySignature>member.valueDeclaration;
                 } else signature = <ts.PropertySignature>member;
-                //const type = typeChecker.getTypeAtLocation(signature);
                 members[signature.name.getText()] = JSON.parse(processAttr(signature as unknown as any, sourceFile));
             });
 
@@ -183,19 +187,60 @@ export default function transformer(program: ts.Program) {
             return { isTuple: true, subTypes };
         }
 
-        function resolveArray(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
-            if (attr.type) {
-                const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>attr.type).elementType);
-                return { isArray: true, subType: resolveType(elementType, attr, sourceFile) };
+        function resolveArray(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode?: ts.TypeNode) {
+            if (typeNode) {
+                const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>typeNode).elementType);
+                return { isArray: true, subType: resolveType(elementType, attr, sourceFile, typeNode) };
             }
             if (attr.initializer) {
                 const subTypes: any[] = [];
                 (<ts.ArrayLiteralExpression>attr.initializer).elements.forEach((element) => {
-                    const subType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile);
+                    const subType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile, typeNode);
                     subTypes.push(subType);
                 });
                 return { isArray: true, subType: { isUnion: true, subTypes } };
             }
+        }
+
+        function resolveCustomType(typeNode: ts.TypeReferenceNode, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile) {
+            const customType = customTypes[typeNode.typeName.getText()];
+            if (!customType) return { isUnresolvedType: true };
+
+            const resolveProperties = () => {
+                return Object.fromEntries(customType.properties.map((property) => {
+                    let value: any = property.value;
+                    const valueIndex = customType.parameters.indexOf(value);
+                    if (valueIndex >= 0) {
+                        const argument = typeNode.typeArguments?.at(valueIndex);
+                        if (argument) {
+                            const argumentType = typeChecker.getTypeAtLocation(argument);
+                            if (utils.isLiteral(argumentType)) {
+                                value = argument.getText();
+                            } else value = resolveType(argumentType, attr, sourceFile, argument);
+                        }
+                    }
+                    return [property.name, value];
+                }));
+            };
+
+            const emitParameterIndex = customType.parameters.indexOf(customType.emitParameter);
+            if (emitParameterIndex >= 0) {
+                const emitType = typeNode.typeArguments?.at(emitParameterIndex);
+                if (!emitType) return { isUnresolvedType: true };
+
+                let type = resolveType(typeChecker.getTypeAtLocation(emitType), attr, sourceFile, emitType);
+                if (type.isUnresolvedType) throw new Error(`can not resolve type of ${attr.name.getText()}`);
+
+                const properties = resolveProperties();
+                if (type.isCustomType) {
+                    Object.assign(properties, type.properties ?? {});
+                    type = type.type;
+                }
+
+                return { isCustomType: true, properties, type };
+            }
+
+            return { isCustomType: true, properties: resolveProperties(), type: { identifier: customType.name } };
         }
 
         return (sourceFile) => {

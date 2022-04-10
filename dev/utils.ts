@@ -2,6 +2,11 @@ import path from "path";
 import arp from "app-root-path";
 import * as ts from "typescript";
 import clientConfig from "../src/client/tsconfig.json";
+import { customTypes } from "./CustomTypes";
+
+export function isCustomType(node?: ts.TypeNode): node is ts.TypeReferenceNode {
+    return Boolean(node && ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && (node.typeName.escapedText ?? "") in customTypes);
+}
 
 export function isNull(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Null) === ts.TypeFlags.Null;
@@ -47,8 +52,8 @@ export function isIntersection(type: ts.Type) {
     return (type.flags & ts.TypeFlags.Intersection) === ts.TypeFlags.Intersection;
 }
 
-export function isArray(property: ts.PropertyDeclaration | ts.PropertySignature) {
-    const kind = property.type?.kind || property.initializer?.kind;
+export function isArray(property: ts.PropertyDeclaration | ts.PropertySignature, typeNode?: ts.TypeNode) {
+    const kind = typeNode?.kind || property.initializer?.kind;
     const isArrayType = kind && (kind & ts.SyntaxKind.ArrayType) === ts.SyntaxKind.ArrayType;
     const isArrayLiteralExpression = kind && (kind & ts.SyntaxKind.ArrayLiteralExpression) === ts.SyntaxKind.ArrayLiteralExpression;
     return Boolean(isArrayType || isArrayLiteralExpression);

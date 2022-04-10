@@ -46,12 +46,13 @@
     "include": [
         "./**/*.js",
         "src/**/*.ts",
+        "src/**/*.d.ts",
         "src/**/*.tsx",
         "src/**/*.vue",
         "dev/**/*.ts",
         "tests/**/*.ts",
-        "tests/**/*.tsx",
-        "src/client/shims-vue.d.ts"
+        "tests/**/*.d.ts",
+        "tests/**/*.tsx"
     ],
     "exclude": [
         "node_modules"

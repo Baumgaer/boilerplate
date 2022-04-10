@@ -6,6 +6,8 @@ interface ITest {
     testAttr: string;
 
     secondAttr: number;
+
+    thirdAttr: Lazy<varchar<50>>
 }
 
 export default abstract class YetAnotherExample extends BaseModel {

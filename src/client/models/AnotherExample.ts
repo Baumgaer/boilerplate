@@ -8,7 +8,7 @@ export default class AnotherExample extends AnotherCommonExample {
     public override name: string = "jojo";
 
     @Attr()
-    public anotherExampleClient!: Promise<number[]>;
+    public anotherExampleClient!: Lazy<number[]>;
 
     public constructor(params?: ConstructionParams<AnotherExample>) {
         super(params);
