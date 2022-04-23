@@ -5,8 +5,14 @@ import type { IEmbeddedEntity } from "~client/../common/@types/AttributeSchema";
 import type { IAttrMetadata } from "~client/@types/MetadataTypes";
 import type BaseModel from "~client/lib/BaseModel";
 
+/**
+ * @see CommonAttributeSchema
+ */
 export default class AttributeSchema<T extends typeof BaseModel> extends CommonAttributeSchema<T> {
 
+    /**
+     * @inheritdoc
+     */
     protected override buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): IEmbeddedEntity | null {
         if (!this.isPlainObjectType(type)) return null;
         if (this.isArrayType(type)) type = type.subType;

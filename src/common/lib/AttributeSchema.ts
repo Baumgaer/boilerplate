@@ -21,50 +21,55 @@ import type { AttrOptions, AllColumnOptions, AttrOptionsPartialMetadataJson, IEm
 import type { IAttrMetadata } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
 
+/**
+ * Defines the schema for any attribute by defining
+ *
+ * - the type
+ * - the constraints for eager or lazy behavior, immutability,
+ *   shareability and so on (read the code for more)
+ * - the relation by looking up partner attributes
+ *
+ * An attribute will be initialized by the @Attr() decorator.
+ *
+ * NOTE: If you are working with an attribute at construction time, you have to
+ * take care of the status given by the method "awaitConstruction".
+ * If the promise is resolved, the construction of the schema is complete and
+ * contains the relation. Otherwise the relation might be missing.
+ *
+ * @template T The model where the schema of the attribute belongs to
+ */
 export default class AttributeSchema<T extends typeof BaseModel> implements AttrOptions<T> {
 
     /**
      * Holds the class object which created the schema. This is only a valid
      * value after processing the schema of the class!
-     *
-     * @memberof AttributeSchema
      */
     public readonly owner?: T;
 
     /**
      * The name of the attribute in the schema. Corresponds to the attribute
      * name in the class (maybe not in runtime)
-     *
-     * @memberof AttributeSchema
      */
     public readonly attributeName: keyof T;
 
     /**
      * The parameters which initializes the schema
-     *
-     * @memberof AttributeSchema
      */
     public readonly parameters = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
 
     /**
      * Indicates if an attribute should be sent to another endpoint.
      * Very important for privacy!
-     *
-     * @memberof AttributeSchema
      */
     public isInternal: boolean = false;
 
     /**
      * Indicates if an attribute has to be set manually (does not have a default)
-     *
-     * @memberof AttributeSchema
      */
     public isRequired: boolean = false;
 
     /**
      * Indicates if an attribute is readonly / not writable / only writable once
-     *
-     * @memberof AttributeSchema
      */
     public isImmutable: boolean = false;
 
@@ -72,139 +77,100 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * Indicates if an attribute should only be loaded from database when it
      * is explicitly used. This is always the case when the type of the
      * attribute is a Promise
-     *
-     * @memberof AttributeSchema
      */
     public isLazy: boolean = false;
 
     /**
      * @see AllColumnOptions["eager"]
-     *
-     * @memberof AttributeSchema
      */
     public isEager: boolean = false;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public isCreationDate: boolean = false;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public isModifiedDate: boolean = false;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public isDeletedDate: boolean = false;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public isVersion: boolean = false;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public isGenerated?: 'increment' | 'uuid' | 'rowid' | undefined;
 
     /**
      * defines if an attribute is a relation to its corresponding type and to
      * which field of this type
-     *
-     * @memberof AttributeSchema
      */
     public relationColumn?: string;
 
     /**
      * If true, the column will be used as the relation column
-     *
-     * @memberof AttributeSchema
      */
     public isRelationOwner!: boolean;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public cascade: AttrOptions<T>["cascade"];
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public createForeignKeyConstraints!: Exclude<AttrOptions<T>["createForeignKeyConstraints"], undefined>;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public orphanedRowAction: AttrOptions<T>["orphanedRowAction"];
 
     /**
      * Determines if this attribute is used as an index row in the database
-     *
-     * @memberof AttributeSchema
      */
     public isIndex!: boolean;
 
     /**
      * @see IndexOptions
-     *
-     * @memberof AttributeSchema
      */
     public indexOptions: IndexOptions = {};
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public persistence!: Exclude<AttrOptions<T>["persistence"], undefined>;
 
     /**
      * @inheritdoc
-     *
-     * @memberof AttributeSchema
      */
     public primary?: AttrOptions<T>["primary"];
 
     /**
      * The type which was determined during compile time
-     *
-     * @private
-     * @memberof AttributeSchema
      */
     private type!: IAttrMetadata["type"];
 
     /**
      * This is the original class type which is used while construction.
      * Use this.ctor during runtime, which is the evaluated version of this one
-     *
-     * @private
-     * @memberof AttributeSchema
      */
     private readonly _ctor: T;
 
     /**
-     * Internal state which determines if the schema is fully built or not
-     *
-     * @private
-     * @memberof AttributeSchema
+     * Internal state which determines if the schema is fully built or not.
+     * NOTE: This will be set to true if the schema is fully built
+     * (including relation).
      */
     private _constructed = false;
 
@@ -221,7 +187,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * Useful to ensure the correct order of decorator execution during setup.
      *
      * @returns a resolving promise
-     * @memberof AttributeSchema
      */
     public awaitConstruction() {
         return new Promise((resolve) => {
@@ -237,7 +202,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * Sets the model class for later use to be able to navigate through the models
      *
      * @param owner the class of the model to set
-     * @memberof AttributeSchema
      */
     public setOwner(owner: T) {
         if ((this._ctor as InstanceType<T>).className !== (owner as InstanceType<T>).className) return;
@@ -250,7 +214,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * on new parameters
      *
      * @param parameters Parameters of this attribute
-     * @memberof AttributeSchema
      */
     public updateParameters(parameters: AttrOptionsPartialMetadataJson<T>) {
         merge(this.parameters, parameters);
@@ -264,7 +227,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a union type else false
-     * @memberof AttributeSchema
      */
     public isUnionType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -277,7 +239,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a intersection type else false
-     * @memberof AttributeSchema
      */
     public isIntersectionType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -290,7 +251,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a literal type else false
-     * @memberof AttributeSchema
      */
     public isLiteralType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -303,7 +263,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a string type else false
-     * @memberof AttributeSchema
      */
     public isStringType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -316,7 +275,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a number type else false
-     * @memberof AttributeSchema
      */
     public isNumberType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -329,7 +287,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a boolean type else false
-     * @memberof AttributeSchema
      */
     public isBooleanType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -342,7 +299,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a date type else false
-     * @memberof AttributeSchema
      */
     public isDateType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -355,7 +311,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
-     * @memberof AttributeSchema
      */
     public isModelType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -367,7 +322,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is an array type else false
-     * @memberof AttributeSchema
      */
     public isArrayType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -380,7 +334,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
-     * @memberof AttributeSchema
      */
     public isObjectLikeType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -393,7 +346,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
-     * @memberof AttributeSchema
      */
     public isPlainObjectType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -407,7 +359,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
-     * @memberof AttributeSchema
      */
     public isUnresolvedType(altType?: IAttrMetadata["type"]): boolean {
         const type = altType || this.type;
@@ -419,7 +370,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns an empty array if is not a fully literal type and an array of strings or numbers else
-     * @memberof AttributeSchema
      */
     public getUnionTypeValues(altType?: IAttrMetadata["type"]): (string | number)[] {
         const type = altType || this.type;
@@ -439,7 +389,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      *
      * @param [altType] alternative type to get identifier from
      * @returns the name of the identifier if exists
-     * @memberof AttributeSchema
      */
     public getTypeIdentifier(altType?: IAttrMetadata["type"]) {
         const type = altType || this.type;
@@ -452,7 +401,6 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * and the relation column
      *
      * @returns null if no relation was found and the name corresponding to typeORMs relation names else
-     * @memberof AttributeSchema
      */
     public async getRelationType() {
         if (!this.isModelType()) return null;
@@ -474,11 +422,9 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * Both has to be compatible with the corresponding database of the
      * environment.
      *
-     * @protected
      * @param type the type of the attribute
      * @param defaultOptions default options determined in the buildSchema() method of this attribute
      * @returns an array with two elements. first is the type, second are the options
-     * @memberof AttributeSchema
      */
     protected getColumnTypeNameAndOptions(type: IAttrMetadata["type"], defaultOptions: AllColumnOptions): [ColumnType, AllColumnOptions] {
         let typeName: ColumnType = "text";
@@ -497,6 +443,14 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return [typeName, defaultOptions];
     }
 
+    /**
+     * Creates a basic entity (not a real model) with class name and the members
+     * of the given type which results from an interface which will be injected
+     * to runtime during compile time.
+     *
+     * @param _attributeName the name of the attribute which will be an embedded entity
+     * @param _type the type of the attribute
+     */
     protected buildEmbeddedEntity(_attributeName: string, _type: IAttrMetadata["type"]): IEmbeddedEntity | null {
         throw new Error("Not implemented!");
     }
@@ -504,11 +458,9 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     /**
      * Checks if sub type containing types are all of same type checked by the checkFunc
      *
-     * @private
      * @param arrayLikeType type to check for same type sub types
      * @param checkFunc function that will be called to check the sub types
      * @returns true if all types are of type checked by checkFunc and false else
-     * @memberof AttributeSchema
      */
     private checkSubTypes(arrayLikeType: IAttrMetadata["type"], checkFunc: ((type?: IAttrMetadata["type"]) => boolean)): boolean {
         if (this.isUnionType(arrayLikeType)) {
@@ -528,6 +480,13 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return false;
     }
 
+    /**
+     * Sets all given constraints on thi schema and decides which behavior
+     * (lazy or eager) will be applied and wether this attribute will cascade
+     * or not.
+     *
+     * @param params an object with constraints to set on this attribute schema
+     */
     private setConstants(params: AttrOptionsPartialMetadataJson<T>) {
         this.isRequired = Boolean(params.isRequired);
         this.isImmutable = Boolean(params.isReadOnly);
@@ -560,9 +519,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * If the type is somehow a model, it will build the corresponding relation,
      * based on the type of both relation ends.
      *
-     * @private
      * @param type the type which should be used to build the schema
-     * @memberof AttributeSchema
      */
     private async buildSchema(type: IAttrMetadata["type"], altProto?: object, altAttrName?: string) {
         // This is the correction described in decorator @Attr()
@@ -610,11 +567,9 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * the relation column into account. It also determines the
      * relation column / relation table if possible.
      *
-     * @private
      * @param attributeName the name of the attribute to find relation for
      * @param options options for the relation
      * @returns true if a relation was build and false else
-     * @memberof AttributeSchema
      */
     private async buildRelation(attributeName: string, options: RelationOptions) {
         const proto = this._ctor.prototype;

@@ -5,49 +5,114 @@ import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~common/@types/BaseModel";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 
+/**
+ * This class should be a parent of each other model. It wraps the BaseEntity
+ * of TypeORM and provides some default common attributes which each model
+ * should have. It also provides some basic methods for data conversion and
+ * handling attributes or schemas.
+ */
 export default abstract class BaseModel extends BaseEntity {
 
-    public static readonly className: string = "BaseModel";
+    /**
+     * The name of the class after compile time. This will be set by the
+     * @Model() decorator which will receive this value by a developer or
+     * by the reflectionTransformer.
+     */
+    public static readonly className: string;
 
-    public static readonly collectionName: string = "BaseModels";
+    /**
+     * The name of the collection where the model is stored in after compile time.
+     * This will be set by the @Model() decorator which will receive this value
+     * by a developer or by the reflectionTransformer. The naming strategy is
+     * to add an "s" at the end because we assume that a collection always
+     * contains several models of this type.
+     */
+    public static readonly collectionName: string;
 
+    /**
+     * The ID field in the database to be able to identify each model doubtless.
+     * This will be set by the server.
+     */
     @Attr({ primary: true })
     public readonly id!: string;
 
+    /**
+     * The date of creation. This will be set automatically
+     */
     @Attr({ isCreationDate: true })
     public readonly createdAt: Date = new Date();
 
+    /**
+     * The date of the last modification which will be equal with "createdAt"
+     * when the model was just created. Otherwise it will be updated automatically.
+     */
     @Attr({ isModifiedDate: true })
     public readonly modifiedAt: Date = new Date();
 
+    /**
+     * The date of deletion. This means that a model still exists in the data
+     * base but is soft deleted (marked as deleted). This will be set by the server.
+     */
     @Attr({ isDeletedDate: true })
     public readonly deletedAt?: Date;
 
+    /**
+     * The number of the current version which will be increased each time the
+     * model is saved with changes.
+     */
     @Attr({ isVersion: true })
     public readonly version: number = 0;
 
+    /**
+     * Every object should have at least a name to enable humans to identify
+     * the model in frontend.
+     */
     @Attr()
     public name!: string;
 
+    /**
+     * @see BaseModel.className
+     */
     public readonly className!: string;
 
+    /**
+     * @see BaseModel.collectionName
+     */
     public readonly collectionName!: string;
 
+    /**
+     * This gives access to the model instance without proxy around.
+     * This enables to change an attribute without causing
+     * changes and also gives the ability to improve performance.
+     */
     public readonly unProxyfiedModel!: typeof this;
 
+    /**
+     * The id of the model until it has no official id from the server
+     */
     public dummyId: string = "";
-
-    protected backup: Partial<Record<keyof this, any>> = {};
 
     public constructor(_params?: ConstructionParams<BaseModel>) {
         super();
     }
 
+    /**
+     * Looks for the schema of the current instance and returns it
+     *
+     * @returns the schema of the model
+     */
     public static getSchema() {
         const metadataStore = new MetadataStore();
         return metadataStore.getModelSchema<typeof this>(Object.getPrototypeOf(this), this.className);
     }
 
+    /**
+     * Looks for the attribute given by the name and returns its schema
+     *
+     * @param this current this context
+     * @param name the name of the attribute
+     * @returns the schema of the attribute given by name
+     */
     public static getAttributeSchema<T extends typeof BaseModel>(this: T, name: AttributeSchemaName<T>) {
         const metadataStore = new MetadataStore();
         return metadataStore.getAttributeSchema(Object.getPrototypeOf(this), name);
@@ -56,9 +121,7 @@ export default abstract class BaseModel extends BaseEntity {
     /**
      * Removes the dummy id when the model is saved and got a real id
      *
-     * @protected
      * @param value the given id
-     * @memberof BaseModel
      */
     @AttrObserver("id", "change")
     protected onIdChange(value: string): void {
@@ -66,18 +129,42 @@ export default abstract class BaseModel extends BaseEntity {
         this.dummyId = "";
     }
 
+    /**
+     * Checks if the model is still new. A model is new, when it has a dummyId
+     * and has not yet received an id from the server.
+     *
+     * @returns true if the model is still new and false else
+     */
     public isNew(): boolean {
         return Boolean(!this.id && this.dummyId);
     }
 
-    public toId() {
+    /**
+     * Returns the id of the model
+     *
+     * @returns dummyId if exists and id else
+     */
+    public getId() {
         return this.dummyId || this.id;
     }
 
+    /**
+     * iterates over all attributes of the current model and stringifies it.
+     *
+     * @returns a json string of the models attributes
+     */
     public toJson() {
         return JSON.stringify(this.toObject());
     }
 
+    /**
+     * Iterates over all attributes of the model and adds it to a plain object
+     * if it has a value valid value. If the attribute is internal,
+     * the attribute will be ignored. It also performs transformations on the
+     * attribute while not modifying the attribute itself.
+     *
+     * @returns a deep js plain object of all attributes
+     */
     public toObject() {
         const obj: RawObject<this> = {};
         eachDeep(this, (value: unknown, key, parentValue: unknown, context) => {
@@ -94,20 +181,42 @@ export default abstract class BaseModel extends BaseEntity {
         return obj;
     }
 
+    /**
+     * @see BaseModel.getSchema
+     */
     public getSchema() {
         return (<typeof BaseModel>this.constructor).getSchema();
     }
 
+    /**
+     * returns the attributes instance identified by the current model
+     * instance and the given name.
+     *
+     * @param this current this context
+     * @param name the name of the attribute
+     * @returns the unique initialized attribute owned by this model instance and identified by the given name
+     */
     public getAttribute<T extends typeof BaseModel>(this: InstanceType<T>, name: string): BaseAttribute<T> | undefined {
         const metadataStore = new MetadataStore();
         return metadataStore.getAttribute(this, name);
     }
 
+    /**
+     * collects all attributes of this model instance and returns them.
+     *
+     * @param this current this context
+     * @returns array of all attributes
+     */
     public getAttributes<T extends typeof BaseModel>(this: InstanceType<T>) {
         const metadataStore = new MetadataStore();
         return metadataStore.getAttributes(this);
     }
 
+    /**
+     * Iterates over all attributes and checks them for changes.
+     *
+     * @returns true if there are changes and false else
+     */
     public hasChanges() {
         const attributes = this.getAttributes();
         for (const attribute of attributes) {
@@ -116,9 +225,14 @@ export default abstract class BaseModel extends BaseEntity {
         return false;
     }
 
+    /**
+     * Iterates over all attributes and collects their changes if exist.
+     * All attributes with changes will be stored in a plain object.
+     *
+     * @returns a plain object with attribute names as key and corresponding changes as values
+     */
     public getChanges() {
         const changes = {} as ModelChanges<this>;
-        if (!this.hasChanges()) return changes;
 
         const attributes = this.getAttributes();
         for (const attribute of attributes) {
@@ -128,16 +242,31 @@ export default abstract class BaseModel extends BaseEntity {
         return changes;
     }
 
+    /**
+     * Iterates over all attributes and removes their changes.
+     * NOTE: This is **NOT** a discard / undo!
+     */
     public removeChanges() {
         const attributes = this.getAttributes();
         for (const attribute of attributes) attribute.removeChanges();
     }
 
+    /**
+     * Iterates over all attributes and revokes their changes to get the
+     * initial state after the last call of save().
+     */
     public undoChanges() {
         const attributes = this.getAttributes();
         for (const attribute of attributes) attribute.undoChanges();
     }
 
+    /**
+     * Applies all given changes to the corresponding attributes.
+     * This will modify the current existing changes of the attributes but only
+     * in a correction way.
+     *
+     * @param changes plain object with attribute names as keys and changes as values
+     */
     public applyChanges(changes: ModelChanges<this>) {
         for (const attributeName in changes) {
             if (Object.prototype.hasOwnProperty.call(changes, attributeName)) {
@@ -148,6 +277,14 @@ export default abstract class BaseModel extends BaseEntity {
         }
     }
 
+    /**
+     * This is called by the ModelClass when the model is in construction.
+     * This should return the instance itself or a proxy which wraps the
+     * instance to enable reactivity for a framework or something else in
+     * addition to the models reactivity.
+     *
+     * @param _value the instance which should be wrapped with a proxy
+     */
     protected addReactivity(_value: this): this {
         throw new Error("Not implemented");
     }
