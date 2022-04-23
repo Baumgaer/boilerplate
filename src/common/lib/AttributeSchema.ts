@@ -31,7 +31,7 @@ import type BaseModel from "~common/lib/BaseModel";
  *
  * An attribute will be initialized by the @Attr() decorator.
  *
- * NOTE: If you are working with an attribute at construction time, you have to
+ * NOTE: If you are working with an AttributeSchema at construction time, you have to
  * take care of the status given by the method "awaitConstruction".
  * If the promise is resolved, the construction of the schema is complete and
  * contains the relation. Otherwise the relation might be missing.

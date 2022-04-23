@@ -3,6 +3,22 @@ import type { ModelOptions } from "~common/@types/ModelClass";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
 
+/**
+ * defines the schema for any Model by defining:
+ *
+ * - the name of the model and of its collection
+ * - if its abstract and
+ * - all attributes
+ *
+ * A Model schema will be Initialized by the @Model() decorator.
+ *
+ * NOTE: If you are working with an ModelSchema at construction time, you have to
+ * take care of the status given by the method "awaitConstruction".
+ * If the promise is resolved, the construction of the schema is complete and
+ * contains the relation. Otherwise the relation might be missing.
+ *
+ * @template T The model where the schema of the model belongs to
+ */
 export default class ModelSchema<T extends typeof BaseModel> {
 
     /**
@@ -70,18 +86,43 @@ export default class ModelSchema<T extends typeof BaseModel> {
         });
     }
 
+    /**
+     * returns the schema of the attribute given by name
+     *
+     * @param name the name of the attribute
+     * @returns the schema of the attribute
+     */
     public getAttributeSchema(name: keyof InstanceType<T>): AttributeSchema<T> {
         return Reflect.get(this.attributeSchemas, name);
     }
 
+    /**
+     * Changes the attributes object in an controlled way using the name of the
+     * given schema
+     *
+     * @param schema the schema to set
+     * @returns true if it was set and false else
+     */
     public setAttributeSchema(schema: AttributeSchema<T>) {
         return Reflect.set(this.attributeSchemas, schema.attributeName, schema);
     }
 
+    /**
+     * Removes the given schema from the attributes object in a controlled way
+     * using its name
+     *
+     * @param schema the schema to remove
+     * @returns true if it was removed and false else
+     */
     public removeAttributeSchema(schema: AttributeSchema<T>) {
         return Reflect.deleteProperty(this.attributeSchemas, schema.attributeName);
     }
 
+    /**
+     * Activates the schema when all attribute schemas are constructed.
+     * It also decides wether the schema becomes a child entity or introduces
+     * table inheritance as well as the type of the index used in the database.
+     */
     private async applyEntity() {
         // Wait for all attribute schemas constructed to ensure order of decorators
         await Promise.all(Object.values(this.attributeSchemas).map((attributeSchema) => attributeSchema.awaitConstruction()));
