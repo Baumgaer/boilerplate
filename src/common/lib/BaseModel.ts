@@ -278,6 +278,18 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     /**
+     * A lifecycle hook that will be called before the passed properties
+     * will be assigned to the instance. This has to return an object with
+     * construction parameters.
+     *
+     * @param properties properties to merge into the instance of the model
+     * @returns new properties
+     */
+    protected prePropertyMixin(properties: Record<string, any> = {}) {
+        return properties;
+    }
+
+    /**
      * This is called by the ModelClass when the model is in construction.
      * This should return the instance itself or a proxy which wraps the
      * instance to enable reactivity for a framework or something else in

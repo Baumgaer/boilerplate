@@ -87,7 +87,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             let proxy = new Proxy(this, this.proxyHandler);
             proxy = this.addReactivity(proxy);
             this.createAttributes(proxy);
-            Object.assign(proxy, this.mergeProperties(args?.[0]));
+            Object.assign(proxy, this.prePropertyMixin(proxy, args?.[0]));
             // If this is an initialization of an existing model, we dont
             // want to have the changes
             if (args?.[0]?.id) proxy.removeChanges();
@@ -117,22 +117,22 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         }
 
         /**
-         * Merges new parameters with the default attributes if the corresponding
-         * parameter is an attribute. If this is not the case the parameter will
-         * be ignored. A dummyId will be created when no id is present in the
-         * parameters.
-         *
-         * @param properties properties to merge into the instance of the model
-         * @returns new properties
+         * @inheritdoc
          */
-        private mergeProperties(properties: Record<string, any> = {}) {
-            const attributeSchemas = this.getSchema()?.attributeSchemas;
-            const defaults: Record<string, any> = {};
-            if (!properties.id) this.dummyId = uuid();
-            for (const key in attributeSchemas) {
-                if (hasOwnProperty(attributeSchemas, key)) defaults[key] = Reflect.get(this, key);
+        protected override prePropertyMixin(proxy: this, properties: Record<string, any> = {}) {
+            // Has to be called with the proxy because the attributes are
+            // stored on the proxy, not the raw class
+            const attributes = proxy.getAttributes();
+
+            // reassign default attributes so ensure reactivity
+            for (const attribute of attributes) {
+                // @ts-expect-error TS recognizes readonly properties which can not be attributes
+                this[attribute.name] = attribute.observeChangesOf(this[attribute.name]);
             }
-            return Object.assign(defaults, properties);
+
+            const defaults: Record<string, any> = {};
+            if (!properties.id) defaults.dummyId = uuid();
+            return super.prePropertyMixin.bind(proxy, Object.assign(defaults, properties));
         }
 
         /**

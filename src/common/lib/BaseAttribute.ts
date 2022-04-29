@@ -1,8 +1,8 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
 import { setValue, getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
-import type { Options } from "on-change";
-import type { IAttributeChange } from "~common/@types/AttributeSchema";
+import type { Options, ApplyData } from "on-change";
+import type { ChangeMethodsArgs, IAttributeChange } from "~common/@types/AttributeSchema";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
 
@@ -53,7 +53,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * Holds the value as a proxy of reference values to be able to compare
      * old value with new one.
      */
-    private observedValue?: InstanceType<T>[this["name"]];
+    private observedValue?: unknown;
 
     /**
      * Holds an array of changes which will be collected by its owner which
@@ -105,28 +105,38 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @param value The value which should be set on the attribute
      * @returns true if it was set and false on error
      */
-    public set(value: InstanceType<T>[this["name"]]): boolean {
+    public set(value: unknown): boolean {
         let changeType: IAttributeChange["type"] = "change";
         if (this.unProxyfiedOwner[this.name] === undefined) changeType = "init";
 
         const hookValue = this.callHook("setter", value);
         const oldValue = this.observedValue ?? Reflect.get(this.owner, this.name);
-        let newValue = hookValue !== undefined ? hookValue : value;
-
-        if (this.mustObserveChanges(newValue)) {
-            newValue = this.addReactivity(onChange(newValue, (path, value, previousValue) => {
-                this.changeCallback(path, value as InstanceType<T>[this["name"]], previousValue as InstanceType<T>[this["name"]]);
-            }, this.changeCallbackOptions));
-            this.observedValue = newValue;
-        } else delete this.observedValue;
+        const newValue = this.observeChangesOf(hookValue !== undefined ? hookValue : value);
 
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
         if (setResult && oldValue !== newValue) {
-            this.callHook("observer:change", newValue);
+            this.callHook("observer:change", newValue, { path: [], oldValue: this.unProxyfiedOwner[this.name] });
             this.addChange({ type: changeType, path: [], value: newValue, previousValue: oldValue });
         }
 
         return setResult;
+    }
+
+    /**
+     * Creates an on-change observer if the given value is observable
+     *
+     * @param value the value to observe changes
+     * @returns the original value if not observable and a proxyfied value else
+     */
+    public observeChangesOf(value: unknown) {
+        let newValue = value;
+        if (this.mustObserveChanges(newValue)) {
+            newValue = this.addReactivity(onChange(newValue, (path, value, previousValue, applyData) => {
+                this.changeCallback(applyData, path, value, previousValue);
+            }, this.changeCallbackOptions));
+            this.observedValue = newValue;
+        } else delete this.observedValue;
+        return newValue;
     }
 
     /**
@@ -230,23 +240,13 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @param value the value which was set
      * @param previousValue the value which was existent before
      */
-    protected changeCallback(path: (string | symbol)[], value: InstanceType<T>[this["name"]], previousValue: InstanceType<T>[this["name"]]): void {
+    protected changeCallback(applyData: ApplyData, ...args: ChangeMethodsArgs<unknown>): void {
+        const [path, value, previousValue] = args;
         if (this.schema.isArrayType()) {
-            // We don't want to react on the length change of arrays because
-            // this currently has no functionality and no hook
-            if (path[0] === "length") return;
-            if (previousValue === undefined && value !== undefined) {
-                this.callHook("observer:add", value, { path, oldValue: previousValue });
-                this.addChange({ type: "add", path, value, previousValue });
-            } else if (previousValue !== undefined && value === undefined) {
-                this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
-                this.addChange({ type: "remove", path, value, previousValue });
-            } else if (previousValue !== undefined && value !== undefined) {
-                this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
-                this.addChange({ type: "remove", path, value, previousValue });
-                this.callHook("observer:add", value, { path, oldValue: previousValue });
-                this.addChange({ type: "add", path, value, previousValue });
-            }
+            if (applyData) {
+                const changes = this.determineArrayChanges(applyData, path, value, previousValue);
+                for (const change of changes) this.processArrayChange.call(this, ...change);
+            } else this.processArrayChange(path, value, previousValue);
         } else {
             let changeType: IAttributeChange["type"] = "change";
             if (getValue(this.unProxyfiedOwner[this.name], path) === undefined) changeType = "init";
@@ -264,7 +264,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @param parameters The parameters with which the hook is called
      * @returns the return value of the hook in case of a getter or setter
      */
-    protected callHook(name: string, value?: InstanceType<T>[this["name"]], parameters?: ObserverParameters<unknown>) {
+    protected callHook(name: string, value?: unknown, parameters?: ObserverParameters<unknown>) {
         const activeHookMetaKey = `${this.ownerName}:${this.name}:active${name}`;
         const hook: any | undefined = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
         if (!hook || Reflect.getMetadata(activeHookMetaKey, this.unProxyfiedOwner)) return;
@@ -289,6 +289,87 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     }
 
     /**
+     * Produces normalized changes for arrays from a local view of the attribute (the array)
+     *
+     * @param applyData information given by on-change which method was called with which parameters
+     * @param args the path as array, the new value and the old value of the attribute
+     * @returns an array of new path, new value and new previous value from local view of the array
+     */
+    private determineArrayChanges(applyData: ApplyData, ...args: ChangeMethodsArgs<unknown>): ChangeMethodsArgs<unknown>[] {
+        const [path, _value, previousValue] = args as unknown as ChangeMethodsArgs<unknown[]>;
+        const changes: ChangeMethodsArgs<unknown | undefined>[] = [];
+        const oldLength = Number(previousValue.length);
+
+        const method = applyData.name as keyof [];
+        if (method === "pop") { // removes behind
+            changes.push([path.concat(String(oldLength - 1)), undefined, previousValue[oldLength - 1]]); // triggers remove
+        } else if (method === "shift") { // removes in front
+            changes.push([path.concat(["0"]), undefined, previousValue[0]]); // triggers remove
+        } else if (method === "push") { // adds behind
+            for (let index = 0; index < applyData.args.length; index++) {
+                const arg = applyData.args[index];
+                changes.push([path.concat(String(oldLength + index)), arg, undefined]); // triggers add
+            }
+        } else if (method === "unshift") { // adds in front
+            for (let index = 0; index < applyData.args.length; index++) {
+                const arg = applyData.args[index];
+                changes.push([path.concat(String(index)), arg, undefined]); // triggers add
+            }
+        } else if (method === "copyWithin") { // copies range to index and overwrites existing values
+            const args = applyData.args as Parameters<[]["copyWithin"]>;
+            const elementsToAdd = previousValue.slice(args[1], args[2] ?? oldLength);
+            const elementsToRemove = previousValue.slice(args[0], elementsToAdd.length);
+
+            for (let index = 0; index < elementsToAdd.length; index++) {
+                if (elementsToRemove[index]) changes.push([path.concat([String(args[0] + index)]), undefined, elementsToRemove[index]]); // triggers remove
+                changes.push([path.concat([String(args[0] + index)]), elementsToAdd[index], undefined]); // triggers add
+            }
+        } else if (method === "fill") { // fills in range and overwrites
+            const args = applyData.args as Parameters<[]["fill"]>;
+            const elementsToAdd = previousValue.slice(args[1], args[2]).fill(...args);
+            const elementsToRemove = previousValue.slice(args[1], elementsToAdd.length);
+
+            for (let index = 0; index < elementsToAdd.length; index++) {
+                if (elementsToRemove[index]) changes.push([path.concat([String(args[1] || 0 + index)]), undefined, elementsToRemove[index]]); // triggers remove
+                changes.push([path.concat([String(args[1] || 0 + index)]), args[0], undefined]); // triggers add
+            }
+        } else if (method === "splice") { // removes in range and adds since range start
+            const args = applyData.args as Parameters<[]["splice"]>;
+            const elementsToAdd = args.length > 2 ? args.slice(2) : [];
+            const elementsToRemove = previousValue.slice(args[0], args[0] + Number(args[1] ?? oldLength));
+
+            for (let index = 0; index < elementsToRemove.length; index++) {
+                changes.push([path.concat([String(args[0] + index)]), undefined, elementsToRemove[index]]); // triggers remove
+            }
+
+            for (let index = 0; index < elementsToAdd.length; index++) {
+                changes.push([path.concat([String(args[0] + index)]), elementsToAdd[index], undefined]); // triggers add
+            }
+        }
+        return changes;
+    }
+
+    /**
+     * Triggers the corresponding hook for the change and registers the change
+     * in the changes array
+     *
+     * @param args the path as array, the new value and the old value of the attribute
+     */
+    private processArrayChange(...args: ChangeMethodsArgs<unknown>) {
+        const [path, value, previousValue] = args;
+        if (previousValue === undefined && value !== undefined) {
+            this.callHook("observer:add", value, { path, oldValue: previousValue });
+            this.addChange({ type: "add", path, value, previousValue });
+        } else if (previousValue !== undefined && value === undefined) {
+            this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
+            this.addChange({ type: "remove", path, value, previousValue });
+        } else if (previousValue !== undefined && value !== undefined) {
+            this.callHook("observer:change", value, { path, oldValue: previousValue });
+            this.addChange({ type: "change", path, value, previousValue });
+        }
+    }
+
+    /**
      * Checks if the value has to be observed, depending on it currently is
      * not observed and is observable.
      *
@@ -306,5 +387,5 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @param value the value to be reactive
      * @returns the reactivated value
      */
-    protected abstract addReactivity(value: InstanceType<T>[this["name"]]): InstanceType<T>[this["name"]];
+    protected abstract addReactivity(value: unknown): typeof value;
 }
