@@ -296,6 +296,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @returns an array of new path, new value and new previous value from local view of the array
      */
     private determineArrayChanges(applyData: ApplyData, ...args: ChangeMethodsArgs<unknown>): ChangeMethodsArgs<unknown>[] {
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [path, _value, previousValue] = args as unknown as ChangeMethodsArgs<unknown[]>;
         const changes: ChangeMethodsArgs<unknown | undefined>[] = [];
         const oldLength = Number(previousValue.length);
@@ -333,7 +334,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
                 if (elementsToRemove[index]) changes.push([path.concat([String(args[1] || 0 + index)]), undefined, elementsToRemove[index]]); // triggers remove
                 changes.push([path.concat([String(args[1] || 0 + index)]), args[0], undefined]); // triggers add
             }
-        } else if (method === "splice") { // removes in range and adds since range start
+        } else if (method === "splice") { // removes in range and adds starting at range start
             const args = applyData.args as Parameters<[]["splice"]>;
             const elementsToAdd = args.length > 2 ? args.slice(2) : [];
             const elementsToRemove = previousValue.slice(args[0], args[0] + Number(args[1] ?? oldLength));
