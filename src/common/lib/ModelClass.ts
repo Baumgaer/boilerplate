@@ -84,10 +84,11 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedModel = this;
+
             let proxy = new Proxy(this, this.proxyHandler);
             proxy = this.addReactivity(proxy);
             this.createAttributes(proxy);
-            Object.assign(proxy, this.prePropertyMixin(proxy, args?.[0]));
+            Object.assign(proxy, this.mergeProperties(proxy, args?.[0]));
             // If this is an initialization of an existing model, we dont
             // want to have the changes
             if (args?.[0]?.id) proxy.removeChanges();
@@ -119,20 +120,18 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         /**
          * @inheritdoc
          */
-        protected override prePropertyMixin(proxy: this, properties: Record<string, any> = {}) {
+        protected mergeProperties(proxy: this, properties: Record<string, any> = {}) {
+            const defaults: Record<string, unknown> = {};
             // Has to be called with the proxy because the attributes are
             // stored on the proxy, not the raw class
             const attributes = proxy.getAttributes();
-
-            // reassign default attributes so ensure reactivity
             for (const attribute of attributes) {
-                // @ts-expect-error TS recognizes readonly properties which can not be attributes
-                this[attribute.name] = attribute.observeChangesOf(this[attribute.name]);
+                defaults[attribute.name] = this[attribute.name];
+                Reflect.set(this, attribute.name, undefined); // Set to undefined to trigger the init change
             }
 
-            const defaults: Record<string, any> = {};
             if (!properties.id) defaults.dummyId = uuid();
-            return super.prePropertyMixin.bind(proxy, Object.assign(defaults, properties));
+            return proxy.prePropertyMixin(Object.assign(defaults, properties));
         }
 
         /**

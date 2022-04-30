@@ -50,12 +50,6 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     private readonly ownerName: string;
 
     /**
-     * Holds the value as a proxy of reference values to be able to compare
-     * old value with new one.
-     */
-    private observedValue?: unknown;
-
-    /**
      * Holds an array of changes which will be collected by its owner which
      * will then send them to the server.
      */
@@ -94,7 +88,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      */
     public get(): InstanceType<T>[this["name"]] {
         const hookValue = this.callHook("getter");
-        return hookValue !== undefined ? hookValue : this.observedValue ?? Reflect.get(this.unProxyfiedOwner, this.name);
+        return hookValue !== undefined ? hookValue : Reflect.get(this.unProxyfiedOwner, this.name);
     }
 
     /**
@@ -110,7 +104,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         if (this.unProxyfiedOwner[this.name] === undefined) changeType = "init";
 
         const hookValue = this.callHook("setter", value);
-        const oldValue = this.observedValue ?? Reflect.get(this.owner, this.name);
+        const oldValue = Reflect.get(this.owner, this.name);
         const newValue = this.observeChangesOf(hookValue !== undefined ? hookValue : value);
 
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
@@ -134,8 +128,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
             newValue = this.addReactivity(onChange(newValue, (path, value, previousValue, applyData) => {
                 this.changeCallback(applyData, path, value, previousValue);
             }, this.changeCallbackOptions));
-            this.observedValue = newValue;
-        } else delete this.observedValue;
+        }
         return newValue;
     }
 
@@ -213,9 +206,14 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
             if (change.type === "init") {
                 setValue(this.owner, path, change.value);
             } else if (obj instanceof Array) {
+                const index = Number(path.slice(-1));
                 if (change.type === "add") {
-                    obj.splice(Number(path.slice(-1)), 0, change.value);
-                } else if (change.type === "remove") obj.splice(Number(path.slice(-1)), 1);
+                    obj.splice(index, 0, change.value);
+                    this.adjustArrayChanges("increment", index);
+                } else if (change.type === "remove") {
+                    obj.splice(index, 1);
+                    this.adjustArrayChanges("decrement", index);
+                }
             } else if (change.type === "change") setValue(this.owner, path, change.value);
         }
 
@@ -286,6 +284,16 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         const check = (name: string) => Boolean(Reflect.getMetadata(`${this.name}:${name}`, this.owner));
         if (hookName instanceof Array) return hookName.some((name) => check(name));
         return check(hookName);
+    }
+
+    private adjustArrayChanges(type: "increment" | "decrement", index: number): void {
+        for (const change of this.changes) {
+            if (!["add", "remove"].includes(change.type)) continue;
+            const idx = Number(!isNaN(parseInt(change.path.slice(-1).toString())) && change.path.slice(-1));
+            if (type === "increment" && idx >= index) {
+                change.path[change.path.length - 1] = String(idx + 1);
+            } else if (type === "decrement" && idx <= index) change.path[change.path.length - 1] = String(idx - 1);
+        }
     }
 
     /**
