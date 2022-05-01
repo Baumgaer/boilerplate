@@ -42,9 +42,7 @@ export default class BaseAttribute<T extends typeof BaseModel> extends CommonBas
      */
     protected override changeCallback(applyData: ApplyData, ...args: ChangeMethodsArgs<unknown>): void {
         super.changeCallback(applyData, ...args);
-        if (this.schema.isArrayType()) {
-            this.isChangeTrigger = true;
-            Reflect.set(this.owner, this.name, args[1]);
-        }
+        this.isChangeTrigger = true;
+        Reflect.set(this.owner, this.name, Reflect.get(this.owner, this.name));
     }
 }
