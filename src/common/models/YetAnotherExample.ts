@@ -7,7 +7,7 @@ interface ITest {
 
     secondAttr: number;
 
-    thirdAttr: Lazy<varchar<50>>
+    thirdAttr: Lazy<Varchar<50>>
 }
 
 export default abstract class YetAnotherExample extends BaseModel {

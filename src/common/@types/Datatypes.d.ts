@@ -31,9 +31,43 @@ type EndOfExplanation = string;
 declare type Lazy<T> = Promise<T> | T;
 
 /**
- * A standard database type for strings to safe memory
+ * A standard database type for strings to safe memory that has to be at least
+ * 0 characters and at most <Length>. Length can be at most 65535
  *
- * @property {Length} length The maximum length of the string
+ * @alias varchar
+ * @property {0} min The minimum length of the string
+ * @property {Length} max The maximum length of the string
  * @property {validateVarchar} validator The check function to ensure type safety at runtime
  */
-declare type varchar<Length> = import("type-fest").Opaque<string, Length>;
+declare type Varchar<Length extends number> = import("type-fest").Opaque<string, `Varchar${Length}`>;
+
+/**
+ * A number that has to be between Min and Max (inclusive).
+ * <Min> and <Max> can be Infinity or -Infinity
+ *
+ * @alias Number
+ * @property {Min} min The minimum length of the string
+ * @property {Max} max The maximum length of the string
+ * @property {validateVarchar} validator The check function to ensure type safety at runtime
+ */
+declare type NumberRange<Min extends number, Max extends number> = import("type-fest").Opaque<number, `NumberRange${Min}_${Max}`>;
+
+/**
+ * A string that has to be at least <Min> characters and at most <Max> characters.
+ * <Min> and <Max> can be Infinity or -Infinity
+ *
+ * @alias String
+ * @property {Min} min The minimum length of the string
+ * @property {Max} max The maximum length of the string
+ * @property {validateVarchar} validator The check function to ensure type safety at runtime
+ */
+declare type TextRange<Min extends number, Max extends number> = import("type-fest").Opaque<string, `NumberRange${Min}_${Max}`>;
+
+/**
+ * Marks an attribute as unique
+ *
+ * @emits T
+ * @property {true} unique The property has to be unique
+ * @property {validateVarchar} validator The check function to ensure type safety at runtime
+ */
+declare type Unique<T> = T;

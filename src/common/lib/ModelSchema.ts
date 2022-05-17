@@ -1,4 +1,6 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
+import { baseTypeFuncs } from "~common/utils/schema";
+import type { ZodLazy, ZodObject, ZodType } from "zod";
 import type { ModelOptions } from "~common/@types/ModelClass";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
@@ -53,6 +55,8 @@ export default class ModelSchema<T extends typeof BaseModel> {
      * Holds the options of the entity (model) which were used to construct the schema
      */
     public readonly options: ModelOptions<T>;
+
+    private schemaType: ZodLazy<ZodObject<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
     /**
      * Internal state which determines if the schema is fully built or not
@@ -118,6 +122,10 @@ export default class ModelSchema<T extends typeof BaseModel> {
         return Reflect.deleteProperty(this.attributeSchemas, schema.attributeName);
     }
 
+    public getSchemaType() {
+        return this.schemaType;
+    }
+
     /**
      * Activates the schema when all attribute schemas are constructed.
      * It also decides wether the schema becomes a child entity or introduces
@@ -137,5 +145,15 @@ export default class ModelSchema<T extends typeof BaseModel> {
         } else Entity(options.collectionName, options)(this.owner);
         if (options.indexes) for (const index of options.indexes) Index(index.columns, index.options)(proto);
         this._constructed = true;
+    }
+
+    private buildSchemaType() {
+        const attributeSchemas = Object.values(this.attributeSchemas);
+        const members = {} as Record<keyof T, ZodType>;
+        for (const attributeSchema of attributeSchemas) {
+            members[attributeSchema.attributeName] = attributeSchema.getSchemaType();
+        }
+
+        return baseTypeFuncs.object(members);
     }
 }

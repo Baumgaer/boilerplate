@@ -14,8 +14,8 @@ export default class AttributeSchema<T extends typeof BaseModel> extends CommonA
      * @inheritdoc
      */
     protected override buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): IEmbeddedEntity | null {
-        if (!this.isPlainObjectType(type)) return null;
         if (this.isArrayType(type)) type = type.subType;
+        if (!this.isPlainObjectType(type)) return null;
 
         const metadataStore = new MetadataStore();
         const className = `${pascalCase(attributeName)}EmbeddedEntity`;

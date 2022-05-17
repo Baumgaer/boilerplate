@@ -1,7 +1,8 @@
 import { BaseEntity } from "typeorm";
+import { AttributeError, ValidationError } from "~common/lib/Errors";
 import MetadataStore from "~common/lib/MetadataStore";
 import { Attr, AttrObserver } from "~common/utils/decorators";
-import { eachDeep, setValue, isUndefined } from "~common/utils/utils";
+import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~common/utils/utils";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~common/@types/BaseModel";
 import type BaseAttribute from "~common/lib/BaseAttribute";
 
@@ -269,12 +270,29 @@ export default abstract class BaseModel extends BaseEntity {
      */
     public applyChanges(changes: ModelChanges<this>) {
         for (const attributeName in changes) {
-            if (Object.prototype.hasOwnProperty.call(changes, attributeName)) {
+            if (hasOwnProperty(changes, attributeName)) {
                 const attributeChanges = changes[attributeName];
                 const attribute = this.getAttribute(attributeName);
                 if (attribute) attribute.applyChanges(attributeChanges);
             }
         }
+    }
+
+    public validate(obj = this.getValidationObject()) {
+        const errors: AttributeError[] = [];
+        for (const key in obj) {
+            if (hasOwnProperty(obj, key)) {
+                const attribute = this.getAttribute(key);
+                if (!attribute) {
+                    errors.push(new AttributeError(key, "inexistent", [key], obj[key]));
+                } else {
+                    const validationResult = attribute.validate(obj[key]);
+                    if (validationResult instanceof AttributeError) errors.push(validationResult);
+                }
+            }
+        }
+        if (errors.length) return new ValidationError(errors, this);
+        return true;
     }
 
     /**
@@ -299,6 +317,12 @@ export default abstract class BaseModel extends BaseEntity {
      */
     protected addReactivity(_value: this): this {
         throw new Error("Not implemented");
+    }
+
+    private getValidationObject() {
+        if (this.isNew()) return Object.fromEntries(this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]));
+        if (this.hasChanges()) return Object.fromEntries(Object.keys(this.getChanges()).map((attributeName) => [attributeName, Reflect.get(this, attributeName)]));
+        return Object.fromEntries(this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]));
     }
 
 }

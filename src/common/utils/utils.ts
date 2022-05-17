@@ -3,6 +3,8 @@ import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
 import type BaseModel from "~common/lib/BaseModel";
 
+export { compact, union, intersection, difference, camelCase, merge, isPlainObject, isUndefined, upperFirst } from "lodash";
+
 const lodash = addDeepdash(_);
 
 type eachDeepParams = Required<Parameters<typeof lodash.eachDeep>>;
@@ -51,45 +53,10 @@ export function eachDeep(obj: object, callback: eachDeepParams["1"], options: ea
 }
 
 /**
- * @see lodash.merge
- */
-export function merge(...args: Parameters<typeof _["merge"]>): ReturnType<typeof _["merge"]> {
-    return _.merge(...args);
-}
-
-/**
- * @see lodash.camelCase
- */
-export function camelCase(...args: Parameters<typeof _["camelCase"]>): ReturnType<typeof _["camelCase"]> {
-    return _.camelCase(...args);
-}
-
-/**
- * @see lodash.pascalCase
+ * Converts string to PascalCase
  */
 export function pascalCase(str: string): ReturnType<typeof _["camelCase"]> {
-    return _.capitalize(camelCase(str));
-}
-
-/**
- * @see lodash.union
- */
-export function union(...args: Parameters<typeof _["union"]>): ReturnType<typeof _["union"]> {
-    return _.union(...args);
-}
-
-/**
- * @see lodash.intersection
- */
-export function intersection(...args: Parameters<typeof _["intersection"]>): ReturnType<typeof _["intersection"]> {
-    return _.intersection(...args);
-}
-
-/**
- * @see lodash.difference
- */
-export function difference(...args: Parameters<typeof _["difference"]>): ReturnType<typeof _["difference"]> {
-    return _.difference(...args);
+    return _.upperFirst(_.camelCase(str));
 }
 
 /**
@@ -117,20 +84,13 @@ export function hasOwnProperty(value: object, key: string) {
 }
 
 /**
- * @see lodash.isPlainObject
- */
-export function isPlainObject(...args: Parameters<typeof _["isPlainObject"]>): ReturnType<typeof _["isPlainObject"]> {
-    return _.isPlainObject(...args);
-}
-
-/**
  * Checks if a given value can be observed by on-change
  *
  * @param value the value to check
  * @returns true if can be observed and false else
  */
 export function isChangeObservable(value: unknown) {
-    return value instanceof Array || value instanceof Set || value instanceof Map || isPlainObject(value);
+    return value instanceof Array || value instanceof Set || value instanceof Map || _.isPlainObject(value);
 }
 
 /**
@@ -146,20 +106,13 @@ export function isChangeObserved(value: unknown) {
 }
 
 /**
- * @see lodash.isUndefined
- */
-export function isUndefined(...args: Parameters<typeof _["isUndefined"]>): ReturnType<typeof _["isUndefined"]> {
-    return _.isUndefined(...args);
-}
-
-/**
  * Checks if a value is not undefined or null
  *
  * @param value the value to check
  * @returns true if it is a value and false else
  */
 export function isValue(value: unknown): boolean {
-    return !isUndefined(value) && !isNull(value);
+    return !_.isUndefined(value) && !isNull(value);
 }
 
 /**

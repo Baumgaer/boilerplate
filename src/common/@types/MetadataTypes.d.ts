@@ -1,22 +1,33 @@
 import type { LiteralUnion } from "type-fest";
 
-type MetadataType = IIdentifiedType & IModelType & IMixedType & IArrayType & IUnionOrIntersectionType & ILiteralType & IUnresolvedType & IInterfaceType & ITupleType & IOptionalType;
+type MetadataType = IIdentifiedType | INullType | IUndefinedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType | IUnresolvedType | IInterfaceType | ITupleType | IOptionalType;
 
-export interface IIdentifiedType {
-    identifier: LiteralUnion<"String" | "Number" | "Boolean" | "Date", string>;
+export type CombinedDataType<T> = T | IUnionOrIntersectionType<T> | IArrayType<T> | ITupleType<T>
+export type ObjectLikeDataType = IInterfaceType | IUnionOrIntersectionType | IModelType | CombinedDataType<ObjectLikeDataType>;
+
+export interface IIdentifiedType<T = LiteralUnion<"String" | "Number" | "Boolean" | "Date", string>> {
+    identifier: T;
+}
+
+export interface INullType {
+    isNull: true;
+}
+
+export interface IUndefinedType {
+    isUndefined: true;
 }
 
 export interface IModelType {
     identifier: IIdentifiedType["identifier"];
-    isModel: boolean;
+    isModel: true;
 }
 
 export interface IMixedType {
-    isMixed: boolean;
+    isMixed: true;
 }
 
 export interface IInterfaceType {
-    isInterface: boolean,
+    isInterface: true,
     members: Record<string, IAttrMetadata>
 }
 
@@ -24,32 +35,40 @@ export interface IUnresolvedType {
     isUnresolvedType: true;
 }
 
-export interface ILiteralType {
+export interface ILiteralType<T = string | number> {
     isLiteral?: true;
-    isStringLiteral?: boolean;
-    isNumberLiteral?: boolean;
-    value: string | number;
+    isStringLiteral?: T extends string ? true : never;
+    isNumberLiteral?: T extends number ? true : never;
+    value: T;
 }
 
-export interface IArrayType {
-    isArray: boolean;
-    subType: MetadataType;
+export interface IArrayType<T = MetadataType> {
+    isArray: true;
+    subType: T;
 }
 
-export interface IUnionOrIntersectionType {
+export interface IUnionOrIntersectionType<T = MetadataType> {
     isUnion?: boolean;
     isIntersection?: boolean;
-    subTypes: MetadataType[]
+    subTypes: T[]
+}
+
+export interface IUnionType<T = MetadataType> extends Omit<IUnionOrIntersectionType<T>, "isIntersection"> {
+    isUnion: true;
+}
+
+export interface IIntersectionType<T = MetadataType> extends Omit<IUnionOrIntersectionType<T>, "isUnion"> {
+    isIntersection: true;
 }
 
 export interface IOptionalType {
-    isOptional: boolean;
+    isOptional: true;
     subType: MetadataType
 }
 
-export interface ITupleType {
-    isTuple: boolean;
-    subTypes: MetadataType[]
+export interface ITupleType<T = MetadataType> {
+    isTuple: true;
+    subTypes: T[]
 }
 
 export interface IModelMetadata {

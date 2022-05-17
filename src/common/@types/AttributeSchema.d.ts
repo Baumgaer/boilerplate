@@ -7,6 +7,7 @@ import type { ColumnNumericOptions } from "typeorm/decorator/options/ColumnNumer
 import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWithLengthOptions";
 import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
+import type { ZodTypeAny } from "zod";
 import type { IAttrMetadata } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
 
@@ -94,3 +95,5 @@ export type AttrOptionsPartialMetadataJson<T extends typeof BaseModel> = IAttrMe
 export type AttrObserverTypes = "add" | "remove" | "change"
 
 export type ChangeMethodsArgs<V> = [(string | symbol)[], V, V]
+
+export type SchemaTypes = ZodTypeAny;

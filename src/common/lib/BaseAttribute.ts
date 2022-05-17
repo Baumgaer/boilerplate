@@ -220,6 +220,10 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         this.processingChanges = false;
     }
 
+    public validate(value: unknown) {
+        return this.schema.validate(value);
+    }
+
     /**
      * Adds a change if attribute is currently not processed
      *
@@ -306,7 +310,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     private determineArrayChanges(applyData: ApplyData, ...args: ChangeMethodsArgs<unknown>): ChangeMethodsArgs<unknown>[] {
         // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [path, _value, previousValue] = args as unknown as ChangeMethodsArgs<unknown[]>;
-        const changes: ChangeMethodsArgs<unknown | undefined>[] = [];
+        const changes: ChangeMethodsArgs<unknown>[] = [];
         const oldLength = Number(previousValue.length);
 
         const method = applyData.name as keyof [];
