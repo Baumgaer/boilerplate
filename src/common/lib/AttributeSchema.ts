@@ -251,6 +251,12 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.buildSchema(parameters.type);
     }
 
+    /**
+     * Checks if the given value is valid like defined by the schema type
+     *
+     * @param value the value to check
+     * @returns true if valid and an error else
+     */
     public validate(value: unknown) {
         const name = this.attributeName.toString();
 
@@ -365,7 +371,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     }
 
     /**
-     * Determines if this attribute is an array type. This includes tuples!
+     * Determines if this attribute is an array type. This does NOT include tuples
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is an array type else false
@@ -375,16 +381,36 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return "isArray" in type && type.isArray;
     }
 
+    /**
+     * Determines if this attribute is a tuple type. This does NOT include
+     * regular arrays.
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a tuple type else false
+     */
     public isTupleType(altType?: IAttrMetadata["type"]): altType is ITupleType {
         const type = altType || this.rawType;
         return "isTuple" in type && type.isTuple;
     }
 
+    /**
+     * Determines if this attribute has an optional type
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is an optional type else false
+     */
     public isOptionalType(altType?: IAttrMetadata["type"]): altType is IOptionalType {
         const type = altType || this.rawType;
         return "isOptional" in type && type.isOptional;
     }
 
+    /**
+     * Determines if the type of the attribute is an identifies type (means a
+     * type with an explizite name).
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is an identified type else false
+     */
     public hasIdentifier(altType?: IAttrMetadata["type"]): altType is IModelType | IIdentifiedType {
         const type = altType || this.rawType;
         return "identifier" in type;
@@ -427,16 +453,36 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return "isMixed" in type && type.isMixed || "isUnresolvedType" in type && type.isUnresolvedType || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
     }
 
+    /**
+     * Determines if the type of this attribute is undefined
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is an undefined type else false
+     */
     public isUndefinedType(altType?: IAttrMetadata["type"]): altType is IUndefinedType {
         const type = altType || this.rawType;
         return "isUndefined" in type && type.isUndefined;
     }
 
+    /**
+     * Determines if the type of this attribute is null
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a null type else false
+     */
     public isNullType(altType?: IAttrMetadata["type"]): altType is INullType {
         const type = altType || this.rawType;
         return "isNull" in type && type.isNull;
     }
 
+    /**
+     * Determines if the type of this attribute is a custom defined type.
+     * This type looks like an identified type but behaves different in
+     * determination of database type name and schema type generation.
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is a custom type else false
+     */
     public isCustomType(altType?: IAttrMetadata["type"]): altType is ICustomType {
         const type = altType || this.rawType;
         return "isCustomType" in type && type.isCustomType;
@@ -495,6 +541,16 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return null;
     }
 
+    /**
+     * If not already existent, this will start the generation of the schema
+     * type of this attribute and returns it.
+     *
+     * NOTE: This assumes that ALL models are already completely loaded to be
+     * able to be sync which allows the model schema to build a lazy schema type
+     * which then allows circular schema definitions.
+     *
+     * @returns at least a ZodAnyType
+     */
     public getSchemaType() {
         if (!this.schemaType) this.schemaType = this.buildSchemaType(this.rawType);
         return this.schemaType;
@@ -688,6 +744,18 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return true;
     }
 
+    /**
+     * Generates a schema which will be used to validate a value. This schema is
+     * a pure data schema and depends completely on the attributes type.
+     * This also takes isRequired and other constraints into account (see end of method).
+     *
+     * NOTE: This assumes that all models are already loaded to have access
+     * to the MODEL_NAME_TO_MODEL_MAP which allows to be sync which is needed
+     * for circular schema definitions.
+     *
+     * @param type type to build schema from
+     * @returns at least a "ZodAnyType"
+     */
     private buildSchemaType(type: IAttrMetadata["type"]): SchemaTypes {
         let schemaType: SchemaTypes = baseTypeFuncs.any();
 

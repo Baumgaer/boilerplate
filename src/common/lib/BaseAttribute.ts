@@ -221,6 +221,12 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         this.processingChanges = false;
     }
 
+    /**
+     * Checks if the given value is a valid value like defined by the schema
+     *
+     * @param value the value to check
+     * @returns true if the value is valid and an error else
+     */
     public validate(value: unknown) {
         if (!this.owner.isNew() && this.schema.isImmutable) {
             return new AttributeError(this.name.toString(), "immutable", [], value);
@@ -294,6 +300,14 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
         return check(hookName);
     }
 
+    /**
+     * Adjust changes of arrays when new changes are applied to ensure indexes
+     * and model version to be consistent.
+     *
+     * @private
+     * @param type wether to increase or decrease the index of existing changes
+     * @param index indexes greater this index have to be adjusted
+     */
     private adjustArrayChanges(type: "increment" | "decrement", index: number): void {
         for (const change of this.changes) {
             if (!["add", "remove"].includes(change.type)) continue;

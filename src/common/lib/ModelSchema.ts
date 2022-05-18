@@ -56,6 +56,9 @@ export default class ModelSchema<T extends typeof BaseModel> {
      */
     public readonly options: ModelOptions<T>;
 
+    /**
+     * Holds the "ready to validate" schema of the type
+     */
     private schemaType: ZodLazy<ZodObject<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
     /**
@@ -147,6 +150,13 @@ export default class ModelSchema<T extends typeof BaseModel> {
         this._constructed = true;
     }
 
+    /**
+     * This will be called by the ZodLazyType which is already applied
+     * to the schemaType. This will build the schema on-the-fly to be able to
+     * create recursive and circular schema types for this model schema.
+     *
+     * @returns at least an empty ZodObjectType
+     */
     private buildSchemaType() {
         const attributeSchemas = Object.values(this.attributeSchemas);
         const members = {} as Record<keyof T, ZodType>;
