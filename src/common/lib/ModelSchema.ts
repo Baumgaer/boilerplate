@@ -125,6 +125,10 @@ export default class ModelSchema<T extends typeof BaseModel> {
         return Reflect.deleteProperty(this.attributeSchemas, schema.attributeName);
     }
 
+    /**
+     * @returns the schema type which will be used by the attribute schemas to
+     * provide a type based schema type them self.
+     */
     public getSchemaType() {
         return this.schemaType;
     }
@@ -154,6 +158,10 @@ export default class ModelSchema<T extends typeof BaseModel> {
      * This will be called by the ZodLazyType which is already applied
      * to the schemaType. This will build the schema on-the-fly to be able to
      * create recursive and circular schema types for this model schema.
+     *
+     * NOTE: This assumes that all models are already be loaded because the
+     * attribute schemas have the same assumption. This allows the lazy type to
+     * be built which then allows circular schemas.
      *
      * @returns at least an empty ZodObjectType
      */
