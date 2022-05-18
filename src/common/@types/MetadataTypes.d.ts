@@ -1,6 +1,7 @@
 import type { LiteralUnion } from "type-fest";
+import type { ColumnType } from "typeorm";
 
-type MetadataType = IIdentifiedType | INullType | IUndefinedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType | IUnresolvedType | IInterfaceType | ITupleType | IOptionalType;
+type MetadataType = IIdentifiedType | INullType | IUndefinedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType | IUnresolvedType | IInterfaceType | ITupleType | IOptionalType | ICustomType;
 
 export type CombinedDataType<T> = T | IUnionOrIntersectionType<T> | IArrayType<T> | ITupleType<T>
 export type ObjectLikeDataType = IInterfaceType | IUnionOrIntersectionType | IModelType | CombinedDataType<ObjectLikeDataType>;
@@ -33,6 +34,10 @@ export interface IInterfaceType {
 
 export interface IUnresolvedType {
     isUnresolvedType: true;
+}
+
+export interface ICustomType<T = ColumnType> extends IIdentifiedType<T> {
+    isCustomType: true
 }
 
 export interface ILiteralType<T = string | number> {

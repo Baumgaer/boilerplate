@@ -35,7 +35,7 @@ export default abstract class BaseModel extends BaseEntity {
      * This will be set by the server.
      */
     @Attr({ primary: true })
-    public readonly id!: string;
+    public readonly id!: UUID;
 
     /**
      * The date of creation. This will be set automatically
@@ -279,7 +279,7 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public validate(obj = this.getValidationObject()) {
-        const errors: AttributeError[] = [];
+        const errors: (AttributeError | AggregateError)[] = [];
         for (const key in obj) {
             if (hasOwnProperty(obj, key)) {
                 const attribute = this.getAttribute(key);
@@ -287,7 +287,7 @@ export default abstract class BaseModel extends BaseEntity {
                     errors.push(new AttributeError(key, "inexistent", [key], obj[key]));
                 } else {
                     const validationResult = attribute.validate(obj[key]);
-                    if (validationResult instanceof AttributeError) errors.push(validationResult);
+                    if (validationResult instanceof AggregateError) errors.push(validationResult);
                 }
             }
         }

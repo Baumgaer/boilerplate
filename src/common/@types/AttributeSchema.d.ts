@@ -10,6 +10,7 @@ import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColu
 import type { ZodTypeAny } from "zod";
 import type { IAttrMetadata } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
+import type * as DataTypes from "~common/lib/DataTypes";
 
 /**
  * All attribute field names of typeorm which are allowed to use in column options
@@ -64,7 +65,29 @@ export interface ISpecialColumns {
     isGenerated?: Parameters<typeof Generated>["0"]
 }
 
-export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, ThisType<T> {
+export interface IInjectedOptions {
+    /**
+     * The minimum of a number or of the length of a string
+     */
+    min?: number;
+
+    /**
+     * The maximum of a number or of the length of a string
+     */
+    max?: number;
+
+    /**
+     * A number or the length of a string hav to be multiple of this value
+     */
+    multipleOf?: number;
+
+    /**
+     * The name of the datatype which holds the schema and corresponding validation function
+     */
+    validator?: keyof typeof DataTypes;
+}
+
+export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, ThisType<T> {
 
     /**
      * Defines the attribute as an index column which can be used additionally

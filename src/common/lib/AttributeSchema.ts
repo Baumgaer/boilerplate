@@ -14,13 +14,16 @@ import {
     VersionColumn,
     Index
 } from "typeorm";
+import { ZodNumber, ZodString } from "zod";
+import * as DataTypes from "~common/lib/DataTypes";
+import { AttributeError } from "~common/lib/Errors";
 import { baseTypeFuncs } from "~common/utils/schema";
-import { merge, getModelClassByName, isValue } from "~common/utils/utils";
-import { AttributeError } from "./Errors";
+import { merge, getModelClassByName } from "~common/utils/utils";
+import type { Constructor } from "type-fest";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type { AttrOptions, AllColumnOptions, AttrOptionsPartialMetadataJson, IEmbeddedEntity, SchemaNameByModelClass, SchemaTypes } from "~common/@types/AttributeSchema";
-import type { CombinedDataType, IArrayType, IAttrMetadata, IIdentifiedType, IInterfaceType, IIntersectionType, ILiteralType, IModelType, INullType, IOptionalType, ITupleType, IUndefinedType, IUnionType, IUnresolvedType, MetadataType, ObjectLikeDataType } from "~common/@types/MetadataTypes";
+import type { CombinedDataType, IArrayType, IAttrMetadata, ICustomType, IIdentifiedType, IInterfaceType, IIntersectionType, ILiteralType, IModelType, INullType, IOptionalType, ITupleType, IUndefinedType, IUnionType, IUnresolvedType, MetadataType, ObjectLikeDataType } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
 
 /**
@@ -74,6 +77,26 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * Indicates if an attribute is readonly / not writable / only writable once
      */
     public isImmutable: boolean = false;
+
+    /**
+     * @inheritdoc
+     */
+    public min?: number;
+
+    /**
+     * @inheritdoc
+     */
+    public max?: number;
+
+    /**
+     * @inheritdoc
+     */
+    public multipleOf?: number;
+
+    /**
+     * @inheritdoc
+     */
+    public validator?: keyof typeof DataTypes;
 
     /**
      * Indicates if an attribute should only be loaded from database when it
@@ -230,11 +253,17 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     public validate(value: unknown) {
         const name = this.attributeName.toString();
-        if (this.isImmutable) return new AttributeError(name, "immutable", [], value);
-        if (this.isRequired && !isValue(value)) return new AttributeError(name, "required", [], value);
 
         const result = this.getSchemaType().safeParse(value);
-        if (!result.success) return new AttributeError(name, "type", [], value);
+        if (!result.success) {
+            const errors: AttributeError[] = [];
+            result.error.issues.forEach((issue) => {
+                if (issue.message === "Required") {
+                    errors.push(new AttributeError(name, "required", issue.path, value));
+                } else errors.push(new AttributeError(name, "type", issue.path, value));
+            });
+            return new AggregateError(errors);
+        }
 
         return true;
     }
@@ -408,6 +437,11 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         return "isNull" in type && type.isNull;
     }
 
+    public isCustomType(altType?: IAttrMetadata["type"]): altType is ICustomType {
+        const type = altType || this.rawType;
+        return "isCustomType" in type && type.isCustomType;
+    }
+
     /**
      * Returns the values of an union type when the type is a fully literal type
      *
@@ -489,6 +523,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             typeName = "simple-enum";
             defaultOptions.enum = this.getUnionTypeValues(type);
         }
+        if (this.isCustomType(type)) typeName = type.identifier;
         return [typeName, defaultOptions];
     }
 
@@ -554,6 +589,11 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         this.rawType = params.type;
         this.isRelationOwner = Boolean(params.isRelationOwner);
         this.relationColumn = params.relationColumn;
+
+        this.min = params.min;
+        this.max = params.max;
+        this.multipleOf = params.multipleOf;
+        this.validator = params.validator;
 
         if (!this.isRelationOwner) {
             this.isEager = !this.isLazy;
@@ -650,7 +690,12 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     private buildSchemaType(type: IAttrMetadata["type"]): SchemaTypes {
         let schemaType: SchemaTypes = baseTypeFuncs.any();
-        if (this.isTupleType(type)) {
+
+        // eslint-disable-next-line import/namespace
+        if (this.validator && DataTypes[this.validator]) {
+            // eslint-disable-next-line import/namespace
+            schemaType = DataTypes[this.validator]({ min: this.min, max: this.max }).schemaType;
+        } else if (this.isTupleType(type)) {
             const tupleTypes = type.subTypes.map((subType) => this.buildSchemaType(subType));
             schemaType = baseTypeFuncs.tuple(tupleTypes as [SchemaTypes, ...SchemaTypes[]]);
         } else if (this.isArrayType(type)) {
@@ -659,8 +704,9 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType));
         } else if (this.isModelType(type)) {
             const typeIdentifier = this.getTypeIdentifier() || "";
-            const modelSchema = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier]?.getSchema();
-            schemaType = modelSchema?.getSchemaType() || baseTypeFuncs.any();
+            const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
+            const modelSchema = modelClass?.getSchema();
+            schemaType = modelClass && modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.any();
         } else if (this.isPlainObjectType(type)) {
             schemaType = baseTypeFuncs.object(Object.fromEntries(Object.entries(type.members).map((entry) => {
                 const value = this.buildSchemaType(entry[1].type);
@@ -691,7 +737,22 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             schemaType = baseTypeFuncs.date();
         }
 
+        let min = -Infinity;
+        if (this.isStringType(type)) min = 0;
+        if (this.min !== undefined) min = this.min;
+        if (schemaType instanceof ZodNumber) {
+            schemaType.gte(min);
+        } else if (schemaType instanceof ZodString) schemaType.min(min);
+
+        let max = Infinity;
+        if (this.max !== undefined) max = this.max;
+        if (schemaType instanceof ZodNumber) {
+            schemaType.lte(max);
+        } else if (schemaType instanceof ZodString) schemaType.max(max);
+
         if (!this.isRequired) schemaType = baseTypeFuncs.optional(schemaType);
+        if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
+
         console.debug(`Created schema type ${this._ctor.name}#${this.attributeName}: ${schemaType._def.typeName}`);
         return schemaType;
     }

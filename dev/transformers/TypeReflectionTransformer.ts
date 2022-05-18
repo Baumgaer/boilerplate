@@ -216,6 +216,7 @@ export default function transformer(program: ts.Program) {
                             const argumentType = typeChecker.getTypeAtLocation(argument);
                             if (utils.isLiteral(argumentType)) {
                                 value = argument.getText();
+                                if (utils.isNumberLiteral(argumentType)) value = parseFloat(value);
                             } else value = resolveType(argumentType, attr, sourceFile, argument);
                         }
                     }
@@ -240,7 +241,7 @@ export default function transformer(program: ts.Program) {
                 return { isCustomType: true, properties, type };
             }
 
-            return { isCustomType: true, properties: resolveProperties(), type: { identifier: customType.name } };
+            return { isCustomType: true, properties: resolveProperties(), type: { isCustomType: true, identifier: customType.name } };
         }
 
         return (sourceFile) => {

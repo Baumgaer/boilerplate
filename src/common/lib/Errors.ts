@@ -14,9 +14,9 @@ export class BaseError extends Error {
 
 export class ValidationError extends BaseError {
 
-    public errors: AttributeError[];
+    public errors: (AttributeError | AggregateError)[];
 
-    public constructor(errors: AttributeError[], model: BaseModel) {
+    public constructor(errors: (AttributeError | AggregateError)[], model: BaseModel) {
         super(`Validation of Model ${model.className}:${model.getId()} failed`);
         this.errors = errors;
     }
@@ -28,11 +28,11 @@ export class AttributeError extends BaseError {
 
     public attribute: string;
 
-    public path: string[];
+    public path: (string | number)[];
 
     public value: unknown;
 
-    public constructor(attributeName: string, kind: AttributeKinds, path: string[], value: unknown) {
+    public constructor(attributeName: string, kind: AttributeKinds, path: (string | number)[], value: unknown) {
         const errorName = <PascalCase<AttributeKinds>>upperFirst(kind);
         super(`attribute "${attributeName}" is invalid: ${errorName}`);
         this.attribute = attributeName;

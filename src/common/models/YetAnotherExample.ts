@@ -3,9 +3,9 @@ import BaseModel from "~env/lib/BaseModel";
 import type AnotherExample from "~env/models/AnotherExample";
 
 interface ITest {
-    testAttr: string;
+    testAttr: TextRange<50, 100>;
 
-    secondAttr: number;
+    secondAttr: NumberRange<50, 100>;
 
     thirdAttr: Lazy<Varchar<50>>
 }

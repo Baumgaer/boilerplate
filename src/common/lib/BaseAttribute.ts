@@ -1,5 +1,6 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
+import { AttributeError } from "~common/lib/Errors";
 import { setValue, getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
 import type { Options, ApplyData } from "on-change";
 import type { ChangeMethodsArgs, IAttributeChange } from "~common/@types/AttributeSchema";
@@ -221,6 +222,9 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
     }
 
     public validate(value: unknown) {
+        if (!this.owner.isNew() && this.schema.isImmutable) {
+            return new AttributeError(this.name.toString(), "immutable", [], value);
+        }
         return this.schema.validate(value);
     }
 
