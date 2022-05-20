@@ -13,6 +13,10 @@
         </ion-header>
 
         <div id="container">
+            <strong @click="changeLanguage(this.lngChange % 2 ? 'en-us' : 'de-de')">
+                {{ this.translate("hello") }} {{ this.translate("world") }}!
+                {{ this.translate("test") }} <br />
+            </strong>
             <strong>Ready to create an app with the model named {{ model.name }}?</strong>
             <p>Start with Ionic <a target="_blank" rel="noopener noreferrer"
                     href="https://ionicframework.com/docs/components">UI Components</a></p>

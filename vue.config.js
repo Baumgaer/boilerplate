@@ -64,6 +64,8 @@ module.exports = {
             return args;
         });
 
+        config.module.rule('yml').test(/\.ya?ml$/).use('yaml-loader').loader('yaml-loader').end();
+
         config.optimization.minimizer('terser').tap(args => {
             const { terserOptions } = args[0];
             // eslint-disable-next-line

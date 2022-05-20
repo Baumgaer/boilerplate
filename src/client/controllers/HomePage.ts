@@ -3,7 +3,7 @@ import BaseController from "~client/lib/BaseController";
 import AnotherExample from "~client/models/AnotherExample";
 import { Controller } from "~client/utils/decorators";
 
-@Controller({ components: { IonContent, IonHeader, IonPage, IonTitle, IonToolbar } })
+@Controller({ components: { IonContent, IonHeader, IonPage, IonTitle, IonToolbar }, name: "home-page" })
 export default class HomePage extends BaseController {
 
     public model = new AnotherExample({ name: "waddehaddeduddeda", anotherExampleClient: [1, 2, 3] });
