@@ -8,6 +8,7 @@ import helmet from "helmet";
 import hpp from "hpp";
 import ms from "ms";
 import normalizeUrl from "normalize-url";
+import { middleware as i18nMiddleware } from "~server/utils/language";
 import type { Request, Response, NextFunction } from "express";
 
 
@@ -68,6 +69,7 @@ export default class BaseServer {
         this.app.use(json({ limit: maximumRequestBodySize }));
         this.app.use(urlencoded({ extended: Boolean(useQueryStringLibrary), limit: maximumRequestBodySize }));
         this.app.use(compression());
+        this.app.use(i18nMiddleware);
 
         if (enableETag) this.app.enable('etag');
     }
