@@ -17,8 +17,9 @@ import {
 import { ZodNumber, ZodString } from "zod";
 import * as DataTypes from "~common/lib/DataTypes";
 import { AttributeError } from "~common/lib/Errors";
+import MetadataStore from "~common/lib/MetadataStore";
 import { baseTypeFuncs } from "~common/utils/schema";
-import { merge, getModelClassByName } from "~common/utils/utils";
+import { merge, getModelClassByName, hasOwnProperty, pascalCase } from "~common/utils/utils";
 import type { Constructor } from "type-fest";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
@@ -588,11 +589,38 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * of the given type which results from an interface which will be injected
      * to runtime during compile time.
      *
-     * @param _attributeName the name of the attribute which will be an embedded entity
-     * @param _type the type of the attribute
+     * @param attributeName the name of the attribute which will be an embedded entity
+     * @param type the type of the attribute
      */
-    protected buildEmbeddedEntity(_attributeName: string, _type: IAttrMetadata["type"]): IEmbeddedEntity | null {
-        throw new Error("Not implemented!");
+    protected buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): IEmbeddedEntity | null {
+        let embeddedType: MetadataType | MetadataType[] | null = null;
+        if (this.isArrayType(type)) embeddedType = type.subType;
+        if (this.isTupleType(type) && type.subTypes.every((subType) => this.isPlainObjectType(subType))) embeddedType = type.subTypes;
+        if (!this.isValidEmbeddedType(embeddedType)) return null;
+
+        const metadataStore = new MetadataStore();
+        const className = `${pascalCase(attributeName)}EmbeddedEntity`;
+        class EmbeddedEntity {
+            public static className: string = className;
+        }
+
+        if (!(embeddedType instanceof Array)) embeddedType = [embeddedType];
+
+        for (const type of embeddedType) {
+            for (const memberKey in type.members) {
+                if (hasOwnProperty(type.members, memberKey)) {
+                    const memberType = type.members[memberKey];
+                    const attr = new AttributeSchema(EmbeddedEntity as any, memberKey as any, memberType);
+                    metadataStore.setAttributeSchema(EmbeddedEntity as any, memberKey as any, attr);
+                }
+            }
+        }
+
+        return EmbeddedEntity;
+    }
+
+    protected isValidEmbeddedType(embeddedType: MetadataType | MetadataType[] | null): embeddedType is IInterfaceType | IInterfaceType[] {
+        return Boolean(embeddedType && (embeddedType instanceof Array && embeddedType.every((subType) => this.isPlainObjectType(subType)) || !(embeddedType instanceof Array) && this.isPlainObjectType(embeddedType)));
     }
 
     /**
