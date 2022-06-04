@@ -38,7 +38,6 @@ const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
 // Wait for all model schemas constructed to ensure all models have correct relations
 const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
 await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
-// TODO: Start ZOD schema generation here due to cyclic schemas
 await new DataSource({
     type: "sqljs",
     autoSave: true,
@@ -46,7 +45,7 @@ await new DataSource({
     useLocalForage: true,
     entities: modelClasses,
     synchronize: true,
-    //logging: ["schema", "log", "migration"],
+    logging: ["info", "error", "log", "schema", "warn"],
     sqlJsConfig: {
         locateFile: () => sqlWasm.href
     }

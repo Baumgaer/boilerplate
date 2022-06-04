@@ -29,7 +29,7 @@ interface options {
     port?: number
 }
 
-export default class BaseServer {
+export default abstract class BaseServer {
 
     protected readonly app = express();
 
@@ -69,7 +69,6 @@ export default class BaseServer {
         this.app.use(json({ limit: maximumRequestBodySize }));
         this.app.use(urlencoded({ extended: Boolean(useQueryStringLibrary), limit: maximumRequestBodySize }));
         this.app.use(compression());
-        this.app.use(i18nMiddleware);
 
         if (enableETag) this.app.enable('etag');
     }
@@ -82,7 +81,7 @@ export default class BaseServer {
     }
 
     protected setupLocalization() {
-        // Nothing to do here
+        this.app.use(i18nMiddleware);
     }
 
     protected setupDatabase() {
@@ -134,7 +133,7 @@ export default class BaseServer {
         return {};
     }
 
-    protected setupRoutes() {
+    private async setupRoutes() {
         // TODO
     }
 
@@ -157,17 +156,25 @@ export default class BaseServer {
     }
 
     private async setup() {
-        await this.setupGeneral();
-        await Promise.all([
-            this.setupTemplateEngine(),
-            this.setupLocalization(),
-            this.setupDatabase(),
-            this.setupEmailConnection()
-        ]);
-        await this.setupSession();
-        await this.setupBasicSecurity();
-        await this.setupRoutes();
-
+        try {
+            console.info("1. Basic middlewares");
+            await this.setupGeneral();
+            console.info("2. Session");
+            await this.setupSession();
+            console.info("3. Basic security");
+            await this.setupBasicSecurity();
+            console.info("4. Localization");
+            await this.setupLocalization();
+            console.info("5. Template engine");
+            await this.setupTemplateEngine();
+            console.info("6. Database and mail server connections");
+            await Promise.all([this.setupDatabase(), this.setupEmailConnection()]);
+            console.info("7. Routes");
+            await this.setupRoutes();
+            console.info("8. Setup finished");
+        } catch (error) {
+            console.error(`Error while setting up server: ${error}`);
+        }
         this.setupFinished = true;
     }
 
