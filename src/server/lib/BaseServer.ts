@@ -2,14 +2,17 @@ import { createHash, randomBytes } from "crypto";
 import { createServer } from "http";
 import compression from "compression";
 import csurf from "csurf";
-import express, { json, urlencoded /*static as expressStatic, Router */ } from "express";
+import express, { json, urlencoded /*static as expressStatic */, Router } from "express";
 import expressSession from "express-session";
 import helmet from "helmet";
 import hpp from "hpp";
+import HttpErrors from "http-errors";
 import ms from "ms";
 import normalizeUrl from "normalize-url";
 import { middleware as i18nMiddleware } from "~server/utils/language";
 import type { Request, Response, NextFunction } from "express";
+import type { HttpMethods } from "~server/@types/http";
+import type BaseRoute from "~server/lib/BaseRoute";
 
 
 type cspSrcNames = "default" | "font" | "frame" | "img" | "media" | "manifest" | "object" | "script" | "style" | "connect"
@@ -133,8 +136,36 @@ export default abstract class BaseServer {
         return {};
     }
 
+    protected routeFilter(_route: typeof BaseRoute): boolean {
+        return true;
+    }
+
     private async setupRoutes() {
-        // TODO
+        const context = require.context("~server/routes/", true, /.+\.ts/, "sync");
+        const router = Router({ caseSensitive: true, mergeParams: true });
+
+        context.keys().forEach((key) => {
+            const routeClass: typeof BaseRoute = context(key).default;
+            if (!routeClass.serverClasses.includes(this.constructor as typeof BaseServer) || !this.routeFilter(routeClass)) return;
+
+            const route = new routeClass(this);
+            for (const routeObj of route.routes) {
+                const routerMethod = routeObj.method.toLowerCase() as Lowercase<HttpMethods>;
+                router[routerMethod](routeObj.uri, (req, res, next) => {
+                    const methodName = routeObj.methodName;
+                    const accessCheck = routeObj.accessCheck;
+                    route.handle(req, res, next, { methodName, accessCheck });
+                });
+            }
+
+            this.app.use(routeClass.namespace, router);
+        });
+
+        this.app.use("*", (request, _response, next) => {
+            console.info(`${request.ip} ${request.method} NOT FOUND ${request.originalUrl}`);
+            const httpError = new HttpErrors.NotFound();
+            next(httpError);
+        });
     }
 
     private setupHelmet(request: Request, response: Response, next: NextFunction) {
