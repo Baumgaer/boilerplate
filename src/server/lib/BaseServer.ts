@@ -9,6 +9,7 @@ import hpp from "hpp";
 import HttpErrors from "http-errors";
 import ms from "ms";
 import normalizeUrl from "normalize-url";
+import Train from "~server/lib/Train";
 import { middleware as i18nMiddleware } from "~server/utils/language";
 import type { Request, Response, NextFunction } from "express";
 import type { HttpMethods } from "~server/@types/http";
@@ -152,9 +153,10 @@ export default abstract class BaseServer {
             for (const routeObj of route.routes) {
                 const routerMethod = routeObj.method.toLowerCase() as Lowercase<HttpMethods>;
                 router[routerMethod](routeObj.uri, (req, res, next) => {
-                    const methodName = routeObj.methodName;
+                    const descriptor = routeObj.descriptor;
                     const accessCheck = routeObj.accessCheck;
-                    route.handle(req, res, next, { methodName, accessCheck });
+                    const train = new Train(req, res, next);
+                    route.handle(train, { descriptor, accessCheck });
                 });
             }
 

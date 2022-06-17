@@ -1,3 +1,4 @@
+import HttpErrors from "http-errors";
 import { upperFirst } from "~common/utils/utils";
 import type { PascalCase } from "type-fest";
 import type { AttributeKinds } from "~common/@types/Errors";
@@ -6,6 +7,12 @@ import type BaseModel from "~common/lib/BaseModel";
 export class BaseError extends Error {
 
     public override name: string = "UnknownError";
+
+    public status: number = 500;
+
+    public statusCode: number = 500;
+
+    public expose: boolean = true;
 
     public constructor(message: string) {
         super(message);
@@ -41,3 +48,11 @@ export class AttributeError extends BaseError {
         this.value = value;
     }
 }
+
+export class Forbidden extends HttpErrors.Forbidden { }
+
+export class InternalServerError extends HttpErrors.InternalServerError { }
+
+export class NotAcceptable extends HttpErrors.NotAcceptable { }
+
+export class NotFound extends HttpErrors.NotFound { }
