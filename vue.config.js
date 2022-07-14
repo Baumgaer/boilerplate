@@ -3,6 +3,7 @@ const arp = require('app-root-path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin').TsconfigPathsPlugin;
 const webpack = require("webpack");
 
+// Test
 const TSCONFIG_PATH = path.resolve(arp.path, "src", "client", "tsconfig.json");
 
 module.exports = {
