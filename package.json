@@ -87,7 +87,7 @@
     "@vue/eslint-config-typescript": "^11.0.0",
     "@vue/test-utils": "^2.0.2",
     "chai": "^4.3.6",
-    "cypress": "^8.7.0",
+    "cypress": "^10.4.0",
     "eslint": "^8.21.0",
     "eslint-import-resolver-typescript": "^3.4.0",
     "eslint-plugin-import": "^2.26.0",
