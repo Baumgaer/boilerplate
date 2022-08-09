@@ -89,7 +89,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             proxy = this.addReactivity(proxy);
             this.createAttributes(proxy);
             Object.assign(proxy, this.mergeProperties(proxy, args?.[0]));
-            // If this is an initialization of an existing model, we dont
+            // If this is an initialization of an existing model, we don't
             // want to have the changes
             if (args?.[0]?.id) proxy.removeChanges();
             return proxy;
@@ -180,7 +180,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
-            // Because the attribute is stores on the model instance and not on
+            // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedModel
             return metadataStore.getAttribute(receiver, stringProperty)?.get();
@@ -203,7 +203,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
-            // Because the attribute is stores on the model instance and not on
+            // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedModel
             return metadataStore.getAttribute(receiver, stringProperty)?.set(value) ?? false;
