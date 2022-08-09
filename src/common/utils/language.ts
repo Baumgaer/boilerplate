@@ -1,5 +1,6 @@
 import { t, changeLanguage as chLang } from "i18next";
 import { merge } from "~common/utils/utils";
+import type { InitOptions } from "i18next";
 import type { context } from "~common/@types/Language";
 
 const env = require.context('~env/locales', true, /[A-Za-z0-9-_,\s]+\.yml$/i);
@@ -12,7 +13,7 @@ const resources = {} as Record<string, Record<string, string>>;
     });
 });
 
-export const options = {
+export const options: InitOptions = {
     fallbackLng: "en-us",
     ns: "dict",
     defaultNS: "dict",

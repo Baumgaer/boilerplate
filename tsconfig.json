@@ -22,7 +22,7 @@
         "baseUrl": ".",
         "types": [
             "webpack-env",
-            "jest",
+            "mocha",
             "reflect-metadata",
             "node"
         ],

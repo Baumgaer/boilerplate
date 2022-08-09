@@ -1,4 +1,4 @@
-import addDeepdash from "deepdash-es";
+import addDeepdash from "deepdash";
 import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
 import type BaseModel from "~common/lib/BaseModel";

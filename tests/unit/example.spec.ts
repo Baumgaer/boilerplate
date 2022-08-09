@@ -1,9 +1,10 @@
 import { mount } from '@vue/test-utils';
-import HomePage from '~client/components/HomePage.vue';
+import { expect } from "chai";
+import HomePage from '../../src/client/components/HomePage.vue';
 
 describe('HomePage.vue', () => {
     it('renders home vue', () => {
         const wrapper = mount(HomePage);
-        expect(wrapper.text()).toMatch('Ready to create an app?');
+        expect(wrapper.text()).to.include('Hello World');
     });
 });
