@@ -277,8 +277,8 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @returns the return value of the hook in case of a getter or setter
      */
     protected callHook(name: string, value?: unknown, parameters?: ObserverParameters<unknown>) {
-        const activeHookMetaKey = `${this.ownerName}:${this.name}:active${name}`;
-        const hook: any | undefined = Reflect.getMetadata(`${this.name}:${name}`, this.owner);
+        const activeHookMetaKey = `${this.ownerName}:${String(this.name)}:active${name}`;
+        const hook: any | undefined = Reflect.getMetadata(`${String(this.name)}:${name}`, this.owner);
         if (!hook || Reflect.getMetadata(activeHookMetaKey, this.unProxyfiedOwner)) return;
 
         Reflect.defineMetadata(activeHookMetaKey, true, this.unProxyfiedOwner);
@@ -295,7 +295,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
      * @returns true if the owning model has a hook and false else
      */
     protected hasHook(hookName: string | string[]) {
-        const check = (name: string) => Boolean(Reflect.getMetadata(`${this.name}:${name}`, this.owner));
+        const check = (name: string) => Boolean(Reflect.getMetadata(`${String(this.name)}:${name}`, this.owner));
         if (hookName instanceof Array) return hookName.some((name) => check(name));
         return check(hookName);
     }

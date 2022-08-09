@@ -85,7 +85,7 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
  */
 export function AttrValidator<T>(attributeName: keyof T) {
     return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], boolean>>) => {
-        Reflect.defineMetadata(`${attributeName}:validator`, descriptor, target);
+        Reflect.defineMetadata(`${String(attributeName)}:validator`, descriptor, target);
     };
 }
 
@@ -100,7 +100,7 @@ export function AttrValidator<T>(attributeName: keyof T) {
  */
 export function AttrGetter<T>(attributeName: keyof T) {
     return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
-        Reflect.defineMetadata(`${attributeName}:getter`, descriptor, target);
+        Reflect.defineMetadata(`${String(attributeName)}:getter`, descriptor, target);
     };
 }
 
@@ -116,7 +116,7 @@ export function AttrGetter<T>(attributeName: keyof T) {
  */
 export function AttrSetter<T>(attributeName: keyof T) {
     return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], T[typeof attributeName]>>) => {
-        Reflect.defineMetadata(`${attributeName}:setter`, descriptor, target);
+        Reflect.defineMetadata(`${String(attributeName)}:setter`, descriptor, target);
     };
 }
 
@@ -133,7 +133,7 @@ export function AttrSetter<T>(attributeName: keyof T) {
  */
 export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
     return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<ObserverHookFunction<any>>) => {
-        Reflect.defineMetadata(`${attributeName}:observer:${type}`, descriptor, target);
+        Reflect.defineMetadata(`${String(attributeName)}:observer:${type}`, descriptor, target);
     };
 }
 
@@ -150,6 +150,6 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
  */
 export function AttrTransformer<T>(attributeName: keyof T, type: AttrObserverTypes) {
     return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<TransformerHookFunction<T[typeof attributeName], unknown>>) => {
-        Reflect.defineMetadata(`${attributeName}:transformer:${type}`, descriptor, target);
+        Reflect.defineMetadata(`${String(attributeName)}:transformer:${type}`, descriptor, target);
     };
 }

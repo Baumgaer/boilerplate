@@ -50,7 +50,7 @@ export default class MetadataStore {
         if (!this.attributeSchemas[attrStr]) {
             this.attributeSchemas[attrStr] = [schema];
         } else this.attributeSchemas[attrStr].push(schema);
-        Reflect.defineMetadata(`${target.name}:${attributeName}:definition`, schema, target);
+        Reflect.defineMetadata(`${target.name}:${String(attributeName)}:definition`, schema, target);
     }
 
     /**
@@ -61,7 +61,7 @@ export default class MetadataStore {
      * @returns the attribute schema if found and null else
      */
     public getAttributeSchema<T extends typeof BaseModel>(target: T, attributeName: keyof T): AttributeSchema<T> | null {
-        return Reflect.getMetadata(`${target.name}:${attributeName}:definition`, target) || null;
+        return Reflect.getMetadata(`${target.name}:${String(attributeName)}:definition`, target) || null;
     }
 
     /**

@@ -849,7 +849,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         if (!this.isRequired) schemaType = baseTypeFuncs.optional(schemaType);
         if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
 
-        console.debug(`Created schema type ${this._ctor.name}#${this.attributeName}: ${schemaType._def.typeName}`);
+        console.debug(`Created schema type ${this._ctor.name}#${String(this.attributeName)}: ${schemaType._def.typeName}`);
         return schemaType;
     }
 }
