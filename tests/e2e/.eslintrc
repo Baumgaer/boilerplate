@@ -1,4 +1,7 @@
 {
+    "extends": [
+        "../../.eslintrc"
+    ],
     "env": {
         "cypress/globals": true,
         "mocha": true

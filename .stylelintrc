@@ -1,0 +1,21 @@
+{
+    "extends": [
+        "stylelint-config-standard-scss",
+        "stylelint-config-clean-order"
+    ],
+    "rules": {
+        "color-named": "never",
+        "color-no-invalid-hex": true,
+        "indentation": 4,
+        "unit-allowed-list": [
+            "em",
+            "rem",
+            "%",
+            "mm",
+            "fr",
+            "vw",
+            "vh",
+            "ms"
+        ]
+    }
+}

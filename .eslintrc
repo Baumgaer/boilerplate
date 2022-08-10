@@ -4,15 +4,16 @@
         "node": true
     },
     "extends": [
-        "plugin:vue/vue3-essential",
         "eslint:recommended",
+        "plugin:vue/vue3-essential",
         "@vue/typescript/recommended",
         "plugin:import/recommended"
     ],
+    "parser": "vue-eslint-parser",
     "overrides": [
         {
             "env": {
-                "jest": true
+                "mocha": true
             },
             "files": [
                 "**/__tests__/*.{j,t}s?(x)",
@@ -21,6 +22,10 @@
         }
     ],
     "parserOptions": {
+        "parser": {
+            "ts": "@typescript-eslint/parser",
+            "js": "@typescript-eslint/parser"
+        },
         "ecmaVersion": 2020,
         "project": "./tsconfig.json"
     },
