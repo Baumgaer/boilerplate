@@ -3,6 +3,10 @@
         "@commitlint/config-conventional"
     ],
     "rules": {
+        "references-empty": [
+            2,
+            "never"
+        ],
         "scope-enum": [
             2,
             "always",
