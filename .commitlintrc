@@ -1,0 +1,33 @@
+{
+    "extends": [
+        "@commitlint/config-conventional"
+    ],
+    "rules": {
+        "scope-enum": [
+            2,
+            "always",
+            [
+                "server",
+                "common",
+                "client",
+                "app",
+                "fullstack",
+                "android",
+                "ios",
+                "web",
+                "model",
+                "view",
+                "controller",
+                "component",
+                "config",
+                "lib",
+                "locale",
+                "util",
+                "route",
+                "attribute",
+                "type",
+                "lint"
+            ]
+        ]
+    }
+}
