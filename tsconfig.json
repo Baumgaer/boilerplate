@@ -54,7 +54,8 @@
         "tests/**/*.d.ts",
         "tests/**/*.tsx",
         "./capacitor.config.ts",
-        "./cypress.config.ts"
+        "./cypress.config.ts",
+        "./.mocharc.js"
     ],
     "exclude": [
         "node_modules"
