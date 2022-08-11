@@ -200,6 +200,14 @@ export function isValidAttrIdentifier(identifier: ts.Identifier, typeChecker: ts
     return isValidImport && identifier.escapedText === "Attr";
 }
 
+export function isInEnvironment(environment: string, pathString: string, substitute = "") {
+    if (!environment.startsWith("~")) environment = `~${environment}`;
+    if (pathString.startsWith("~")) pathString = resolveImportPath(pathString);
+    const relativeTo = path.dirname(resolveImportPath(environment)).replace(substitute, "");
+    const relative = path.relative(relativeTo, pathString);
+    return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
+}
+
 export function resolveImportPath(importPath: string) {
     if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
     const pathParts = importPath.split("/");

@@ -9,6 +9,10 @@
         "@vue/typescript/recommended",
         "plugin:import/recommended"
     ],
+    "plugins": [
+        "boilerplate",
+        "@typescript-eslint"
+    ],
     "parser": "vue-eslint-parser",
     "overrides": [
         {
@@ -75,6 +79,7 @@
                 "before": true
             }
         ],
+        "boilerplate/no-invalid-common-import": "error",
         "camelcase": "error",
         "comma-dangle": [
             "error",
@@ -178,7 +183,8 @@
                 // use an array
                 "project": [
                     "src/client/tsconfig.json",
-                    "src/server/tsconfig.json"
+                    "src/server/tsconfig.json",
+                    "dev/eslint-plugin-boilerplate/tsconfig.json"
                 ]
             }
         }

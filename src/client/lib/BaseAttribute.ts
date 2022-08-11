@@ -1,8 +1,8 @@
 import { reactive } from "vue";
 import CommonBaseAttribute from "~common/lib/BaseAttribute";
 import type { ApplyData } from "on-change";
+import type { ChangeMethodsArgs } from "~client/@types/AttributeSchema";
 import type BaseModel from "~client/lib/BaseModel";
-import type { ChangeMethodsArgs } from "~common/@types/AttributeSchema";
 
 /**
  * @see CommonBaseAttribute

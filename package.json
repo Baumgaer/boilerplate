@@ -29,7 +29,7 @@
         "lint:style": "stylelint **/*.scss",
         "//6": "",
         "type-coverage": "typescript-coverage-report -o ./coverage/type-report",
-        "prepare": "is-ci || husky install"
+        "prepare": "cd dev/eslint-plugin-boilerplate && npm run build && cd ../.. && is-ci || husky install"
     },
     "dependencies": {
         "@babel/runtime": "^7.18.9",
@@ -111,6 +111,7 @@
         "eslint": "^8.21.0",
         "eslint-import-resolver-typescript": "^3.4.0",
         "eslint-plugin-import": "^2.26.0",
+        "eslint-plugin-boilerplate": "./dev/eslint-plugin-boilerplate",
         "eslint-plugin-vue": "^9.3.0",
         "husky": "^8.0.1",
         "is-ci": "^3.0.1",

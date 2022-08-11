@@ -1,7 +1,7 @@
 import { Vue, Provide, Inject } from "vue-property-decorator";
 import { Controller } from "~client/utils/decorators";
 import { translate, changeLanguage } from "~client/utils/language";
-import type { context } from "~common/@types/Language";
+import type { context } from "~client/@types/Language";
 
 @Controller()
 export default class BaseController extends Vue {

@@ -1,6 +1,6 @@
 import fs from "fs";
 import { fileTypeFromBuffer } from "file-type";
-import { Forbidden, InternalServerError, NotAcceptable, NotFound } from "~common/lib/Errors";
+import { Forbidden, InternalServerError, NotAcceptable, NotFound } from "~server/lib/Errors";
 import { isValue } from "~server/utils/utils";
 import type { HttpMethods, IFullRouteObject, IMinimumRouteObject } from "~server/@types/http";
 import type BaseModel from "~server/lib/BaseModel";
