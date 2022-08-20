@@ -30,7 +30,8 @@
                 "route",
                 "attribute",
                 "type",
-                "lint"
+                "lint",
+                "dependencies"
             ]
         ]
     }
