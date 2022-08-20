@@ -1,5 +1,3 @@
-
-
 module.exports = {
     exit: true,
     bail: true,

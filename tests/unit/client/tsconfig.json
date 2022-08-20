@@ -1,0 +1,20 @@
+{
+    "extends": "./../../../tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "~client/*": [
+                "./../../../src/client/*"
+            ],
+            "~common/*": [
+                "./../../../src/common/*"
+            ],
+            "~env/*": [
+                "./../../../src/client/*"
+            ],
+            "~test/*": [
+                "./*"
+            ]
+        }
+    }
+}

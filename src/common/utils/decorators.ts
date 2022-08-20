@@ -1,8 +1,8 @@
 import { mergeWith } from "lodash";
 import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
-import ModelSchema from "~common/lib/ModelSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
+import ModelSchema from "~env/lib/ModelSchema";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~common/@types/AttributeSchema";
 import type { IAttrMetadata, IModelMetadata } from "~common/@types/MetadataTypes";
 import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~common/@types/ModelClass";
