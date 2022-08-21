@@ -29,8 +29,12 @@ function createMetadataJson(name: keyof typeof typeMap, isRequired = false, isIn
 }
 
 // @ts-expect-error 001
+@Model({ metadataJson: JSON.stringify({ className, collectionName, isAbstract: true }) })
+abstract class AbstractTest extends BaseModel { }
+
+// @ts-expect-error 001
 @Model({ metadataJson: JSON.stringify({ className, collectionName, isAbstract: false }) })
-class TestModel extends BaseModel {
+class TestModel extends AbstractTest {
 
     // @ts-expect-error 001
     @Attr({ metadataJson: createMetadataJson("aBoolean") })
