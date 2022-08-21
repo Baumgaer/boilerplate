@@ -26,7 +26,7 @@
         "build:app:ios": "npm run build:web && cap copy && cap sync && cap open ios",
         "//4": "",
         "test": "npm run test:unit && npm run test:e2e",
-        "test:unit": "cross-env NODE_ENV=test nyc --reporter=lcov --reporter=text vue-cli-service test:unit",
+        "test:unit": "cross-env NODE_ENV=test nyc vue-cli-service test:unit",
         "test:e2e": "vue-cli-service test:e2e",
         "//5": "",
         "lint": "npm-run-all -p lint:*",
