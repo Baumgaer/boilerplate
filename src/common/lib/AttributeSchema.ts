@@ -64,7 +64,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     public readonly parameters = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
 
     /**
-     * Indicates if an attribute should be sent to another endpoint.
+     * Indicates if an attribute should NOT be sent to another endpoint.
      * Very important for privacy!
      */
     public isInternal: boolean = false;

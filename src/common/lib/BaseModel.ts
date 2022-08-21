@@ -104,7 +104,7 @@ export default abstract class BaseModel extends BaseEntity {
      */
     public static getSchema() {
         const metadataStore = new MetadataStore();
-        return metadataStore.getModelSchema<typeof this>(Object.getPrototypeOf(this), this.className);
+        return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
     }
 
     /**
@@ -115,8 +115,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @returns the schema of the attribute given by name
      */
     public static getAttributeSchema<T extends typeof BaseModel>(this: T, name: AttributeSchemaName<T>) {
-        const metadataStore = new MetadataStore();
-        return metadataStore.getAttributeSchema(Object.getPrototypeOf(this), name);
+        return this.getSchema()?.getAttributeSchema(name);
     }
 
     /**

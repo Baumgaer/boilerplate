@@ -77,7 +77,7 @@ export interface IInjectedOptions {
     max?: number;
 
     /**
-     * A number or the length of a string hav to be multiple of this value
+     * A number or the length of a string have to be multiple of this value
      */
     multipleOf?: number;
 
