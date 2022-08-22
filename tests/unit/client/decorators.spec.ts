@@ -1,9 +1,10 @@
 import { expect } from "chai";
-import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean } from "zod";
+import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects } from "zod";
 import AttributeSchema from "~client/lib/AttributeSchema";
 import BaseModel from "~client/lib/BaseModel";
 import ModelSchema from "~client/lib/ModelSchema";
 import { Model, Attr } from "~client/utils/decorators";
+import type { ZodRawShape } from "zod";
 import type { IAttrMetadata } from "~client/@types/MetadataTypes";
 
 /*
@@ -21,12 +22,37 @@ const typeMap: Record<string, IAttrMetadata["type"]> = {
     aBoolean: { identifier: "Boolean" },
     aString: { identifier: "String" },
     aNumber: { identifier: "Number" },
-    aDate: { identifier: "Date" }
+    aDate: { identifier: "Date" },
+    anUnion: {
+        isUnion: true,
+        subTypes: [
+            { isLiteral: true, isStringLiteral: true, value: "Test" },
+            { isLiteral: true, isNumberLiteral: true, value: 42 }
+        ]
+    },
+    anIntersection: {
+        isIntersection: true,
+        subTypes: [{
+            isModel: true,
+            identifier: "MyTestModel"
+        }, {
+            isModel: true,
+            identifier: "MyTesterModel"
+        }]
+    }
 };
 
 function createMetadataJson(name: keyof typeof typeMap, isRequired = false, isInternal = false, isReadOnly = false, isLazy = false) {
     return JSON.stringify({ name, isInternal, isReadOnly, isRequired, isLazy, type: typeMap[name] });
 }
+
+// @ts-expect-error 001
+@Model({ metadataJson: JSON.stringify({ className: "MyTestModel", collectionName: "MyTestModels", isAbstract: false }) })
+class MyTestModel extends BaseModel { }
+
+// @ts-expect-error 001
+@Model({ metadataJson: JSON.stringify({ className: "MyTesterModel", collectionName: "MyTesterModels", isAbstract: false }) })
+class MyTesterModel extends BaseModel { }
 
 // @ts-expect-error 001
 @Model({ metadataJson: JSON.stringify({ className, collectionName, isAbstract: true }) })
@@ -51,14 +77,24 @@ class TestModel extends AbstractTest {
     // @ts-expect-error 001
     @Attr({ metadataJson: createMetadataJson("aDate", true) })
     public aDate!: Date;
+
+    // @ts-expect-error 001
+    @Attr({ metadataJson: createMetadataJson("anUnion", false) })
+    public anUnion: "Test" | 42 = 42;
+
+    // @ts-expect-error 001
+    @Attr({ metadataJson: createMetadataJson("anIntersection", true) })
+    public anIntersection!: MyTestModel & MyTesterModel;
 }
 
-const MODEL_NAME_TO_MODEL_MAP = { TestModel };
-if (window.MODEL_NAME_TO_MODEL_MAP) {
-    Object.assign(window.MODEL_NAME_TO_MODEL_MAP, MODEL_NAME_TO_MODEL_MAP);
-} else window.MODEL_NAME_TO_MODEL_MAP = MODEL_NAME_TO_MODEL_MAP;
-
 describe('decorators', () => {
+    before("register models", () => {
+        const MODEL_NAME_TO_MODEL_MAP = { BaseModel, TestModel, MyTestModel, MyTesterModel };
+        if (global.MODEL_NAME_TO_MODEL_MAP) {
+            Object.assign(global.MODEL_NAME_TO_MODEL_MAP, MODEL_NAME_TO_MODEL_MAP);
+        } else global.MODEL_NAME_TO_MODEL_MAP = MODEL_NAME_TO_MODEL_MAP;
+    });
+
     describe('Model', () => {
         it('should give a model a className', () => {
             expect(TestModel.className).to.be.equal(className);
@@ -192,6 +228,42 @@ describe('decorators', () => {
             const schema = TestModel.getAttributeSchema("aDate");
             const type = schema?.getSchemaType() as ZodOptional<ZodString>;
             expect(type).to.be.instanceOf(ZodDate);
+        });
+
+        it(`should have generated a required union type with string literal "Test" and number literal 42`, () => {
+            const schema = TestModel.getAttributeSchema("anUnion");
+            const type = schema?.getSchemaType() as ZodOptional<ZodUnion<[ZodOptional<ZodLiteral<"test">>, ZodOptional<ZodLiteral<42>>]>>;
+            expect(type).to.be.instanceOf(ZodOptional);
+            expect(type._def.innerType).to.be.instanceOf(ZodUnion);
+
+            const innerType = type._def.innerType;
+            expect(innerType.options[0]).to.be.instanceOf(ZodOptional);
+            expect(innerType.options[0]._def.innerType).to.be.instanceOf(ZodLiteral);
+            expect(innerType.options[0]._def.innerType.value).to.be.equal("Test");
+
+            expect(innerType.options[1]).to.be.instanceOf(ZodOptional);
+            expect(innerType.options[1]._def.innerType).to.be.instanceOf(ZodLiteral);
+            expect(innerType.options[1]._def.innerType.value).to.be.equal(42);
+        });
+
+        it(`should have generated an required intersection type with MyTestModel & MyTesterModel`, () => {
+            const schema = TestModel.getAttributeSchema("anIntersection");
+            const type = schema?.getSchemaType() as ZodIntersection<ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>, ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>>;
+            expect(type).to.be.instanceOf(ZodIntersection);
+
+            let innerType = type._def.left;
+            expect(innerType.options[0]).to.be.instanceOf(ZodLazy);
+            expect(innerType.options[0].schema).to.be.instanceOf(ZodObject);
+            expect(innerType.options[0].schema.shape).to.have.property("name");
+
+            expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
+
+            innerType = type._def.right;
+            expect(innerType.options[0]).to.be.instanceOf(ZodLazy);
+            expect(innerType.options[0].schema).to.be.instanceOf(ZodObject);
+            expect(innerType.options[0].schema.shape).to.have.property("name");
+
+            expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
         });
     });
 
