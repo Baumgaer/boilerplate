@@ -799,7 +799,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         } else if (this.isOptionalType(type)) {
             schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType));
         } else if (this.isModelType(type)) {
-            const typeIdentifier = this.getTypeIdentifier() || "";
+            const typeIdentifier = this.getTypeIdentifier(type) || "";
             const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
             const modelSchema = modelClass?.getSchema();
             schemaType = modelClass && modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.any();
