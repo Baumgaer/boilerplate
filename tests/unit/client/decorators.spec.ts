@@ -344,6 +344,23 @@ describe('decorators', () => {
             expect(type).to.be.instanceOf(ZodArray);
             expect(type._def.type).to.be.an.instanceOf(ZodString);
         });
+
+        it(`should be an object like type`, () => {
+            const objectLikeAttributes = ["anIntersection", "anInterface"] as const;
+
+            for (const attributeName of objectLikeAttributes) {
+                const schema = TestModel.getAttributeSchema(attributeName);
+                const type = schema?.parameters.type;
+                expect(type).not.to.be.undefined;
+                expect(schema?.isObjectLikeType(type)).to.be.true;
+            }
+        });
+
+        it(`should be an unresolved type`, () => {
+            const schema = TestModel.getAttributeSchema("anArray");
+            expect(schema?.isUnresolvedType({ isUnresolvedType: true })).to.be.true;
+            expect(schema?.isUnresolvedType({ isMixed: true })).to.be.true;
+        });
     });
 
 });
