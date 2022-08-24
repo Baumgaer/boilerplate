@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects } from "zod";
+import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodUndefined, ZodNull, ZodArray } from "zod";
 import AttributeSchema from "~client/lib/AttributeSchema";
 import BaseModel from "~client/lib/BaseModel";
 import ModelSchema from "~client/lib/ModelSchema";
@@ -17,6 +17,11 @@ const collectionName = "TestModels";
 
 const attributesToExpect = ["aBoolean", "aString", "aNumber", "aDate"] as const;
 const atLeastAttributesText = `At least: "${attributesToExpect.join("\", \"")}"`;
+
+interface IMyInterface {
+    prop1: string;
+    prop2?: number;
+}
 
 const typeMap: Record<string, IAttrMetadata["type"]> = {
     aBoolean: { identifier: "Boolean" },
@@ -39,6 +44,39 @@ const typeMap: Record<string, IAttrMetadata["type"]> = {
             isModel: true,
             identifier: "MyTesterModel"
         }]
+    },
+    aTuple: {
+        isTuple: true,
+        subTypes: [
+            { isUndefined: true },
+            { isNull: true },
+            { isOptional: true, subType: { identifier: "Boolean" } }
+        ]
+    },
+    anInterface: {
+        isInterface: true,
+        members: {
+            prop1: {
+                isInternal: false,
+                isLazy: false,
+                isReadOnly: false,
+                isRequired: true,
+                name: "prop1",
+                type: { identifier: "String" }
+            },
+            prop2: {
+                isInternal: false,
+                isLazy: false,
+                isReadOnly: false,
+                isRequired: false,
+                name: "prop2",
+                type: { isOptional: true, subType: { identifier: "Number" } }
+            }
+        }
+    },
+    anArray: {
+        isArray: true,
+        subType: { identifier: "String" }
     }
 };
 
@@ -85,6 +123,18 @@ class TestModel extends AbstractTest {
     // @ts-expect-error 001
     @Attr({ metadataJson: createMetadataJson("anIntersection", true) })
     public anIntersection!: MyTestModel & MyTesterModel;
+
+    // @ts-expect-error 001
+    @Attr({ metadataJson: createMetadataJson("aTuple", true) })
+    public aTuple!: [undefined, null, boolean?];
+
+    // @ts-expect-error 001
+    @Attr({ metadataJson: createMetadataJson("anInterface", true) })
+    public anInterface!: IMyInterface;
+
+    // @ts-expect-error 001
+    @Attr({ metadataJson: createMetadataJson("anArray", true) })
+    public anArray!: string[];
 }
 
 describe('decorators', () => {
@@ -264,6 +314,35 @@ describe('decorators', () => {
             expect(innerType.options[0].schema.shape).to.have.property("name");
 
             expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
+        });
+
+        it(`should have generated a required tuple type with undefined, null and optional boolean`, () => {
+            const schema = TestModel.getAttributeSchema("aTuple");
+            const type = schema?.getSchemaType() as ZodTuple<[ZodUndefined, ZodNull, ZodOptional<ZodBoolean>]>;
+            expect(type).to.be.instanceOf(ZodTuple);
+            expect(type.items).to.be.an.instanceOf(Array);
+            expect(type.items[0]).to.be.an.instanceOf(ZodUndefined);
+            expect(type.items[1]).to.be.an.instanceOf(ZodNull);
+            expect(type.items[2]).to.be.an.instanceOf(ZodOptional);
+            expect(type.items[2]._def.innerType).to.be.an.instanceOf(ZodBoolean);
+        });
+
+        it(`should have generated an required plain object type with member prop1: string and prop2?: number`, () => {
+            const schema = TestModel.getAttributeSchema("anInterface");
+            const type = schema?.getSchemaType() as ZodObject<ZodRawShape>;
+            expect(type).to.be.instanceOf(ZodObject);
+            expect(type._def.shape()).to.be.an.instanceOf(Object);
+            expect(type._def.shape()).to.include.all.keys(["prop1", "prop2"]);
+            expect(type._def.shape().prop1).to.be.an.instanceOf(ZodString);
+            expect(type._def.shape().prop2).to.be.an.instanceOf(ZodOptional);
+            expect(type._def.shape().prop2._def.innerType).to.be.an.instanceOf(ZodNumber);
+        });
+
+        it(`should have generated an required array type of strings`, () => {
+            const schema = TestModel.getAttributeSchema("anArray");
+            const type = schema?.getSchemaType() as ZodArray<ZodString, "many">;
+            expect(type).to.be.instanceOf(ZodArray);
+            expect(type._def.type).to.be.an.instanceOf(ZodString);
         });
     });
 
