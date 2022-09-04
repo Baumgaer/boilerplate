@@ -3,7 +3,8 @@ const arp = require('app-root-path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin').TsconfigPathsPlugin;
 const webpack = require("webpack");
 
-const TSCONFIG_PATH = path.resolve(arp.path, "src", "client", "tsconfig.json");
+let TSCONFIG_PATH = path.resolve(arp.path, "src", "client", "tsconfig.json");
+if (process.env.NODE_ENV === "test") TSCONFIG_PATH = path.resolve(arp.path, "tests", "unit", "client", "tsconfig.json");
 
 module.exports = {
     pages: {

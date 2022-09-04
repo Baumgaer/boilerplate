@@ -184,6 +184,7 @@
                 "project": [
                     "src/client/tsconfig.json",
                     "src/server/tsconfig.json",
+                    "tests/unit/client/tsconfig.json",
                     "dev/eslint-plugin-boilerplate/tsconfig.json"
                 ]
             }

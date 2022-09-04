@@ -3,143 +3,19 @@ import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate
 import AttributeSchema from "~client/lib/AttributeSchema";
 import BaseModel from "~client/lib/BaseModel";
 import ModelSchema from "~client/lib/ModelSchema";
-import { Model, Attr } from "~client/utils/decorators";
+import TestModel from "~test/models/TestModel";
+import TestMyTestModel from "~test/models/TestMyTestModel";
+import TestMyTesterModel from "~test/models/TestMyTesterModel";
+import { className, collectionName } from "~test/utils";
 import type { ZodRawShape } from "zod";
-import type { IAttrMetadata } from "~client/@types/MetadataTypes";
-
-/*
-    Error expectation codes:
-        - 001: because we are using mocks here, we have to pass a normally unaccessible property
-*/
-
-const className = "TestModel";
-const collectionName = "TestModels";
 
 const attributesToExpect = ["aBoolean", "aString", "aNumber", "aDate"] as const;
 const atLeastAttributesText = `At least: "${attributesToExpect.join("\", \"")}"`;
 
-interface IMyInterface {
-    prop1: string;
-    prop2?: number;
-}
-
-const typeMap: Record<string, IAttrMetadata["type"]> = {
-    aBoolean: { identifier: "Boolean" },
-    aString: { identifier: "String" },
-    aNumber: { identifier: "Number" },
-    aDate: { identifier: "Date" },
-    anUnion: {
-        isUnion: true,
-        subTypes: [
-            { isLiteral: true, isStringLiteral: true, value: "Test" },
-            { isLiteral: true, isNumberLiteral: true, value: 42 }
-        ]
-    },
-    anIntersection: {
-        isIntersection: true,
-        subTypes: [{
-            isModel: true,
-            identifier: "MyTestModel"
-        }, {
-            isModel: true,
-            identifier: "MyTesterModel"
-        }]
-    },
-    aTuple: {
-        isTuple: true,
-        subTypes: [
-            { isUndefined: true },
-            { isNull: true },
-            { isOptional: true, subType: { identifier: "Boolean" } }
-        ]
-    },
-    anInterface: {
-        isInterface: true,
-        members: {
-            prop1: {
-                isInternal: false,
-                isLazy: false,
-                isReadOnly: false,
-                isRequired: true,
-                name: "prop1",
-                type: { identifier: "String" }
-            },
-            prop2: {
-                isInternal: false,
-                isLazy: false,
-                isReadOnly: false,
-                isRequired: false,
-                name: "prop2",
-                type: { isOptional: true, subType: { identifier: "Number" } }
-            }
-        }
-    },
-    anArray: {
-        isArray: true,
-        subType: { identifier: "String" }
-    }
-};
-
-function createMetadataJson(name: keyof typeof typeMap, isRequired = false, isInternal = false, isReadOnly = false, isLazy = false) {
-    return JSON.stringify({ name, isInternal, isReadOnly, isRequired, isLazy, type: typeMap[name] });
-}
-
-// @ts-expect-error 001
-@Model({ metadataJson: JSON.stringify({ className: "MyTestModel", collectionName: "MyTestModels", isAbstract: false }) })
-class MyTestModel extends BaseModel { }
-
-// @ts-expect-error 001
-@Model({ metadataJson: JSON.stringify({ className: "MyTesterModel", collectionName: "MyTesterModels", isAbstract: false }) })
-class MyTesterModel extends BaseModel { }
-
-// @ts-expect-error 001
-@Model({ metadataJson: JSON.stringify({ className, collectionName, isAbstract: true }) })
-abstract class AbstractTest extends BaseModel { }
-
-// @ts-expect-error 001
-@Model({ metadataJson: JSON.stringify({ className, collectionName, isAbstract: false }) })
-class TestModel extends AbstractTest {
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("aBoolean") })
-    public aBoolean: boolean = true;
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("aString", false, false, true) })
-    public readonly aString?: string;
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("aNumber", true, true) })
-    public aNumber!: number; // This normally has to be at least protected because it's marked as "isInternal"
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("aDate", true) })
-    public aDate!: Date;
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("anUnion", false) })
-    public anUnion: "Test" | 42 = 42;
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("anIntersection", true) })
-    public anIntersection!: MyTestModel & MyTesterModel;
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("aTuple", true) })
-    public aTuple!: [undefined, null, boolean?];
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("anInterface", true) })
-    public anInterface!: IMyInterface;
-
-    // @ts-expect-error 001
-    @Attr({ metadataJson: createMetadataJson("anArray", true) })
-    public anArray!: string[];
-}
-
 describe('decorators', () => {
+
     before("register models", () => {
-        const MODEL_NAME_TO_MODEL_MAP = { BaseModel, TestModel, MyTestModel, MyTesterModel };
+        const MODEL_NAME_TO_MODEL_MAP = { BaseModel, TestModel, TestMyTestModel, TestMyTesterModel };
         if (global.MODEL_NAME_TO_MODEL_MAP) {
             Object.assign(global.MODEL_NAME_TO_MODEL_MAP, MODEL_NAME_TO_MODEL_MAP);
         } else global.MODEL_NAME_TO_MODEL_MAP = MODEL_NAME_TO_MODEL_MAP;
