@@ -171,7 +171,9 @@ export function isValidSourceFile(sourceFile: ts.SourceFile): boolean {
         "/src/server/models",
         "/src/client/lib/BaseModel.ts",
         "/src/common/lib/BaseModel.ts",
-        "/src/server/lib/BaseModel.ts"
+        "/src/server/lib/BaseModel.ts",
+        "/tests/unit/client/models",
+        "/tests/unit/server/models"
     ];
     return validSourceFiles.some((path) => sourceFile.fileName.includes(path));
 }
@@ -211,7 +213,7 @@ export function isInEnvironment(environment: string, pathString: string, substit
 export function resolveImportPath(importPath: string) {
     if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
     const pathParts = importPath.split("/");
-    const entryPoint = pathParts.shift() as "~client" | "~common" | "~env" | "~test";
+    const entryPoint = pathParts.shift() as "~client" | "~common" | "~env";
     const fileName = `${pathParts.pop()}.ts`;
 
     const paths = clientConfig.compilerOptions.paths;

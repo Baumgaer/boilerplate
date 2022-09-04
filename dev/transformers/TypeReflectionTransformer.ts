@@ -96,10 +96,10 @@ export default function transformer(program: ts.Program) {
             if (utils.isBoolean(type)) return resolveBoolean();
             if (utils.isLiteral(type)) return resolveLiteral(type);
             if (utils.isModel(type, sourceFile)) return resolveModel(type);
-            if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isDate(type, attr)) return resolveDate();
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr, typeNode)) return resolveArray(attr, sourceFile, typeNode);
+            if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
