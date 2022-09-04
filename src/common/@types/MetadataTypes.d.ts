@@ -3,7 +3,7 @@ import type { ColumnType } from "typeorm";
 
 type MetadataType = IIdentifiedType | INullType | IUndefinedType | IModelType | IMixedType | IArrayType | IUnionOrIntersectionType | ILiteralType | IUnresolvedType | IInterfaceType | ITupleType | IOptionalType | ICustomType;
 
-export type CombinedDataType<T> = T | IUnionOrIntersectionType<T> | IArrayType<T> | ITupleType<T>
+export type CombinedDataType<T> = T | IUnionOrIntersectionType<T>
 export type ObjectLikeDataType = IInterfaceType | IUnionOrIntersectionType | IModelType | CombinedDataType<ObjectLikeDataType>;
 
 export interface IIdentifiedType<T = LiteralUnion<"String" | "Number" | "Boolean" | "Date", string>> {

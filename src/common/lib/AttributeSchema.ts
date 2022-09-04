@@ -19,7 +19,7 @@ import * as DataTypes from "~common/lib/DataTypes";
 import { AttributeError } from "~common/lib/Errors";
 import MetadataStore from "~common/lib/MetadataStore";
 import { baseTypeFuncs } from "~common/utils/schema";
-import { merge, getModelClassByName, hasOwnProperty, pascalCase } from "~common/utils/utils";
+import { merge, getModelClassByName, hasOwnProperty, pascalCase, isArray } from "~common/utils/utils";
 import type { Constructor } from "type-fest";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
@@ -301,7 +301,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow a literal type.
-     * This includes arrays of literals!
+     * This includes unions of literals!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a literal type else false
@@ -313,7 +313,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow a string type.
-     * This includes arrays of strings!
+     * This includes unions of strings!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a string type else false
@@ -325,7 +325,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow a number type.
-     * This includes arrays of numbers!
+     * This includes unions of numbers!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a number type else false
@@ -337,7 +337,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow a boolean type.
-     * This includes arrays of booleans!
+     * This includes unions of booleans!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a boolean type else false
@@ -349,7 +349,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow a date type.
-     * This includes arrays of dates!
+     * This includes unions of dates!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a date type else false
@@ -361,7 +361,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow a model type.
-     * This includes arrays of models!
+     * This includes unions of models!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
@@ -419,19 +419,19 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute is somehow an object type.
-     * This includes arrays of objects and arrays itself as well as models!
+     * This includes unions of objects and arrays itself as well as models!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
      */
     public isObjectLikeType(altType?: IAttrMetadata["type"]): altType is ObjectLikeDataType {
         const type = altType || this.rawType;
-        return "isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection || this.isModelType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
+        return "isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection || this.isModelType(type) || this.isArrayType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
     }
 
     /**
      * Determines if this attribute is somehow a plain object type.
-     * This does **NOT** include arrays or models but arrays of plain objects!
+     * This does **NOT** include arrays or models!
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
@@ -443,8 +443,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
 
     /**
      * Determines if this attribute contains somehow an unresolved type.
-     * This includes arrays of unresolved types too. An array of unresolved
-     * types is given, if the array contains at least one unresolved type.
+     * This includes unions of unresolved types too.
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
@@ -501,8 +500,11 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         if (!this.isUnionType(type)) return values;
 
         for (const subType of type.subTypes) {
-            if (!this.isLiteralType(subType)) return [];
-            values.push(subType.value);
+            if (this.isUnionType(subType)) {
+                values.push(...this.getUnionTypeValues(subType));
+            } else if (this.isLiteralType(subType) && "value" in subType) {
+                values.push(subType.value);
+            }
         }
 
         return values;
@@ -604,9 +606,9 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             public static className: string = className;
         }
 
-        if (!(embeddedType instanceof Array)) embeddedType = [embeddedType];
+        if (!isArray(embeddedType)) embeddedType = [embeddedType];
 
-        for (const type of embeddedType) {
+        for (const type of embeddedType as IInterfaceType[]) {
             for (const memberKey in type.members) {
                 if (hasOwnProperty(type.members, memberKey)) {
                     const memberType = type.members[memberKey];
@@ -631,20 +633,7 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      * @returns true if all types are of type checked by checkFunc and false else
      */
     private checkSubTypes(arrayLikeType: IAttrMetadata["type"], checkFunc: ((type?: IAttrMetadata["type"]) => boolean)): boolean {
-        if (this.isUnionType(arrayLikeType)) {
-            return arrayLikeType.subTypes.every(checkFunc.bind(this));
-        }
-
-        if (this.isArrayType(arrayLikeType)) {
-            return Boolean(this.isUnionType(arrayLikeType.subType) && arrayLikeType.subType.subTypes.every(checkFunc.bind(this)) || this.isModelType(arrayLikeType.subType) && arrayLikeType.subType.isModel);
-        }
-        if (this.isTupleType(arrayLikeType)) {
-            return arrayLikeType.subTypes.every((subType) => {
-                if (this.isOptionalType(subType)) return checkFunc(subType.subType);
-                return checkFunc(subType);
-            });
-        }
-
+        if (this.isUnionType(arrayLikeType)) return arrayLikeType.subTypes.every(checkFunc.bind(this));
         return false;
     }
 
@@ -821,7 +810,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             schemaType = baseTypeFuncs.null();
         } else if (this.isUndefinedType(type)) {
             schemaType = baseTypeFuncs.undefined();
-        } else if (this.isLiteralType(type)) {
+        } else if (this.isLiteralType(type) && "value" in type) {
+            // "Value" has to be in type because a literal can obviously be an union type
             schemaType = baseTypeFuncs.literal(type.value);
         } else if (this.isStringType(type)) {
             schemaType = baseTypeFuncs.string();

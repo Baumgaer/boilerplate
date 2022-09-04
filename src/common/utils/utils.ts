@@ -3,7 +3,7 @@ import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
 import type BaseModel from "~common/lib/BaseModel";
 
-export { compact, union, intersection, difference, camelCase, merge, isPlainObject, isUndefined, upperFirst } from "lodash";
+export { compact, union, intersection, difference, camelCase, merge, isPlainObject, isUndefined, upperFirst, isArray } from "lodash";
 
 const lodash = addDeepdash(_);
 
@@ -66,7 +66,7 @@ export function pascalCase(str: string): ReturnType<typeof _["camelCase"]> {
  * @param value the value to remove proxy from
  * @returns the unProxyfied value
  */
-export function resolveProxy<T>(value: T): T {
+export function resolveProxy(value: any): typeof value {
     if (!isChangeObserved(value)) return value;
     return resolveProxy(onChange.target(value));
 }
