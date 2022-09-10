@@ -22,7 +22,7 @@ export const NoInvalidCommonImport = createRule({
         return {
             ImportDeclaration(node) {
                 const [environment, ...parts] = node.source.value.split("/");
-                const isInCommon = isInEnvironment("~common", context.getFilename(), `${path.sep}dev${path.sep}eslint-plugin-boilerplate`);
+                const isInCommon = isInEnvironment("~common", context.getFilename(), "", `${path.sep}dev${path.sep}eslint-plugin-boilerplate`);
                 if (!isInCommon && environment.startsWith("~common") && !context.getFilename().includes(parts.join(path.sep) + ".ts")) {
                     context.report({ messageId: "noInvalidCommonImport", node: node });
                 }

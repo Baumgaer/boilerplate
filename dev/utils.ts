@@ -1,8 +1,36 @@
+import fs from "fs";
 import path from "path";
 import arp from "app-root-path";
+import { capitalize } from "lodash";
 import * as ts from "typescript";
 import clientConfig from "../src/client/tsconfig.json";
+import serverConfig from "../src/server/tsconfig.json";
+import testClientConfig from "../tests/unit/client/tsconfig.json";
+import testServerConfig from "../tests/unit/server/tsconfig.json";
+import defaultConfig from "../tsconfig.json";
 import { customTypes } from "./CustomTypes";
+
+const configs = { clientConfig, serverConfig, testClientConfig, testServerConfig, defaultConfig };
+
+type environmentName = "test" | "client" | "server" | "common";
+type subEnvironmentName = "client" | "server" | "";
+
+export function getConfig(environment: environmentName, subEnvironment: subEnvironmentName = "") {
+    const subEnv = capitalize(subEnvironment || "") as "Client" | "Server";
+    let config: typeof defaultConfig | typeof clientConfig | typeof serverConfig | typeof testClientConfig | typeof testServerConfig = defaultConfig;
+    if (environment === "client") config = clientConfig;
+    if (environment === "server") config = serverConfig;
+    if (environment === "test" && subEnvironment) config = configs[`${environment}${subEnv}Config`];
+    return config;
+}
+
+export function getEnvironmentBasePath(environment: environmentName, subEnvironment: subEnvironmentName = "") {
+    const pathParts = [arp.path];
+    if (environment === "test") {
+        pathParts.push("tests", "unit", subEnvironment);
+    } else pathParts.push("src", environment);
+    return path.resolve(path.join(...pathParts));
+}
 
 export function isCustomType(node?: ts.TypeNode): node is ts.TypeReferenceNode {
     return Boolean(node && ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && (node.typeName.escapedText ?? "") in customTypes);
@@ -89,11 +117,11 @@ export function hasTypeLiteral(property: ts.PropertyDeclaration | ts.PropertySig
     return Boolean(kind && (kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral);
 }
 
-export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile): boolean {
+export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, environment: environmentName, subEnvironment: subEnvironmentName = ""): boolean {
     return Boolean(property.type && (
         type.isClassOrInterface() && !type.isClass() ||
-        !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) && !isModel(type, sourceFile) ||
-        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property, sourceFile)) ||
+        !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) && !isModel(type, sourceFile, environment, subEnvironment) ||
+        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property, sourceFile, environment, subEnvironment)) ||
         hasTypeLiteral(property));
 }
 
@@ -101,14 +129,15 @@ export function isTypeParameter(type: ts.Type): type is ts.TypeParameter {
     return (type.flags & ts.TypeFlags.TypeParameter) === ts.TypeFlags.TypeParameter;
 }
 
-export function getSourceFileByPath(sourceFile: ts.SourceFile, importPath: string, skipValidModelCheck = false, extension = "ts"): [ts.SourceFile | undefined, ts.Program] {
+export function getSourceFileByPath(sourceFile: ts.SourceFile, importPath: string, environment: environmentName, subEnvironment: subEnvironmentName = "", skipValidModelCheck = false, extension = "ts"): [ts.SourceFile | undefined, ts.Program] {
     if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
 
-    const subProgram = programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
+    const configBasePath = getEnvironmentBasePath(environment, subEnvironment);
+    const subProgram = programFromConfig(path.resolve(path.join(configBasePath, "tsconfig.json")));
 
     let resolvedPath = "";
     if (importPath.startsWith("~")) {
-        resolvedPath = resolveImportPath(importPath, extension);
+        resolvedPath = resolveImportPath(importPath, environment, subEnvironment, extension);
     } else if (importPath.startsWith(".")) {
         resolvedPath = path.resolve(path.relative(path.dirname(sourceFile.fileName), importPath));
     } else[undefined, subProgram];
@@ -116,7 +145,7 @@ export function getSourceFileByPath(sourceFile: ts.SourceFile, importPath: strin
     return [possibleSourceFiles.find((sourceFile) => !path.relative(resolvedPath, sourceFile.fileName)), subProgram];
 }
 
-export function isModel(type: ts.Type, sourceFile: ts.SourceFile) {
+export function isModel(type: ts.Type, sourceFile: ts.SourceFile, environment: environmentName, subEnvironment: subEnvironmentName = "") {
 
     function isMaybeModelType(): boolean {
         for (const statement of sourceFile.statements) {
@@ -128,7 +157,7 @@ export function isModel(type: ts.Type, sourceFile: ts.SourceFile) {
             if (importClause.name.getText() !== type.aliasSymbol.name) continue;
 
             const importPath = moduleSpecifier.getText();
-            const [newSourceFile, _subProgram] = getSourceFileByPath(sourceFile, importPath);
+            const [newSourceFile] = getSourceFileByPath(sourceFile, importPath, environment, subEnvironment);
             if (!newSourceFile) continue;
 
             for (const statement of newSourceFile.statements) {
@@ -212,23 +241,30 @@ export function isValidAttrIdentifier(identifier: ts.Identifier, typeChecker: ts
     return isValidImport && identifier.escapedText === "Attr";
 }
 
-export function isInEnvironment(environment: string, pathString: string, substitute = "") {
-    if (!environment.startsWith("~")) environment = `~${environment}`;
-    if (pathString.startsWith("~")) pathString = resolveImportPath(pathString);
-    const relativeTo = path.dirname(resolveImportPath(environment)).replace(substitute, "");
+export function isInEnvironment(environment: `~${environmentName}` | environmentName, pathString: string, subEnvironment: subEnvironmentName = "", substitute = "") {
+    if (!environment.startsWith("~")) environment = `~${environment}` as `~${environmentName}`;
+    if (pathString.startsWith("~")) pathString = resolveImportPath(pathString, environment.replace("~", "") as environmentName, subEnvironment);
+    const relativeTo = path.dirname(resolveImportPath(environment, environment.replace("~", "") as environmentName, subEnvironment)).replace(substitute, "");
     const relative = path.relative(relativeTo, pathString);
     return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-export function resolveImportPath(importPath: string, extension = "ts") {
+export function resolveImportPath(importPath: string, environment: environmentName, subEnvironment: subEnvironmentName = "", extension = "ts") {
     if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
     const pathParts = importPath.split("/");
-    const entryPoint = pathParts.shift() as "~client" | "~common" | "~env";
+    const entryPoint = pathParts.shift() as `~${environmentName}`;
     const fileName = `${pathParts.pop()}.${extension}`;
 
-    const paths = clientConfig.compilerOptions.paths;
-    const relativePath = paths[`${entryPoint}/*`]?.[0].replace("*", "") || "";
-    return path.resolve(path.join(arp.path, "src", "client", relativePath, ...pathParts, fileName));
+    const environmentBasePath = getEnvironmentBasePath(environment, subEnvironment);
+    const paths = getConfig(environment, subEnvironment).compilerOptions.paths;
+
+    const relativePaths = (paths as Record<string, string[]>)[`${entryPoint}/*`]; //?.[0].replace("*", "") || "";
+    for (let relativePath of relativePaths) {
+        relativePath = relativePath.replace("*", "");
+        const fullPath = path.resolve(path.join(environmentBasePath, relativePath, ...pathParts, fileName));
+        if (fs.existsSync(fullPath)) return fullPath;
+    }
+    return "";
 }
 
 export function programFromConfig(configFileName: string) {

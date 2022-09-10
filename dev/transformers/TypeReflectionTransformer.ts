@@ -2,12 +2,14 @@ import { camelCase } from "lodash";
 import * as ts from "typescript";
 import { customTypes } from "../CustomTypes";
 import * as utils from "../utils";
+import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 
-let typeChecker!: ts.TypeChecker;
+export default function transformer(program: ts.Program, pluginConfig: PluginConfig & { environment: "test" | "client" | "server", subEnvironment?: "client" | "server" }) {
 
-export default function transformer(program: ts.Program) {
+    const environment = pluginConfig.environment;
+    const subEnvironment = pluginConfig.subEnvironment || "";
 
-    typeChecker = program.getTypeChecker();
+    const typeChecker: ts.TypeChecker = program.getTypeChecker();
 
     return (context: ts.TransformationContext): ts.Transformer<ts.SourceFile> => {
 
@@ -60,6 +62,7 @@ export default function transformer(program: ts.Program) {
             const name = attr.name.getText();
             console.info(`processing attribute ${name}`);
 
+            // eslint-disable-next-line @typescript-eslint/no-non-null-assertion
             let type = resolveType(typeChecker.getTypeFromTypeNode(attr.type!), attr, sourceFile);
             if (!type || type.isUnresolvedType) throw new Error(`Can not resolve type for ${name}`);
 
@@ -95,11 +98,11 @@ export default function transformer(program: ts.Program) {
             if (utils.isNumber(type)) return resolveNumber();
             if (utils.isBoolean(type)) return resolveBoolean();
             if (utils.isLiteral(type)) return resolveLiteral(type);
-            if (utils.isModel(type, sourceFile)) return resolveModel(type);
+            if (utils.isModel(type, sourceFile, environment, subEnvironment)) return resolveModel(type);
             if (utils.isDate(type, attr)) return resolveDate();
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr, typeNode)) return resolveArray(attr, sourceFile, typeNode);
-            if (utils.isInterface(type, attr, sourceFile)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
+            if (utils.isInterface(type, attr, sourceFile, environment, subEnvironment)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
@@ -164,10 +167,9 @@ export default function transformer(program: ts.Program) {
                 if (!symbol?.members) {
                     typeChecker.getSymbolAtLocation(typeNode.typeName)?.declarations?.forEach((declaration) => {
                         if (ts.isImportSpecifier(declaration)) {
-                            console.log("importspecifier");
                             const path = declaration?.parent?.parent?.parent?.moduleSpecifier?.getText();
                             if (!path) return;
-                            const [newSourceFile, subProgram] = utils.getSourceFileByPath(sourceFile, path, true, "d.ts");
+                            const [newSourceFile, subProgram] = utils.getSourceFileByPath(sourceFile, path, environment, subEnvironment, true, "d.ts");
                             if (!newSourceFile) return;
                             for (const statement of newSourceFile.statements) {
                                 if (ts.isInterfaceDeclaration(statement) && statement.name.text === typeChecker.typeToString(type)) {

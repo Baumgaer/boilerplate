@@ -12,7 +12,13 @@
             "~env/*": [
                 "./*"
             ]
-        }
+        },
+        "plugins": [
+            {
+                "transform": "./dev/transformers/TypeReflectionTransformer.ts",
+                "environment": "client"
+            }
+        ]
     },
     "include": [
         "./**/*.ts",

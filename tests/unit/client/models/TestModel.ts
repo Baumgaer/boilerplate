@@ -1,12 +1,8 @@
 import { Model, Attr } from "~client/utils/decorators";
 import TestAbstractModel from "~test/models/TestAbstractModel";
+import type { ITestMyInterface } from "~client/@types/ITestMyInterface";
 import type TestMyTestModel from "~test/models/TestMyTestModel";
 import type TestMyTesterModel from "~test/models/TestMyTesterModel";
-
-interface IMyInterface {
-    prop1: string;
-    prop2?: number;
-}
 
 @Model()
 export default class TestModel extends TestAbstractModel {
@@ -30,7 +26,7 @@ export default class TestModel extends TestAbstractModel {
     public aTuple!: [undefined, null, boolean?];
 
     @Attr()
-    public anInterface!: IMyInterface;
+    public anInterface!: ITestMyInterface;
 
     @Attr()
     public anArray!: string[];

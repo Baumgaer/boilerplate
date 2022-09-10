@@ -214,8 +214,9 @@ describe('decorators', () => {
             expect(type.items[2]._def.innerType._def.options[1]).to.be.an.instanceOf(ZodBoolean);
         });
 
-        it.skip(`should have generated an required plain object type with member prop1: string and prop2?: number`, () => {
+        it(`should have generated an required plain object type with member prop1: string and prop2?: number`, () => {
             const schema = TestModel.getAttributeSchema("anInterface");
+            console.log(JSON.stringify(schema?.parameters.type));
             const type = schema?.getSchemaType() as ZodObject<ZodRawShape>;
             expect(type).to.be.instanceOf(ZodObject);
             expect(type._def.shape()).to.be.an.instanceOf(Object);

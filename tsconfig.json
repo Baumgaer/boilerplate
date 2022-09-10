@@ -29,6 +29,18 @@
         "paths": {
             "~root/*": [
                 "src/*"
+            ],
+            "~client/*": [
+                "src/client"
+            ],
+            "~server/*": [
+                "src/server"
+            ],
+            "~env/*": [
+                "src/*"
+            ],
+            "~test/*": [
+                "tests/*"
             ]
         },
         "lib": [
@@ -36,11 +48,6 @@
             "dom",
             "dom.iterable",
             "scripthost"
-        ],
-        "plugins": [
-            {
-                "transform": "./dev/transformers/TypeReflectionTransformer.ts"
-            }
         ]
     },
     "include": [

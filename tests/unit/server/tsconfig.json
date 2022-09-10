@@ -3,15 +3,15 @@
     "compilerOptions": {
         "baseUrl": ".",
         "paths": {
-            "~client/*": [
-                "./../../../src/client/*",
+            "~server/*": [
+                "./../../../src/server/*",
                 "./*"
             ],
             "~common/*": [
                 "./../../../src/common/*"
             ],
             "~env/*": [
-                "./../../../src/client/*",
+                "./../../../src/server/*",
                 "./*"
             ],
             "~test/*": [
@@ -22,14 +22,14 @@
             {
                 "transform": "./dev/transformers/TypeReflectionTransformer.ts",
                 "environment": "test",
-                "subEnvironment": "client"
+                "subEnvironment": "server"
             }
         ]
     },
     "include": [
-        "../../../src/client/**/*.ts",
-        "../../../src/client/**/*.tsx",
-        "../../../src/client/**/*.vue",
+        "../../../src/server/**/*.ts",
+        "../../../src/server/**/*.tsx",
+        "../../../src/server/**/*.vue",
         "../../../src/common/**/*.ts",
         "../../../src/common/**/*.tsx",
         "./**/*.ts",
