@@ -1,14 +1,7 @@
 import { Attr } from "~common/utils/decorators";
 import BaseModel from "~env/lib/BaseModel";
+import type { ITest } from "~common/@types/Test";
 import type AnotherExample from "~env/models/AnotherExample";
-
-interface ITest {
-    testAttr: TextRange<50, 100>;
-
-    secondAttr: NumberRange<50, 100>;
-
-    thirdAttr: Lazy<Varchar<50>>
-}
 
 export default abstract class YetAnotherExample extends BaseModel {
 

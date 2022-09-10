@@ -1,10 +1,5 @@
 import type { IAttrMetadata } from "~client/@types/MetadataTypes";
 
-export interface IMyInterface {
-    prop1: string;
-    prop2?: number;
-}
-
 export const className = "TestModel";
 export const collectionName = "TestModels";
 

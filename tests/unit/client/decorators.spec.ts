@@ -146,11 +146,7 @@ describe('decorators', () => {
 
             const type = schema?.getSchemaType() as ZodOptional<ZodUnion<[ZodOptional<ZodUndefined>, ZodOptional<ZodString>]>>;
             expect(type).to.be.instanceOf(ZodOptional);
-            expect(type._def.innerType).to.be.instanceOf(ZodUnion);
-            expect(type._def.innerType._def.options[0]).to.be.instanceOf(ZodOptional);
-            expect(type._def.innerType._def.options[1]).to.be.instanceOf(ZodOptional);
-            expect(type._def.innerType._def.options[0]._def.innerType).to.be.instanceOf(ZodUndefined);
-            expect(type._def.innerType._def.options[1]._def.innerType).to.be.instanceOf(ZodString);
+            expect(type._def.innerType).to.be.instanceOf(ZodString);
         });
 
         it(`should have generated a required number type`, () => {

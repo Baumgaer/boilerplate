@@ -2,7 +2,11 @@ import { Model, Attr } from "~client/utils/decorators";
 import TestAbstractModel from "~test/models/TestAbstractModel";
 import type TestMyTestModel from "~test/models/TestMyTestModel";
 import type TestMyTesterModel from "~test/models/TestMyTesterModel";
-import type { IMyInterface } from "~test/utils";
+
+interface IMyInterface {
+    prop1: string;
+    prop2?: number;
+}
 
 @Model()
 export default class TestModel extends TestAbstractModel {

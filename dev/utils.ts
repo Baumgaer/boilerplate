@@ -89,14 +89,31 @@ export function hasTypeLiteral(property: ts.PropertyDeclaration | ts.PropertySig
     return Boolean(kind && (kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral);
 }
 
-export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature): boolean {
-    return Boolean(property.type && type.isClassOrInterface() && !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) ||
-        hasTypeLiteral(property) ||
-        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property));
+export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile): boolean {
+    return Boolean(property.type && (
+        type.isClassOrInterface() && !type.isClass() ||
+        !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) && !isModel(type, sourceFile) ||
+        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property, sourceFile)) ||
+        hasTypeLiteral(property));
 }
 
 export function isTypeParameter(type: ts.Type): type is ts.TypeParameter {
     return (type.flags & ts.TypeFlags.TypeParameter) === ts.TypeFlags.TypeParameter;
+}
+
+export function getSourceFileByPath(sourceFile: ts.SourceFile, importPath: string, skipValidModelCheck = false, extension = "ts"): [ts.SourceFile | undefined, ts.Program] {
+    if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
+
+    const subProgram = programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
+
+    let resolvedPath = "";
+    if (importPath.startsWith("~")) {
+        resolvedPath = resolveImportPath(importPath, extension);
+    } else if (importPath.startsWith(".")) {
+        resolvedPath = path.resolve(path.relative(path.dirname(sourceFile.fileName), importPath));
+    } else[undefined, subProgram];
+    const possibleSourceFiles = subProgram.getSourceFiles().filter(skipValidModelCheck ? () => true : isValidSourceFile);
+    return [possibleSourceFiles.find((sourceFile) => !path.relative(resolvedPath, sourceFile.fileName)), subProgram];
 }
 
 export function isModel(type: ts.Type, sourceFile: ts.SourceFile) {
@@ -110,21 +127,14 @@ export function isModel(type: ts.Type, sourceFile: ts.SourceFile) {
             if (!importClause?.name || !type.aliasSymbol) continue;
             if (importClause.name.getText() !== type.aliasSymbol.name) continue;
 
-            let importPath = moduleSpecifier.getText();
-            importPath = importPath.substring(1, importPath.length - 1);
-            if (importPath.startsWith("~")) {
-                const subProgram = programFromConfig(path.resolve(path.join(arp.path, "src", "client", "tsconfig.json")));
+            const importPath = moduleSpecifier.getText();
+            const [newSourceFile, _subProgram] = getSourceFileByPath(sourceFile, importPath);
+            if (!newSourceFile) continue;
 
-                const resolvedPath = resolveImportPath(importPath);
-                const possibleSourceFiles = subProgram.getSourceFiles().filter(isValidSourceFile);
-                const newSourceFile = possibleSourceFiles.find((sourceFile) => !path.relative(resolvedPath, sourceFile.fileName));
-                if (!newSourceFile) continue;
-
-                for (const statement of newSourceFile.statements) {
-                    if (!ts.isClassDeclaration(statement)) continue;
-                    if (!isDefaultExported(statement)) continue;
-                    return true;
-                }
+            for (const statement of newSourceFile.statements) {
+                if (!ts.isClassDeclaration(statement)) continue;
+                if (!isDefaultExported(statement)) continue;
+                return true;
             }
         }
         return false;
@@ -210,14 +220,14 @@ export function isInEnvironment(environment: string, pathString: string, substit
     return relative && !relative.startsWith('..') && !path.isAbsolute(relative);
 }
 
-export function resolveImportPath(importPath: string) {
+export function resolveImportPath(importPath: string, extension = "ts") {
     if (importPath.startsWith('"') && importPath.endsWith('"')) importPath = importPath.substring(1, importPath.length - 1);
     const pathParts = importPath.split("/");
     const entryPoint = pathParts.shift() as "~client" | "~common" | "~env";
-    const fileName = `${pathParts.pop()}.ts`;
+    const fileName = `${pathParts.pop()}.${extension}`;
 
     const paths = clientConfig.compilerOptions.paths;
-    const relativePath = paths[`${entryPoint}/*`][0].replace("*", "");
+    const relativePath = paths[`${entryPoint}/*`]?.[0].replace("*", "") || "";
     return path.resolve(path.join(arp.path, "src", "client", relativePath, ...pathParts, fileName));
 }
 

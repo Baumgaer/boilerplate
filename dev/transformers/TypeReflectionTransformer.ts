@@ -59,8 +59,8 @@ export default function transformer(program: ts.Program) {
 
             const name = attr.name.getText();
             console.info(`processing attribute ${name}`);
-            let type = resolveType(typeChecker.getTypeAtLocation(attr), attr, sourceFile);
 
+            let type = resolveType(typeChecker.getTypeFromTypeNode(attr.type!), attr, sourceFile);
             if (!type || type.isUnresolvedType) throw new Error(`Can not resolve type for ${name}`);
 
             let properties = {};
@@ -84,7 +84,7 @@ export default function transformer(program: ts.Program) {
             // NORMALIZE TYPE
             if (utils.isParenthesizedType(typeNode)) {
                 typeNode = (<ts.ParenthesizedTypeNode>typeNode).type;
-                type = typeChecker.getTypeAtLocation(typeNode);
+                type = typeChecker.getTypeFromTypeNode(typeNode);
             }
 
             if (utils.isCustomType(typeNode)) return resolveCustomType(typeNode, attr, sourceFile);
@@ -99,7 +99,7 @@ export default function transformer(program: ts.Program) {
             if (utils.isDate(type, attr)) return resolveDate();
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr, typeNode)) return resolveArray(attr, sourceFile, typeNode);
-            if (utils.isInterface(type, attr)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
+            if (utils.isInterface(type, attr, sourceFile)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
@@ -159,8 +159,26 @@ export default function transformer(program: ts.Program) {
 
             let typeMembers: ts.SymbolTable | ts.NodeArray<ts.PropertySignature> | undefined;
             if (ts.isTypeReferenceNode(typeNode)) {
-                const identifier = typeNode.typeName;
-                const symbol = typeChecker.getSymbolAtLocation(identifier);
+                const type = typeChecker.getTypeFromTypeNode(typeNode);
+                let symbol = type.getSymbol();
+                if (!symbol?.members) {
+                    typeChecker.getSymbolAtLocation(typeNode.typeName)?.declarations?.forEach((declaration) => {
+                        if (ts.isImportSpecifier(declaration)) {
+                            console.log("importspecifier");
+                            const path = declaration?.parent?.parent?.parent?.moduleSpecifier?.getText();
+                            if (!path) return;
+                            const [newSourceFile, subProgram] = utils.getSourceFileByPath(sourceFile, path, true, "d.ts");
+                            if (!newSourceFile) return;
+                            for (const statement of newSourceFile.statements) {
+                                if (ts.isInterfaceDeclaration(statement) && statement.name.text === typeChecker.typeToString(type)) {
+                                    symbol = subProgram.getTypeChecker().getSymbolAtLocation(statement.name);
+                                    return;
+                                }
+                            }
+                            return;
+                        }
+                    });
+                }
                 typeMembers = symbol?.members;
             } else typeMembers = <ts.NodeArray<ts.PropertySignature>>typeNode.members;
 
@@ -189,7 +207,7 @@ export default function transformer(program: ts.Program) {
 
         function resolveArray(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode?: ts.TypeNode) {
             if (typeNode) {
-                const elementType = typeChecker.getTypeAtLocation((<ts.ArrayTypeNode>typeNode).elementType);
+                const elementType = typeChecker.getTypeFromTypeNode((<ts.ArrayTypeNode>typeNode).elementType);
                 return { isArray: true, subType: resolveType(elementType, attr, sourceFile, typeNode) };
             }
             if (attr.initializer) {
@@ -213,7 +231,7 @@ export default function transformer(program: ts.Program) {
                     if (valueIndex >= 0) {
                         const argument = typeNode.typeArguments?.at(valueIndex);
                         if (argument) {
-                            const argumentType = typeChecker.getTypeAtLocation(argument);
+                            const argumentType = typeChecker.getTypeFromTypeNode(argument);
                             if (utils.isLiteral(argumentType)) {
                                 value = argument.getText();
                                 if (utils.isNumberLiteral(argumentType)) value = parseFloat(value);
@@ -229,7 +247,7 @@ export default function transformer(program: ts.Program) {
                 const emitType = typeNode.typeArguments?.at(emitParameterIndex);
                 if (!emitType) return { isUnresolvedType: true };
 
-                let type = resolveType(typeChecker.getTypeAtLocation(emitType), attr, sourceFile, emitType);
+                let type = resolveType(typeChecker.getTypeFromTypeNode(emitType), attr, sourceFile, emitType);
                 if (type.isUnresolvedType) throw new Error(`can not resolve type of ${attr.name.getText()}`);
 
                 const properties = resolveProperties();
