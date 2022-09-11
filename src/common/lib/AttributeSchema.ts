@@ -23,8 +23,33 @@ import { merge, getModelClassByName, hasOwnProperty, pascalCase, isArray } from 
 import type { Constructor } from "type-fest";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
-import type { AttrOptions, AllColumnOptions, AttrOptionsPartialMetadataJson, IEmbeddedEntity, SchemaNameByModelClass, SchemaTypes } from "~common/@types/AttributeSchema";
-import type { CombinedDataType, IArrayType, IAttrMetadata, ICustomType, IIdentifiedType, IInterfaceType, IIntersectionType, ILiteralType, IModelType, INullType, IOptionalType, ITupleType, IUndefinedType, IUnionType, IUnresolvedType, MetadataType, ObjectLikeDataType } from "~common/@types/MetadataTypes";
+import type {
+    AttrOptions,
+    AllColumnOptions,
+    AttrOptionsPartialMetadataJson,
+    IEmbeddedEntity,
+    SchemaNameByModelClass,
+    SchemaTypes
+} from "~common/@types/AttributeSchema";
+import type {
+    CombinedDataType,
+    IArrayType,
+    IAttrMetadata,
+    ICustomType,
+    IIdentifiedType,
+    IInterfaceType,
+    IIntersectionType,
+    ILiteralType,
+    IModelType,
+    INullType,
+    IOptionalType,
+    ITupleType,
+    IUndefinedType,
+    IUnionType,
+    IUnresolvedType,
+    MetadataType,
+    ObjectLikeDataType
+} from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
 
 /**
@@ -320,7 +345,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     public isStringType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IIdentifiedType<"String"> | ILiteralType<string>> {
         const type = altType || this.rawType;
-        return "isStringLiteral" in type && type.isStringLiteral || "identifier" in type && type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
+        return "isStringLiteral" in type && type.isStringLiteral ||
+            "identifier" in type && type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
     }
 
     /**
@@ -332,7 +358,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     public isNumberType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IIdentifiedType<"Number"> | ILiteralType<number>> {
         const type = altType || this.rawType;
-        return "isNumberLiteral" in type && type.isNumberLiteral || "identifier" in type && type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
+        return "isNumberLiteral" in type && type.isNumberLiteral ||
+            "identifier" in type && type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
     }
 
     /**
@@ -426,7 +453,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     public isObjectLikeType(altType?: IAttrMetadata["type"]): altType is ObjectLikeDataType {
         const type = altType || this.rawType;
-        return "isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection || this.isModelType(type) || this.isArrayType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
+        return "isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection ||
+            this.isModelType(type) || this.isArrayType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
     }
 
     /**
@@ -450,7 +478,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
      */
     public isUnresolvedType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IUnresolvedType> {
         const type = altType || this.rawType;
-        return "isMixed" in type && type.isMixed || "isUnresolvedType" in type && type.isUnresolvedType || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
+        return "isMixed" in type && type.isMixed ||
+            "isUnresolvedType" in type && type.isUnresolvedType || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
     }
 
     /**
@@ -622,7 +651,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
     }
 
     protected isValidEmbeddedType(embeddedType: MetadataType | MetadataType[] | null): embeddedType is IInterfaceType | IInterfaceType[] {
-        return Boolean(embeddedType && (embeddedType instanceof Array && embeddedType.every((subType) => this.isPlainObjectType(subType)) || !(embeddedType instanceof Array) && this.isPlainObjectType(embeddedType)));
+        return Boolean(embeddedType && (embeddedType instanceof Array && embeddedType.every((subType) => this.isPlainObjectType(subType)) ||
+            !(embeddedType instanceof Array) && this.isPlainObjectType(embeddedType)));
     }
 
     /**
@@ -791,7 +821,8 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
             const typeIdentifier = this.getTypeIdentifier(type) || "";
             const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
             const modelSchema = modelClass?.getSchema();
-            schemaType = modelClass && modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.any();
+            schemaType = modelClass && modelSchema?.getSchemaType()?.or(
+                baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.any();
         } else if (this.isPlainObjectType(type)) {
             schemaType = baseTypeFuncs.object(Object.fromEntries(Object.entries(type.members).map((entry) => {
                 const value = this.buildSchemaType(entry[1].type);
