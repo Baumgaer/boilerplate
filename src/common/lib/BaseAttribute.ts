@@ -1,11 +1,11 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
-import { AttributeError } from "~common/lib/Errors";
-import { setValue, getValue, isChangeObservable, isChangeObserved } from "~common/utils/utils";
+import { AttributeError } from "~env/lib/Errors";
+import { setValue, getValue, isChangeObservable, isChangeObserved } from "~env/utils/utils";
 import type { Options, ApplyData } from "on-change";
-import type { ChangeMethodsArgs, IAttributeChange } from "~common/@types/AttributeSchema";
-import type AttributeSchema from "~common/lib/AttributeSchema";
+import type { ChangeMethodsArgs, IAttributeChange } from "~env/@types/AttributeSchema";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type AttributeSchema from "~env/lib/AttributeSchema";
 
 /**
  * Manages basic reactivity inside the model and calls hooks depending on type

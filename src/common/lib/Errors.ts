@@ -1,8 +1,8 @@
 import HttpErrors from "http-errors";
-import { upperFirst } from "~common/utils/utils";
+import { upperFirst } from "~env/utils/utils";
 import type { PascalCase } from "type-fest";
 import type { AttributeKinds } from "~common/@types/Errors";
-import type BaseModel from "~common/lib/BaseModel";
+import type BaseModel from "~env/lib/BaseModel";
 
 export class BaseError extends Error {
 

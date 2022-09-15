@@ -227,7 +227,7 @@ export function isValidDecoratorImport(identifier: ts.Identifier, typeChecker: t
     if (!ts.isStringLiteral(importDeclaration.moduleSpecifier)) return false;
 
     const importPath = importDeclaration.moduleSpecifier.text;
-    const validAttrImports = ["~client/utils/decorators", "~common/utils/decorators", "~server/utils/decorators"];
+    const validAttrImports = ["~client/utils/decorators", "~common/utils/decorators", "~server/utils/decorators", "~env/utils/decorators"];
     return validAttrImports.some((attrImport) => importPath === attrImport);
 }
 

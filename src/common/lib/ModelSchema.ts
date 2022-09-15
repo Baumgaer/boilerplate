@@ -1,9 +1,9 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
 import { baseTypeFuncs } from "~common/utils/schema";
 import type { ZodLazy, ZodObject, ZodType } from "zod";
-import type AttributeSchema from "~common/lib/AttributeSchema";
-import type BaseModel from "~common/lib/BaseModel";
 import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
+import type AttributeSchema from "~env/lib/AttributeSchema";
+import type BaseModel from "~env/lib/BaseModel";
 
 /**
  * defines the schema for any Model by defining:

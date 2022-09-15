@@ -2,12 +2,12 @@ import { reactive } from "vue";
 import CommonBaseAttribute from "~common/lib/BaseAttribute";
 import type { ApplyData } from "on-change";
 import type { ChangeMethodsArgs } from "~client/@types/AttributeSchema";
-import type BaseModel from "~client/lib/BaseModel";
+import type { ModelLike } from "~client/@types/ModelClass";
 
 /**
  * @see CommonBaseAttribute
  */
-export default class BaseAttribute<T extends typeof BaseModel> extends CommonBaseAttribute<T> {
+export default class BaseAttribute<T extends ModelLike> extends CommonBaseAttribute<T> {
 
     private isChangeTrigger = false;
 

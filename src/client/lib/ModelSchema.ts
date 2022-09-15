@@ -1,4 +1,4 @@
 import CommonModelSchema from "~common/lib/ModelSchema";
-import type BaseModel from "~client/lib/BaseModel";
+import type { ModelLike } from "~client/@types/ModelClass";
 
-export default class ModelSchema<T extends typeof BaseModel> extends CommonModelSchema<T> { }
+export default class ModelSchema<T extends ModelLike> extends CommonModelSchema<T> { }

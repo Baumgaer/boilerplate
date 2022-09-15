@@ -1,11 +1,12 @@
 import { BaseEntity } from "typeorm";
-import { AttributeError, ValidationError } from "~common/lib/Errors";
 import MetadataStore from "~common/lib/MetadataStore";
-import { Attr, AttrObserver } from "~common/utils/decorators";
-import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~common/utils/utils";
+import { AttributeError, ValidationError } from "~env/lib/Errors";
+import { Attr, AttrObserver } from "~env/utils/decorators";
+import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~env/utils/utils";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~common/@types/BaseModel";
-import type BaseAttribute from "~common/lib/BaseAttribute";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type BaseAttribute from "~env/lib/BaseAttribute";
+import type EnvBaseModel from "~env/lib/BaseModel";
 
 /**
  * This class should be a parent of each other model. It wraps the BaseEntity
@@ -278,7 +279,7 @@ export default abstract class BaseModel extends BaseEntity {
         }
     }
 
-    public validate(obj = this.getValidationObject()) {
+    public validate(this: EnvBaseModel, obj = this.getValidationObject()) {
         const errors: (AttributeError | AggregateError)[] = [];
         for (const key in obj) {
             if (hasOwnProperty(obj, key)) {

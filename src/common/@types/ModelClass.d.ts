@@ -1,6 +1,6 @@
 import type { SetOptional } from "type-fest";
 import type { EntityOptions, IndexOptions } from "typeorm";
-import type { IModelMetadata } from "~common/@types/MetadataTypes";
+import type { IModelMetadata } from "~env/@types/MetadataTypes";
 import type BaseModel from "~env/lib/BaseModel";
 import type { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 

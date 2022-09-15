@@ -8,8 +8,8 @@ import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWi
 import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
 import type { ZodTypeAny } from "zod";
-import type { IAttrMetadata } from "~common/@types/MetadataTypes";
 import type * as DataTypes from "~common/lib/DataTypes";
+import type { IAttrMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
 
 /**

@@ -16,10 +16,10 @@ import {
 } from "typeorm";
 import { ZodNumber, ZodString } from "zod";
 import * as DataTypes from "~common/lib/DataTypes";
-import { AttributeError } from "~common/lib/Errors";
 import { baseTypeFuncs } from "~common/utils/schema";
-import { merge, getModelClassByName, pascalCase, isArray } from "~common/utils/utils";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
+import { AttributeError } from "~env/lib/Errors";
+import { merge, getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
@@ -30,7 +30,7 @@ import type {
     IEmbeddedEntity,
     SchemaNameByModelClass,
     SchemaTypes
-} from "~common/@types/AttributeSchema";
+} from "~env/@types/AttributeSchema";
 import type {
     CombinedDataType,
     IArrayType,
@@ -49,9 +49,9 @@ import type {
     IUnresolvedType,
     MetadataType,
     ObjectLikeDataType
-} from "~common/@types/MetadataTypes";
-import type BaseModel from "~common/lib/BaseModel";
+} from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type BaseModel from "~env/lib/BaseModel";
 
 /**
  * Defines the schema for any attribute by defining

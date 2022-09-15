@@ -1,0 +1,20 @@
+{
+    "extends": "./../../.eslintrc",
+    "rules": {
+        "boilerplate/prefer-env-import": [
+            "error",
+            {
+                "checkEnvironmentsBasePaths": [
+                    {
+                        "name": "~client",
+                        "path": "./src/client"
+                    },
+                    {
+                        "name": "~server",
+                        "path": "./src/server"
+                    }
+                ]
+            }
+        ]
+    }
+}

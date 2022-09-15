@@ -1,7 +1,7 @@
 import { t, changeLanguage as chLang } from "i18next";
-import { merge } from "~common/utils/utils";
+import { merge } from "~env/utils/utils";
 import type { InitOptions } from "i18next";
-import type { context } from "~common/@types/Language";
+import type { context } from "~env/@types/Language";
 
 const env = require.context('~env/locales', true, /[A-Za-z0-9-_,\s]+\.yml$/i);
 const common = require.context('~common/locales', true, /[A-Za-z0-9-_,\s]+\.yml$/i);

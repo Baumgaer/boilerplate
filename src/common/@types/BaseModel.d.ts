@@ -1,4 +1,4 @@
-import type { IAttributeChange } from "~common/@types/AttributeSchema";
+import type { IAttributeChange } from "~env/@types/AttributeSchema";
 
 export type ModelChanges<T> = Record<keyof T, IAttributeChange[]>;
 

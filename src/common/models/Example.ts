@@ -1,5 +1,5 @@
-import { Attr } from "~common/utils/decorators";
 import BaseModel from "~env/lib/BaseModel";
+import { Attr } from "~env/utils/decorators";
 
 export default abstract class Example extends BaseModel {
 

@@ -1,6 +1,5 @@
 import path from "path";
 import { ESLintUtils } from '@typescript-eslint/utils';
-import { isInEnvironment } from "~dev/utils";
 
 const createRule = ESLintUtils.RuleCreator(name => `https://github.com/Eluminati/boilerplate/tree/main/dev/eslint-plugin-boilerplate/${name}`);
 

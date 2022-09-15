@@ -1,8 +1,8 @@
-import type { AttrOptionsPartialMetadataJson } from "~common/@types/AttributeSchema";
-import type AttributeSchema from "~common/lib/AttributeSchema";
-import type BaseAttribute from "~common/lib/BaseAttribute";
-import type ModelSchema from "~common/lib/ModelSchema";
+import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type AttributeSchema from "~env/lib/AttributeSchema";
+import type BaseAttribute from "~env/lib/BaseAttribute";
+import type ModelSchema from "~env/lib/ModelSchema";
 
 /**
  * This is a singleton store which hold all reflect-metadata data to be type

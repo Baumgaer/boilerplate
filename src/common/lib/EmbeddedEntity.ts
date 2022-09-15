@@ -1,6 +1,6 @@
-import AttributeSchema from "~common/lib/AttributeSchema";
 import MetadataStore from "~common/lib/MetadataStore";
-import { hasOwnProperty, isObject, isPlainObject, pascalCase, upperFirst } from "~common/utils/utils";
+import AttributeSchema from "~env/lib/AttributeSchema";
+import { hasOwnProperty, isObject, isPlainObject, pascalCase, upperFirst } from "~env/utils/utils";
 import type { EmbeddedEntityType, members } from "~env/@types/EmbeddedEntity";
 import type { ModelLike } from "~env/@types/ModelClass";
 

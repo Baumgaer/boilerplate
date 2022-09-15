@@ -1,7 +1,7 @@
 import addDeepdash from "deepdash";
 import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
-import type BaseModel from "~common/lib/BaseModel";
+import type BaseModel from "~env/lib/BaseModel";
 
 export {
     compact,

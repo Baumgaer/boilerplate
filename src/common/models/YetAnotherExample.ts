@@ -1,5 +1,5 @@
-import { Attr } from "~common/utils/decorators";
 import BaseModel from "~env/lib/BaseModel";
+import { Attr } from "~env/utils/decorators";
 import type { ITest } from "~common/@types/Test";
 import type AnotherExample from "~env/models/AnotherExample";
 
