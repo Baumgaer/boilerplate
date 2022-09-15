@@ -79,7 +79,6 @@
                 "before": true
             }
         ],
-        "boilerplate/no-invalid-common-import": "error",
         "camelcase": "error",
         "comma-dangle": [
             "error",

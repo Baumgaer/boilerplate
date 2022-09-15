@@ -31,10 +31,13 @@
                 "src/*"
             ],
             "~client/*": [
-                "src/client"
+                "src/client/*"
             ],
             "~server/*": [
-                "src/server"
+                "src/server/*"
+            ],
+            "~common/*": [
+                "src/common/*"
             ],
             "~env/*": [
                 "src/*"
