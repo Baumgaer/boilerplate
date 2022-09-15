@@ -17,9 +17,9 @@ import {
 import { ZodNumber, ZodString } from "zod";
 import * as DataTypes from "~common/lib/DataTypes";
 import { AttributeError } from "~common/lib/Errors";
-import MetadataStore from "~common/lib/MetadataStore";
 import { baseTypeFuncs } from "~common/utils/schema";
-import { merge, getModelClassByName, hasOwnProperty, pascalCase, isArray } from "~common/utils/utils";
+import { merge, getModelClassByName, pascalCase, isArray } from "~common/utils/utils";
+import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 import type { Constructor } from "type-fest";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
@@ -51,6 +51,7 @@ import type {
     ObjectLikeDataType
 } from "~common/@types/MetadataTypes";
 import type BaseModel from "~common/lib/BaseModel";
+import type { ModelLike } from "~env/@types/ModelClass";
 
 /**
  * Defines the schema for any attribute by defining
@@ -69,7 +70,7 @@ import type BaseModel from "~common/lib/BaseModel";
  *
  * @template T The model where the schema of the attribute belongs to
  */
-export default class AttributeSchema<T extends typeof BaseModel> implements AttrOptions<T> {
+export default class AttributeSchema<T extends ModelLike> implements AttrOptions<T> {
 
     /**
      * Holds the class object which created the schema. This is only a valid
@@ -628,26 +629,12 @@ export default class AttributeSchema<T extends typeof BaseModel> implements Attr
         if (this.isArrayType(type)) embeddedType = type.subType;
         if (this.isTupleType(type) && type.subTypes.every((subType) => this.isPlainObjectType(subType))) embeddedType = type.subTypes;
         if (!this.isValidEmbeddedType(embeddedType)) return null;
-
-        const metadataStore = new MetadataStore();
-        const className = `${pascalCase(attributeName)}EmbeddedEntity`;
-        class EmbeddedEntity {
-            public static className: string = className;
-        }
-
         if (!isArray(embeddedType)) embeddedType = [embeddedType];
 
-        for (const type of embeddedType as IInterfaceType[]) {
-            for (const memberKey in type.members) {
-                if (hasOwnProperty(type.members, memberKey)) {
-                    const memberType = type.members[memberKey];
-                    const attr = new AttributeSchema(EmbeddedEntity as any, memberKey as any, memberType);
-                    metadataStore.setAttributeSchema(EmbeddedEntity as any, memberKey as any, attr);
-                }
-            }
-        }
+        const className = `${pascalCase(attributeName)}EmbeddedEntity`;
+        const members = Object.assign({}, ...(embeddedType as IInterfaceType[]).map((type) => type.members));
 
-        return EmbeddedEntity;
+        return embeddedEntityFactory(className, members);
     }
 
     protected isValidEmbeddedType(embeddedType: MetadataType | MetadataType[] | null): embeddedType is IInterfaceType | IInterfaceType[] {

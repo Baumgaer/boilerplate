@@ -1,8 +1,10 @@
 import type { SetOptional } from "type-fest";
 import type { EntityOptions, IndexOptions } from "typeorm";
 import type { IModelMetadata } from "~common/@types/MetadataTypes";
-import type BaseModel from "~common/lib/BaseModel";
+import type BaseModel from "~env/lib/BaseModel";
+import type { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 
+export type ModelLike = typeof BaseModel | ReturnType<typeof embeddedEntityFactory>;
 export type AllowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";
 
 export interface IMultiRowIndex {
@@ -44,6 +46,6 @@ export interface IExtraOptions {
     indexes?: [IMultiRowIndex, ...IMultiRowIndex[]];
 }
 
-export type ModelOptions<T extends typeof BaseModel> = Pick<EntityOptions, AllowedModelFields> & IExtraOptions & ThisType<T>;
-export type ModelOptionsWithMetadataJson<T extends typeof BaseModel> = ModelOptions<T> & { metadataJson: string }
-export type ModelOptionsPartialMetadataJson<T extends typeof BaseModel> = IModelMetadata & SetOptional<ModelOptionsWithMetadataJson<T>, "metadataJson">;
+export type ModelOptions<T extends ModelLike> = Pick<EntityOptions, AllowedModelFields> & IExtraOptions & ThisType<T>;
+export type ModelOptionsWithMetadataJson<T extends ModelLike> = ModelOptions<T> & { metadataJson: string }
+export type ModelOptionsPartialMetadataJson<T extends ModelLike> = IModelMetadata & SetOptional<ModelOptionsWithMetadataJson<T>, "metadataJson">;

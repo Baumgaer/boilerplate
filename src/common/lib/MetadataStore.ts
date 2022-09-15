@@ -1,8 +1,8 @@
 import type { AttrOptionsPartialMetadataJson } from "~common/@types/AttributeSchema";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseAttribute from "~common/lib/BaseAttribute";
-import type BaseModel from "~common/lib/BaseModel";
 import type ModelSchema from "~common/lib/ModelSchema";
+import type { ModelLike } from "~env/@types/ModelClass";
 
 /**
  * This is a singleton store which hold all reflect-metadata data to be type
@@ -30,7 +30,7 @@ export default class MetadataStore {
      * Holds for each model the corresponding attribute schemas.
      * This has to be a WeakMap to avoid memory leaks when a model is destroyed.
      */
-    private attributes = new WeakMap<BaseModel, Record<string, BaseAttribute<any>>>();
+    private attributes = new WeakMap<InstanceType<ModelLike>, Record<string, BaseAttribute<any>>>();
 
     public constructor() {
         if (MetadataStore.instance) return MetadataStore.instance;
@@ -45,7 +45,7 @@ export default class MetadataStore {
      * @param attributeName the name of the schema
      * @param schema the schema itself
      */
-    public setAttributeSchema<T extends typeof BaseModel>(target: T, attributeName: keyof T, schema: AttributeSchema<T>) {
+    public setAttributeSchema<T extends ModelLike>(target: T, attributeName: keyof T, schema: AttributeSchema<T>) {
         const attrStr = attributeName.toString();
         if (!this.attributeSchemas[attrStr]) {
             this.attributeSchemas[attrStr] = [schema];
@@ -60,7 +60,7 @@ export default class MetadataStore {
      * @param attributeName the name of the schema
      * @returns the attribute schema if found and null else
      */
-    public getAttributeSchema<T extends typeof BaseModel>(target: T, attributeName: keyof T): AttributeSchema<T> | null {
+    public getAttributeSchema<T extends ModelLike>(target: T, attributeName: keyof T): AttributeSchema<T> | null {
         return Reflect.getMetadata(`${target.name}:${String(attributeName)}:definition`, target) || null;
     }
 
@@ -70,7 +70,7 @@ export default class MetadataStore {
      * @param target the static class to get schemas from
      * @returns a plain object with attribute schemas names as key and the schemas as values
      */
-    public getAttributeSchemas<T extends typeof BaseModel>(target: T): AttributeSchema<T>[] {
+    public getAttributeSchemas<T extends ModelLike>(target: T): AttributeSchema<T>[] {
         const attributeSchemas: Record<string, AttributeSchema<T>> = {};
         const metadataKeys: string[] = Reflect.getMetadataKeys(target).slice().reverse();
         for (const key of metadataKeys) {
@@ -89,7 +89,7 @@ export default class MetadataStore {
      * @param params params to merge into
      * @returns new attribute parameters
      */
-    public constructAttributeSchemaParams<T extends typeof BaseModel>(attributeName: keyof T, params: AttrOptionsPartialMetadataJson<T>) {
+    public constructAttributeSchemaParams<T extends ModelLike>(attributeName: keyof T, params: AttrOptionsPartialMetadataJson<T>) {
         const newParams = {};
         this.attributeSchemas[attributeName.toString()]?.forEach((attributeSchema) => {
             Object.assign(newParams, attributeSchema.parameters);
@@ -105,7 +105,7 @@ export default class MetadataStore {
      * @param schemaName the name of the schema
      * @param schema the schema itself
      */
-    public setModelSchema<T extends typeof BaseModel>(target: T, schemaName: string, schema: ModelSchema<T>) {
+    public setModelSchema<T extends ModelLike>(target: T, schemaName: string, schema: ModelSchema<T>) {
         this.modelSchemas[schemaName] = schema;
         Reflect.defineMetadata(`${target.constructor.name}:schema`, schema, target);
     }
@@ -117,7 +117,7 @@ export default class MetadataStore {
      * @param schemaName the name of the schema
      * @returns returns the schema of the model if found and null else
      */
-    public getModelSchema<T extends typeof BaseModel>(target?: T, schemaName?: string): ModelSchema<T> | null {
+    public getModelSchema<T extends ModelLike>(target?: T, schemaName?: string): ModelSchema<T> | null {
         if (schemaName && this.modelSchemas[schemaName]) return this.modelSchemas[schemaName];
         if (target) return Reflect.getMetadata(`${target.constructor.name}:schema`, target) || null;
         return null;
@@ -131,7 +131,7 @@ export default class MetadataStore {
      * @param attributeName the name of the attribute
      * @param attribute the attribute itself
      */
-    public setAttribute<T extends typeof BaseModel>(target: InstanceType<T>, attributeName: string, attribute: BaseAttribute<T>) {
+    public setAttribute<T extends ModelLike>(target: InstanceType<T>, attributeName: string, attribute: BaseAttribute<T>) {
         if (!this.attributes.has(target)) this.attributes.set(target, {});
         const attributes = this.attributes.get(target);
         if (attributes) Reflect.set(attributes, attributeName, attribute);
@@ -144,7 +144,7 @@ export default class MetadataStore {
      * @param attributeName the name of the attribute
      * @returns the attribute if found and undefined else
      */
-    public getAttribute<T extends typeof BaseModel>(target: InstanceType<T>, attributeName: string): BaseAttribute<T> | undefined {
+    public getAttribute<T extends ModelLike>(target: InstanceType<T>, attributeName: string): BaseAttribute<T> | undefined {
         return this.attributes.get(target)?.[attributeName];
     }
 
@@ -154,7 +154,7 @@ export default class MetadataStore {
      * @param target the model instance to get the attributes from
      * @returns all attributes of the given model
      */
-    public getAttributes<T extends typeof BaseModel>(target: InstanceType<T>): BaseAttribute<T>[] {
+    public getAttributes<T extends ModelLike>(target: InstanceType<T>): BaseAttribute<T>[] {
         return Object.values(this.attributes.get(target) ?? {});
     }
 }

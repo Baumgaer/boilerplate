@@ -5,7 +5,7 @@ import { setValue, getValue, isChangeObservable, isChangeObserved } from "~commo
 import type { Options, ApplyData } from "on-change";
 import type { ChangeMethodsArgs, IAttributeChange } from "~common/@types/AttributeSchema";
 import type AttributeSchema from "~common/lib/AttributeSchema";
-import type BaseModel from "~common/lib/BaseModel";
+import type { ModelLike } from "~env/@types/ModelClass";
 
 /**
  * Manages basic reactivity inside the model and calls hooks depending on type
@@ -14,7 +14,7 @@ import type BaseModel from "~common/lib/BaseModel";
  *
  * @template T The class of the instance the attribute belongs to
  */
-export default abstract class BaseAttribute<T extends typeof BaseModel> {
+export default abstract class BaseAttribute<T extends ModelLike> {
 
     /**
      * Gives ability to check identity when no class is given
@@ -64,7 +64,7 @@ export default abstract class BaseAttribute<T extends typeof BaseModel> {
 
     public constructor(owner: InstanceType<T>, name: keyof InstanceType<T>, attributeSchema: AttributeSchema<T>) {
         this.owner = owner;
-        this.unProxyfiedOwner = owner.unProxyfiedModel;
+        this.unProxyfiedOwner = owner.unProxyfiedModel as InstanceType<T>;
         this.name = name;
         this.schema = attributeSchema;
         this.ownerName = owner.className;

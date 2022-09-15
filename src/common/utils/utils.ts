@@ -3,7 +3,19 @@ import _, { isNull, isObjectLike } from "lodash";
 import onChange from "on-change";
 import type BaseModel from "~common/lib/BaseModel";
 
-export { compact, union, intersection, difference, camelCase, merge, isPlainObject, isUndefined, upperFirst, isArray } from "lodash";
+export {
+    compact,
+    union,
+    intersection,
+    difference,
+    camelCase,
+    merge,
+    isPlainObject,
+    isUndefined,
+    upperFirst,
+    isArray,
+    isObject
+} from "lodash";
 
 const lodash = addDeepdash(_);
 
@@ -78,7 +90,7 @@ export function resolveProxy(value: any): typeof value {
  * @param key the key to check for
  * @returns true if has own property and false else
  */
-export function hasOwnProperty(value: object, key: string) {
+export function hasOwnProperty(value: object, key: string): key is keyof typeof value {
     if (!isObjectLike(value)) return false;
     return Object.prototype.hasOwnProperty.call(value, key);
 }

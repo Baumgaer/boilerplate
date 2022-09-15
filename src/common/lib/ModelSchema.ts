@@ -1,9 +1,9 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
 import { baseTypeFuncs } from "~common/utils/schema";
 import type { ZodLazy, ZodObject, ZodType } from "zod";
-import type { ModelOptions } from "~common/@types/ModelClass";
 import type AttributeSchema from "~common/lib/AttributeSchema";
 import type BaseModel from "~common/lib/BaseModel";
+import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
 
 /**
  * defines the schema for any Model by defining:
@@ -21,7 +21,7 @@ import type BaseModel from "~common/lib/BaseModel";
  *
  * @template T The model where the schema of the model belongs to
  */
-export default class ModelSchema<T extends typeof BaseModel> {
+export default class ModelSchema<T extends ModelLike> {
 
     /**
      * Holds the class object which created the schema. This is only a valid

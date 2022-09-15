@@ -5,6 +5,7 @@ import { Attr, AttrObserver } from "~common/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~common/utils/utils";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~common/@types/BaseModel";
 import type BaseAttribute from "~common/lib/BaseAttribute";
+import type { ModelLike } from "~env/@types/ModelClass";
 
 /**
  * This class should be a parent of each other model. It wraps the BaseEntity
@@ -196,7 +197,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the unique initialized attribute owned by this model instance and identified by the given name
      */
-    public getAttribute<T extends typeof BaseModel>(this: InstanceType<T>, name: string): BaseAttribute<T> | undefined {
+    public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: string): BaseAttribute<T> | undefined {
         const metadataStore = new MetadataStore();
         return metadataStore.getAttribute(this, name);
     }
@@ -207,7 +208,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @param this current this context
      * @returns array of all attributes
      */
-    public getAttributes<T extends typeof BaseModel>(this: InstanceType<T>) {
+    public getAttributes<T extends ModelLike>(this: InstanceType<T>) {
         const metadataStore = new MetadataStore();
         return metadataStore.getAttributes(this);
     }

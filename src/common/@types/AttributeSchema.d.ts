@@ -9,8 +9,8 @@ import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWit
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
 import type { ZodTypeAny } from "zod";
 import type { IAttrMetadata } from "~common/@types/MetadataTypes";
-import type BaseModel from "~common/lib/BaseModel";
 import type * as DataTypes from "~common/lib/DataTypes";
+import type { ModelLike } from "~env/@types/ModelClass";
 
 /**
  * All attribute field names of typeorm which are allowed to use in column options
@@ -87,7 +87,7 @@ export interface IInjectedOptions {
     validator?: keyof typeof DataTypes;
 }
 
-export interface AttrOptions<T extends typeof BaseModel> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, ThisType<T> {
+export interface AttrOptions<T extends ModelLike> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, ThisType<T> {
 
     /**
      * Defines the attribute as an index column which can be used additionally
@@ -113,8 +113,8 @@ export interface IEmbeddedEntity {
 }
 
 export type SchemaNameByModelClass<T> = keyof ConstructionParams<InstanceType<T>>
-export type AttrOptionsWithMetadataJson<T extends typeof BaseModel> = AttrOptions<T> & { metadataJson: string }
-export type AttrOptionsPartialMetadataJson<T extends typeof BaseModel> = IAttrMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
+export type AttrOptionsWithMetadataJson<T extends ModelLike> = AttrOptions<T> & { metadataJson: string }
+export type AttrOptionsPartialMetadataJson<T extends ModelLike> = IAttrMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
 export type AttrObserverTypes = "add" | "remove" | "change"
 
 export type ChangeMethodsArgs<V> = [(string | symbol)[], V, V]

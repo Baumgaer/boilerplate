@@ -212,7 +212,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     }
 
     // Manipulate the constructor name to be able to store the data in the
-    // database the right way and to be able to minify the className on compile time
+    // database the right way and to be able to minify the className on compile time.
     // We need to disable that lint on this line to be able to provide the variable above
     // eslint-disable-next-line prefer-const
     constructorProxy = new Proxy(ModelClass, { get: (target, property) => property === "name" ? options.className : Reflect.get(target, property) });

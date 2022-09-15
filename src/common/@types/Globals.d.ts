@@ -6,7 +6,8 @@
 type InternalNames = "className" | "collectionName" | "unProxyfiedModel" | "dummyId";
 type AllAwaited<T> = { [P in keyof T]: Awaited<T[P]> };
 
-declare type ConstructionParams<T> = Omit<Partial<import("type-fest").ConditionalExcept<AllAwaited<T>, Function>>, InternalNames>;
+declare type RealConstructionParams<T> = Omit<import("type-fest").ConditionalExcept<AllAwaited<T>, Function>, InternalNames>;
+declare type ConstructionParams<T> = Partial<RealConstructionParams<T>>;
 declare var MODEL_NAME_TO_MODEL_MAP: Record<string, typeof import("~common/lib/BaseModel").default>;
 
 declare type ModuleLike<T> = { [key: string]: T, default: T };
