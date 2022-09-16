@@ -239,7 +239,7 @@ export default abstract class BaseModel extends BaseEntity {
         const attributes = this.getAttributes();
         for (const attribute of attributes) {
             if (!attribute.hasChanges()) continue;
-            changes[attribute.name] = attribute.getChanges();
+            changes[attribute.name as keyof this] = attribute.getChanges();
         }
         return changes;
     }

@@ -231,6 +231,13 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     private _constructed = false;
 
+    /**
+     * If the relation ends up in an embedded entity, it will be stored here to
+     * have access to its schema and to be able to generate the schema type of
+     * this attribute schema.
+     */
+    private embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
+
     public constructor(ctor: T, attributeName: keyof T, parameters: AttrOptionsPartialMetadataJson<T>) {
         this._ctor = ctor;
         this.attributeName = attributeName;
@@ -624,14 +631,14 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param attributeName the name of the attribute which will be an embedded entity
      * @param type the type of the attribute
      */
-    protected buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): IEmbeddedEntity | null {
-        let embeddedType: MetadataType | MetadataType[] | null = null;
+    protected buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): ReturnType<typeof embeddedEntityFactory> | null {
+        let embeddedType: MetadataType | MetadataType[] = type;
         if (this.isArrayType(type)) embeddedType = type.subType;
         if (this.isTupleType(type) && type.subTypes.every((subType) => this.isPlainObjectType(subType))) embeddedType = type.subTypes;
         if (!this.isValidEmbeddedType(embeddedType)) return null;
         if (!isArray(embeddedType)) embeddedType = [embeddedType];
 
-        const className = `${pascalCase(attributeName)}EmbeddedEntity`;
+        const className = `${this.owner?.className || ""}${pascalCase(attributeName)}EmbeddedEntity`;
         const members = Object.assign({}, ...(embeddedType as IInterfaceType[]).map((type) => type.members));
 
         return embeddedEntityFactory(className, members);
@@ -729,10 +736,10 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
         } else if (this.isVersion) {
             VersionColumn(options)(proto, attrName);
         } else if (!await this.buildRelation(attrName, options)) {
-            const embeddedEntity = this.buildEmbeddedEntity(attrName, type);
+            this.embeddedEntity = this.buildEmbeddedEntity(attrName, type);
             // eslint-disable-next-line @typescript-eslint/ban-types
             let usedType: ColumnType | (() => Function | IEmbeddedEntity) = typeName;
-            if (embeddedEntity) usedType = () => embeddedEntity;
+            if (this.embeddedEntity) usedType = () => this.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
             console.debug(`Creating column ${this._ctor.name}#${attrName}: ${usedType} = ${JSON.stringify(options)}`);
             Column(usedType as any, options)(proto, attrName);
         }
@@ -811,10 +818,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             schemaType = modelClass && modelSchema?.getSchemaType()?.or(
                 baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.any();
         } else if (this.isPlainObjectType(type)) {
-            schemaType = baseTypeFuncs.object(Object.fromEntries(Object.entries(type.members).map((entry) => {
-                const value = this.buildSchemaType(entry[1].type);
-                return [entry[0], value];
-            })));
+            if (this.embeddedEntity) {
+                schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.any();
+            } else schemaType = baseTypeFuncs.any();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
             schemaType = this.buildSchemaType(subTypes.shift() as MetadataType);

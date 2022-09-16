@@ -216,14 +216,13 @@ describe('decorators', () => {
 
         it(`should have generated an required plain object type with member prop1: string and prop2?: number`, () => {
             const schema = TestModel.getAttributeSchema("anInterface");
-            console.log(JSON.stringify(schema?.parameters.type));
-            const type = schema?.getSchemaType() as ZodObject<ZodRawShape>;
-            expect(type).to.be.instanceOf(ZodObject);
-            expect(type._def.shape()).to.be.an.instanceOf(Object);
-            expect(type._def.shape()).to.include.all.keys(["prop1", "prop2"]);
-            expect(type._def.shape().prop1).to.be.an.instanceOf(ZodString);
-            expect(type._def.shape().prop2).to.be.an.instanceOf(ZodOptional);
-            expect(type._def.shape().prop2._def.innerType).to.be.an.instanceOf(ZodNumber);
+            const type = schema?.getSchemaType() as ZodLazy<ZodObject<ZodRawShape>>;
+            expect(type).to.be.instanceOf(ZodLazy);
+            expect(type.schema).to.be.an.instanceOf(Object);
+            expect(type.schema._def.shape()).to.include.all.keys(["prop1", "prop2"]);
+            expect(type.schema._def.shape().prop1).to.be.an.instanceOf(ZodString);
+            expect(type.schema._def.shape().prop2).to.be.an.instanceOf(ZodOptional);
+            expect(type.schema._def.shape().prop2._def.innerType).to.be.an.instanceOf(ZodNumber);
         });
 
         it(`should have generated an required array type of strings`, () => {

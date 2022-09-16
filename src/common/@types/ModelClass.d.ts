@@ -1,8 +1,10 @@
 import type { SetOptional } from "type-fest";
 import type { EntityOptions, IndexOptions } from "typeorm";
+// Need to be imported from common due to reference loop in common embedded entity
+// eslint-disable-next-line boilerplate/prefer-env-import
+import type { embeddedEntityFactory } from "~common/lib/EmbeddedEntity";
 import type { IModelMetadata } from "~env/@types/MetadataTypes";
 import type BaseModel from "~env/lib/BaseModel";
-import type { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 
 export type ModelLike = typeof BaseModel | ReturnType<typeof embeddedEntityFactory>;
 export type AllowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";

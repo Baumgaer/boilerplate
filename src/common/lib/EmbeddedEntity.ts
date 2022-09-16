@@ -1,5 +1,6 @@
 import MetadataStore from "~common/lib/MetadataStore";
 import AttributeSchema from "~env/lib/AttributeSchema";
+import ModelSchema from "~env/lib/ModelSchema";
 import { hasOwnProperty, isObject, isPlainObject, pascalCase, upperFirst } from "~env/utils/utils";
 import type { EmbeddedEntityType, members } from "~env/@types/EmbeddedEntity";
 import type { ModelLike } from "~env/@types/ModelClass";
@@ -19,16 +20,20 @@ export function proxyfy<T, EE extends Record<string, any>>(className: string, cl
     }) as unknown as EmbeddedEntityType<T, EE>;
 }
 
-export function applyMembers<T extends ModelLike>(classType: T, members: members<T>) {
+export function applyMembers<T extends ModelLike>(classType: T, members: members<Record<string, any>>) {
     const metadataStore = new MetadataStore();
-
+    const attributeSchemas: AttributeSchema<T>[] = [];
     for (const memberKey in members) {
         if (hasOwnProperty(members, memberKey)) {
             const memberType = members[memberKey];
             const attr = new AttributeSchema(classType, memberKey as any, memberType);
+            attributeSchemas.push(attr);
             metadataStore.setAttributeSchema(classType, memberKey as any, attr);
         }
     }
+
+    const modelSchema = new ModelSchema(classType, classType.className, attributeSchemas, {});
+    metadataStore.setModelSchema(classType, classType.className, modelSchema);
 }
 
 export function embeddedEntityFactory<T extends Record<string, any>>(className: string, members: members<T>, withProxy: boolean = true) {
@@ -51,6 +56,16 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
             return this.isInstance(instance);
         }
 
+        /**
+         * Looks for the schema of the current instance and returns it
+         *
+         * @returns the schema of the model
+         */
+        public static getSchema(): ModelSchema<typeof EmbeddedEntity> | null {
+            const metadataStore = new MetadataStore();
+            return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
+        }
+
         protected static isInstance(instance: unknown): boolean {
             if (!isObject(instance) || isPlainObject(instance)) return false;
             if (!("className" in instance) || Reflect.get(instance, "className") !== this.className) return false;
@@ -60,6 +75,13 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
 
         public isNew() {
             return true;
+        }
+
+        /**
+         * @see BaseModel.getSchema
+         */
+        public getSchema() {
+            return (<typeof EmbeddedEntity>this.constructor).getSchema();
         }
 
     }
