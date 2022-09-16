@@ -32,6 +32,10 @@ export function getEnvironmentBasePath(environment: environmentName, subEnvironm
     return path.resolve(path.join(...pathParts));
 }
 
+export function isType(value: unknown): value is ts.Type {
+    return Boolean(value && "flags" in value && "objectFlags" in value);
+}
+
 export function isCustomType(node?: ts.TypeNode): node is ts.TypeReferenceNode {
     return Boolean(node && ts.isTypeReferenceNode(node) && ts.isIdentifier(node.typeName) && (node.typeName.escapedText ?? "") in customTypes);
 }
@@ -91,8 +95,8 @@ export function isTupleType(node?: ts.TypeNode | ts.PropertyDeclaration | ts.Pro
     return Boolean(node && ts.isTupleTypeNode(node));
 }
 
-export function isOptional(node?: ts.TypeNode | ts.PropertyDeclaration | ts.PropertySignature) {
-    return node && ts.isOptionalTypeNode(node);
+export function isOptional(node?: ts.TypeNode | ts.PropertyDeclaration | ts.PropertySignature): node is ts.OptionalTypeNode {
+    return Boolean(node && ts.isOptionalTypeNode(node));
 }
 
 export function isObject(type: ts.Type): type is ts.ObjectType {

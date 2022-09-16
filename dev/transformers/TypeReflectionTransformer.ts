@@ -151,9 +151,17 @@ export default function transformer(program: ts.Program, pluginConfig: PluginCon
             const isUnion = utils.isUnion(type);
             const isIntersection = utils.isIntersection(type);
 
+            let types: ts.Type[] | ts.NodeArray<ts.TypeNode> = (type as ts.UnionOrIntersectionType).types;
+            if (typeNode && (ts.isUnionTypeNode(typeNode) || ts.isIntersectionTypeNode(typeNode))) {
+                types = typeNode.types;
+            }
+
             const subTypes = [];
-            for (const subType of (<ts.UnionOrIntersectionType>type).types) {
-                subTypes.push(resolveType(subType, attr, sourceFile, typeNode));
+            for (const subType of types) {
+                if (!utils.isType(subType)) {
+                    const type = typeChecker.getTypeFromTypeNode(subType);
+                    subTypes.push(resolveType(type, attr, sourceFile, subType));
+                } else subTypes.push(resolveType(subType, attr, sourceFile, typeNode));
             }
             return { isUnion, isIntersection, subTypes };
         }
@@ -199,10 +207,11 @@ export default function transformer(program: ts.Program, pluginConfig: PluginCon
         function resolveTupleType(attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode: ts.TupleTypeNode) {
             const subTypes: any[] = [];
             typeNode.elements.forEach((element) => {
-                const resolvedType = resolveType(typeChecker.getTypeAtLocation(element), attr, sourceFile, element);
                 if (utils.isOptional(element)) {
+                    const type = typeChecker.getTypeFromTypeNode(element.type);
+                    const resolvedType = resolveType(type, attr, sourceFile, element.type);
                     subTypes.push({ isOptional: true, subType: resolvedType });
-                } else subTypes.push(resolvedType);
+                } else subTypes.push(resolveType(typeChecker.getTypeFromTypeNode(element), attr, sourceFile, element));
             });
             return { isTuple: true, subTypes };
         }

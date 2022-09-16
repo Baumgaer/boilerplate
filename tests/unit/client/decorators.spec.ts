@@ -198,20 +198,15 @@ describe('decorators', () => {
             expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
         });
 
-        it.skip(`should have generated a required tuple type with undefined, null and optional boolean`, () => {
+        it(`should have generated a required tuple type with undefined, null and optional boolean`, () => {
             const schema = TestModel.getAttributeSchema("aTuple");
-            const type = schema?.getSchemaType() as ZodTuple<[ZodUndefined, ZodNull, ZodOptional<ZodUnion<[ZodUnion<[ZodUndefined, ZodBoolean]>, ZodBoolean]>>]>;
+            const type = schema?.getSchemaType() as ZodTuple<[ZodUndefined, ZodNull, ZodOptional<ZodBoolean>]>;
             expect(type).to.be.instanceOf(ZodTuple);
             expect(type.items).to.be.an.instanceOf(Array);
             expect(type.items[0]).to.be.an.instanceOf(ZodUndefined);
             expect(type.items[1]).to.be.an.instanceOf(ZodNull);
             expect(type.items[2]).to.be.an.instanceOf(ZodOptional);
-            expect(type.items[2]._def.innerType).to.be.an.instanceOf(ZodUnion);
-
-            expect(type.items[2]._def.innerType._def.options[0]).to.be.an.instanceOf(ZodUnion);
-            expect(type.items[2]._def.innerType._def.options[0].options[0]).to.be.an.instanceOf(ZodUndefined);
-            expect(type.items[2]._def.innerType._def.options[0].options[1]).to.be.an.instanceOf(ZodBoolean);
-            expect(type.items[2]._def.innerType._def.options[1]).to.be.an.instanceOf(ZodBoolean);
+            expect(type.items[2]._def.innerType).to.be.an.instanceOf(ZodBoolean);
         });
 
         it(`should have generated an required plain object type with member prop1: string and prop2?: number`, () => {
