@@ -1,6 +1,7 @@
 import { expect } from "chai";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
+import { v4 as uuIdV4 } from "uuid";
 import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodArray } from "zod";
 import AttributeSchema from "~client/lib/AttributeSchema";
 import BaseModel from "~client/lib/BaseModel";
@@ -315,6 +316,29 @@ describe('decorators', () => {
                     valid: [null, undefined],
                     invalid: [
                         new Date(),
+                        randGen.generateString(),
+                        randGen.generateNumber(),
+                        randGen.generateBoolean(),
+                        randGen.generateObject(),
+                        randGen.generateArray()
+                    ]
+                },
+                anIntersection: {
+                    valid: [
+                        {
+                            id: uuIdV4(),
+                            created: new Date(),
+                            modifiedAt: new Date(),
+                            version: 1,
+                            name: randGen.generateString()
+                        }
+                    ],
+                    invalid: [
+                        undefined,
+                        null,
+                        new Date(),
+                        new TestMyTestModel({ name: randGen.generateString() }),
+                        new TestMyTesterModel({ name: randGen.generateString() }),
                         randGen.generateString(),
                         randGen.generateNumber(),
                         randGen.generateBoolean(),
