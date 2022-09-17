@@ -1,6 +1,6 @@
 import { Model, Attr } from "~client/utils/decorators";
 import TestAbstractModel from "~test/models/TestAbstractModel";
-import type { ITestMyInterface } from "~client/@types/ITestMyInterface";
+import type { ITestMyInterface, ITestMySecondInterface } from "~client/@types/ITestMyInterface";
 import type TestMyTestModel from "~test/models/TestMyTestModel";
 import type TestMyTesterModel from "~test/models/TestMyTesterModel";
 
@@ -20,10 +20,16 @@ export default class TestModel extends TestAbstractModel {
     public anUnion: "Test" | 42 = 42;
 
     @Attr()
+    public aUselessField: null | undefined;
+
+    @Attr()
     public anIntersection!: TestMyTestModel & TestMyTesterModel;
 
     @Attr()
-    public aTuple!: [undefined, null, boolean?];
+    public anotherIntersection!: ITestMyInterface & ITestMySecondInterface;
+
+    @Attr()
+    public aTuple!: [string, number, boolean?];
 
     @Attr()
     public anInterface!: ITestMyInterface;
