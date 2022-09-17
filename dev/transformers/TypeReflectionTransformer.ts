@@ -102,7 +102,7 @@ export default function transformer(program: ts.Program, pluginConfig: PluginCon
             if (utils.isDate(type, attr)) return resolveDate();
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr, typeNode)) return resolveArray(attr, sourceFile, typeNode);
-            if (utils.isInterface(type, attr, sourceFile, environment, subEnvironment)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
+            if (utils.isInterface(type, attr, sourceFile, environment, subEnvironment, typeNode)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
             if (utils.isUnionOrIntersection(type, typeNode)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };

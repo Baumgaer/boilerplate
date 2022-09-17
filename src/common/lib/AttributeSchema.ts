@@ -294,6 +294,15 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     public validate(value: unknown) {
         const name = this.attributeName.toString();
 
+        const rawType = this.parameters.type;
+        if (isArray(value) && this.isTupleType(rawType)) {
+            const length = rawType.subTypes.length;
+            const min = rawType.subTypes.findIndex((subType) => this.isOptionalType(subType));
+            if (value.length < min) return new AggregateError([new AttributeError(name, "rangeUnderflow", [], value)]);
+            value = value.slice();
+            (value as any[]).length = length;
+        }
+
         const result = this.getSchemaType().safeParse(value);
         if (!result.success) {
             const errors: AttributeError[] = [];
@@ -639,14 +648,27 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
         if (!isArray(embeddedType)) embeddedType = [embeddedType];
 
         const className = `${this.owner?.className || ""}${pascalCase(attributeName)}EmbeddedEntity`;
-        const members = Object.assign({}, ...(embeddedType as IInterfaceType[]).map((type) => type.members));
+        const members = this.getEmbeddedEntityMembers(embeddedType as IInterfaceType[]);
 
         return embeddedEntityFactory(className, members);
     }
 
     protected isValidEmbeddedType(embeddedType: MetadataType | MetadataType[] | null): embeddedType is IInterfaceType | IInterfaceType[] {
-        return Boolean(embeddedType && (embeddedType instanceof Array && embeddedType.every((subType) => this.isPlainObjectType(subType)) ||
-            !(embeddedType instanceof Array) && this.isPlainObjectType(embeddedType)));
+        return Boolean(embeddedType && (
+            embeddedType instanceof Array && embeddedType.every((subType) => this.isPlainObjectType(subType)) ||
+            !(embeddedType instanceof Array) && (
+                this.isPlainObjectType(embeddedType) ||
+                this.isIntersectionType(embeddedType) && embeddedType.subTypes.every(this.isPlainObjectType.bind(this)))));
+    }
+
+    protected getEmbeddedEntityMembers(embeddedType: IInterfaceType[]): Record<string, any> {
+        const members: Record<string, any> = {};
+        for (const type of embeddedType) {
+            if (this.isIntersectionType(type)) {
+                Object.assign(members, this.getEmbeddedEntityMembers(type.subTypes as IInterfaceType[]));
+            } else Object.assign(members, type.members);
+        }
+        return members;
     }
 
     /**
@@ -798,7 +820,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @returns at least a "ZodAnyType"
      */
     private buildSchemaType(type: IAttrMetadata["type"]): SchemaTypes {
-        let schemaType: SchemaTypes = baseTypeFuncs.any();
+        let schemaType: SchemaTypes = baseTypeFuncs.never();
 
         // eslint-disable-next-line import/namespace
         if (this.validator && DataTypes[this.validator]) {
@@ -816,11 +838,11 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
             const modelSchema = modelClass?.getSchema();
             schemaType = modelClass && modelSchema?.getSchemaType()?.or(
-                baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.any();
+                baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.never();
         } else if (this.isPlainObjectType(type)) {
             if (this.embeddedEntity) {
-                schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.any();
-            } else schemaType = baseTypeFuncs.any();
+                schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
+            } else schemaType = baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
             schemaType = this.buildSchemaType(subTypes.shift() as MetadataType);

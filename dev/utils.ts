@@ -121,11 +121,11 @@ export function hasTypeLiteral(property: ts.PropertyDeclaration | ts.PropertySig
     return Boolean(kind && (kind & ts.SyntaxKind.TypeLiteral) === ts.SyntaxKind.TypeLiteral);
 }
 
-export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, environment: environmentName, subEnvironment: subEnvironmentName = ""): boolean {
+export function isInterface(type: ts.Type, property: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, environment: environmentName, subEnvironment: subEnvironmentName = "", typeNode?: ts.TypeNode): boolean {
     return Boolean(property.type && (
         type.isClassOrInterface() && !type.isClass() ||
-        !type.isClass() && ts.isTypeReferenceNode(property.type) && !isDate(type, property) && !isModel(type, sourceFile, environment, subEnvironment) ||
-        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property, sourceFile, environment, subEnvironment)) ||
+        !type.isClass() && ts.isTypeReferenceNode(typeNode || property.type) && !isDate(type, property) && !isModel(type, sourceFile, environment, subEnvironment) ||
+        property.questionToken && isUnion(type) && isInterface((<ts.UnionType>type).types[1], property, sourceFile, environment, subEnvironment, typeNode)) ||
         hasTypeLiteral(property));
 }
 
