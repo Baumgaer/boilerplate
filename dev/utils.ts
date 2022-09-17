@@ -72,16 +72,16 @@ export function isStringLiteral(type: ts.Type) {
     return (type.flags & ts.TypeFlags.StringLiteral) === ts.TypeFlags.StringLiteral;
 }
 
-export function isUnionOrIntersection(type: ts.Type) {
-    return isUnion(type) || isIntersection(type);
+export function isUnionOrIntersection(type: ts.Type, typeNode?: ts.TypeNode) {
+    return isUnion(type, typeNode) || isIntersection(type, typeNode);
 }
 
-export function isUnion(type: ts.Type) {
-    return (type.flags & ts.TypeFlags.Union) === ts.TypeFlags.Union;
+export function isUnion(type: ts.Type, typeNode?: ts.TypeNode) {
+    return (type.flags & ts.TypeFlags.Union) === ts.TypeFlags.Union || typeNode && ts.isUnionTypeNode(typeNode);
 }
 
-export function isIntersection(type: ts.Type) {
-    return (type.flags & ts.TypeFlags.Intersection) === ts.TypeFlags.Intersection;
+export function isIntersection(type: ts.Type, typeNode?: ts.TypeNode) {
+    return (type.flags & ts.TypeFlags.Intersection) === ts.TypeFlags.Intersection || typeNode && ts.isIntersectionTypeNode(typeNode);
 }
 
 export function isArray(property: ts.PropertyDeclaration | ts.PropertySignature, typeNode?: ts.TypeNode) {

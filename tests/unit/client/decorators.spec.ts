@@ -178,7 +178,7 @@ describe('decorators', () => {
             expect(innerType.options[1]._def.innerType.value).to.be.equal(42);
         });
 
-        it.skip(`should have generated an required intersection type with MyTestModel & MyTesterModel`, () => {
+        it(`should have generated an required intersection type with MyTestModel & MyTesterModel`, () => {
             const schema = TestModel.getAttributeSchema("anIntersection");
             const type = schema?.getSchemaType() as ZodIntersection<ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>, ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>>;
             expect(type).to.be.instanceOf(ZodIntersection);
@@ -227,7 +227,7 @@ describe('decorators', () => {
             expect(type._def.type).to.be.an.instanceOf(ZodString);
         });
 
-        it.skip(`should be an object like type`, () => {
+        it(`should be an object like type`, () => {
             const objectLikeAttributes = ["anIntersection", "anInterface"] as const;
 
             for (const attributeName of objectLikeAttributes) {

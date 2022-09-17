@@ -103,7 +103,7 @@ export default function transformer(program: ts.Program, pluginConfig: PluginCon
             if (utils.isTupleType(typeNode)) return resolveTupleType(attr, sourceFile, typeNode);
             if (utils.isArray(attr, typeNode)) return resolveArray(attr, sourceFile, typeNode);
             if (utils.isInterface(type, attr, sourceFile, environment, subEnvironment)) return resolveInterface(<ts.TypeReferenceNode | ts.TypeLiteralNode>typeNode, sourceFile);
-            if (utils.isUnionOrIntersection(type)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
+            if (utils.isUnionOrIntersection(type, typeNode)) return resolveUnionOrIntersection(type, attr, sourceFile, typeNode);
             if (utils.isAny(type)) return resolveAny();
             return { isUnresolvedType: true };
         }
@@ -148,8 +148,8 @@ export default function transformer(program: ts.Program, pluginConfig: PluginCon
         }
 
         function resolveUnionOrIntersection(type: ts.Type, attr: ts.PropertyDeclaration | ts.PropertySignature, sourceFile: ts.SourceFile, typeNode?: ts.TypeNode) {
-            const isUnion = utils.isUnion(type);
-            const isIntersection = utils.isIntersection(type);
+            const isUnion = utils.isUnion(type, typeNode);
+            const isIntersection = utils.isIntersection(type, typeNode);
 
             let types: ts.Type[] | ts.NodeArray<ts.TypeNode> = (type as ts.UnionOrIntersectionType).types;
             if (typeNode && (ts.isUnionTypeNode(typeNode) || ts.isIntersectionTypeNode(typeNode))) {
