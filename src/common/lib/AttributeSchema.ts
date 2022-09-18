@@ -279,10 +279,10 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      *
      * @param parameters Parameters of this attribute
      */
-    public updateParameters(parameters: AttrOptionsPartialMetadataJson<T>) {
+    public updateParameters(parameters: Partial<AttrOptionsPartialMetadataJson<T>>) {
         merge(this.parameters, parameters);
-        this.setConstants(parameters);
-        this.buildSchema(parameters.type);
+        this.setConstants(this.parameters);
+        this.buildSchema(this.parameters.type);
     }
 
     /**
@@ -576,17 +576,21 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @returns null if no relation was found and the name corresponding to typeORMs relation names else
      */
     public async getRelationType() {
-        if (!this.isModelType()) return null;
+        if (!this.isModelType() && !(this.isArrayType() && this.isModelType((this.rawType as IArrayType).subType))) return null;
         const otherModel = await getModelClassByName(this.getTypeIdentifier() || "");
         const otherAttributeSchema = otherModel && otherModel.getAttributeSchema(this.relationColumn as SchemaNameByModelClass<typeof otherModel>);
 
         if (!this.isArrayType()) {
-            if (!this.relationColumn) return "OneToOne"; // owner is determined automatically
-            if (otherAttributeSchema && (otherAttributeSchema.isArrayType() || otherAttributeSchema.isTupleType())) return "ManyToOne"; // owner not needed
-        } else if (this.relationColumn) {
-            if (otherAttributeSchema && !otherAttributeSchema.isArrayType() && !otherAttributeSchema.isTupleType()) return "OneToMany"; // owner not needed
+            if (!otherAttributeSchema) {
+                return "OneToOne"; // Owner not needed
+            } else if (otherAttributeSchema.isArrayType()) {
+                return "ManyToOne"; // Owner not needed
+            } else if (otherAttributeSchema.relationColumn && this.relationColumn) return "OneToOne"; // Owner has to be specified
+        } else if (otherAttributeSchema) {
+            if (!otherAttributeSchema.isArrayType()) return "OneToMany"; // owner not needed
             return "ManyToMany"; // owner has to be specified
         }
+        console.warn(`Could not determine a relation type for ${this.owner?.className}:${String(this.attributeName)}`);
         return null;
     }
 

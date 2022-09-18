@@ -261,6 +261,53 @@ describe('decorators', () => {
             expect(schema?.isUnresolvedType({ isMixed: true })).to.be.true;
         });
 
+        it(`should be a generated column`, () => {
+            const schema = TestModel.getAttributeSchema("aGeneratedColumn");
+            expect(Boolean(schema?.isGenerated)).to.be.true;
+        });
+
+        it(`should be a one to one relation`, async () => {
+            const schema = TestModel.getAttributeSchema("oneToOne");
+            expect(await schema?.getRelationType()).to.be.equal("OneToOne");
+        });
+
+        it(`should be a bidirectional one to one relation`, async () => {
+            let schema = TestModel.getAttributeSchema("bidirectionalOneToOne");
+            expect(await schema?.getRelationType()).to.be.equal("OneToOne");
+
+            schema = TestMyTestModel.getAttributeSchema("bidirectionalOneToOne");
+            expect(await schema?.getRelationType()).to.be.equal("OneToOne");
+        });
+
+        it(`should be a many to one relation`, async () => {
+            const schema = TestModel.getAttributeSchema("manyToOne");
+            expect(await schema?.getRelationType()).to.be.equal("ManyToOne");
+        });
+
+        it(`should be a one to many relation`, async () => {
+            const schema = TestMyTestModel.getAttributeSchema("oneToMany");
+            expect(await schema?.getRelationType()).to.be.equal("OneToMany");
+        });
+
+        it(`should be a many to many relation`, async () => {
+            let schema = TestModel.getAttributeSchema("manyToMany");
+            expect(await schema?.getRelationType()).to.be.equal("ManyToMany");
+
+            schema = TestMyTestModel.getAttributeSchema("manyToMany");
+            expect(await schema?.getRelationType()).to.be.equal("ManyToMany");
+        });
+
+        it(`should be no relation`, async () => {
+            const schema = TestModel.getAttributeSchema("noRelation");
+            expect(await schema?.getRelationType()).to.be.null;
+        });
+
+        it(`should have updated the parameters`, () => {
+            const schema = TestModel.getAttributeSchema("noRelation");
+            schema?.updateParameters({ isLazy: true });
+            expect(schema?.isLazy).to.be.true;
+        });
+
         it(`should validate correctly`, () => {
             const modelSchema = TestModel.getSchema();
 
@@ -400,7 +447,7 @@ describe('decorators', () => {
                         randGen.generateNumber(),
                         randGen.generateBoolean(),
                         randGen.generateObject(),
-                        randGen.generateArray({ valTypes: ["number", "boolean", "object", "array"] })
+                        randGen.generateArray({ valTypes: ["number", "boolean", "object", "array"], minLength: 1 })
                     ]
                 },
                 aNumber: {

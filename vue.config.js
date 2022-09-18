@@ -3,6 +3,7 @@ const arp = require('app-root-path');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin').TsconfigPathsPlugin;
 const webpack = require("webpack");
 
+console.info("Building with environment", process.env.NODE_ENV);
 let TSCONFIG_PATH = path.resolve(arp.path, "src", "client", "tsconfig.json");
 if (process.env.NODE_ENV === "test") TSCONFIG_PATH = path.resolve(arp.path, "tests", "unit", "client", "tsconfig.json");
 
@@ -43,10 +44,18 @@ module.exports = {
         config.experiments = { asyncWebAssembly: true, topLevelAwait: true };
 
         // Aliasing for templates
-        config.resolve.alias.client = path.resolve(arp.path, "src", "client");
-        config.resolve.alias["~client"] = path.resolve(arp.path, "src", "client");
-        config.resolve.alias["~common"] = path.resolve(arp.path, "src", "common");
-        config.resolve.alias["~env"] = path.resolve(arp.path, "src", "client");
+        config.resolve.alias.client = [path.resolve(arp.path, "src", "client")];
+        config.resolve.alias["~client"] = [path.resolve(arp.path, "src", "client")];
+        config.resolve.alias["~common"] = [path.resolve(arp.path, "src", "common")];
+        config.resolve.alias["~env"] = [path.resolve(arp.path, "src", "client")];
+
+        if (process.env.NODE_ENV === "test") {
+            const clientPath = path.resolve(arp.path, "tests", "unit", "client");
+            config.resolve.alias.client.push(clientPath);
+            config.resolve.alias["~env"].push(clientPath);
+            config.resolve.alias["~client"].push(clientPath);
+            config.resolve.alias["~common"].push(path.resolve(arp.path, "tests", "unit", "common"));
+        }
     },
     chainWebpack: (config) => {
 

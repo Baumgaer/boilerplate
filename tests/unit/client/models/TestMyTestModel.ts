@@ -1,6 +1,16 @@
 import BaseModel from "~client/lib/BaseModel";
-import { Model } from "~client/utils/decorators";
+import { Model, Attr } from "~client/utils/decorators";
+import type TestModel from "~client/models/TestModel";
 
-// @ts-expect-error 001
-@Model({ metadataJson: JSON.stringify({ className: "MyTestModel", collectionName: "MyTestModels", isAbstract: false }) })
-export default class TestMyTestModel extends BaseModel { }
+@Model()
+export default class TestMyTestModel extends BaseModel {
+
+    @Attr({ relationColumn: "bidirectionalOneToOne" })
+    public bidirectionalOneToOne?: TestModel;
+
+    @Attr({ relationColumn: "manyToOne" })
+    public oneToMany?: TestModel[];
+
+    @Attr({ relationColumn: "manyToMany" })
+    public manyToMany?: TestModel[];
+}

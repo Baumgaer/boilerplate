@@ -4,15 +4,15 @@
         "baseUrl": ".",
         "paths": {
             "~client/*": [
-                "./../../../src/client/*",
-                "./*"
+                "./*",
+                "./../../../src/client/*"
             ],
             "~common/*": [
                 "./../../../src/common/*"
             ],
             "~env/*": [
-                "./../../../src/client/*",
-                "./*"
+                "./*",
+                "./../../../src/client/*"
             ],
             "~test/*": [
                 "./*"

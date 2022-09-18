@@ -1,11 +1,29 @@
+import TestAbstractModel from "~client/models/TestAbstractModel";
 import { Model, Attr } from "~client/utils/decorators";
-import TestAbstractModel from "~test/models/TestAbstractModel";
 import type { ITestMyInterface, ITestMySecondInterface } from "~client/@types/ITestMyInterface";
-import type TestMyTestModel from "~test/models/TestMyTestModel";
-import type TestMyTesterModel from "~test/models/TestMyTesterModel";
+import type TestMyTestModel from "~client/models/TestMyTestModel";
+import type TestMyTesterModel from "~client/models/TestMyTesterModel";
 
 @Model()
 export default class TestModel extends TestAbstractModel {
+
+    @Attr()
+    public oneToOne?: TestMyTestModel;
+
+    @Attr({ relationColumn: "bidirectionalOneToOne", isRelationOwner: true })
+    public bidirectionalOneToOne?: TestMyTestModel;
+
+    @Attr({ relationColumn: "oneToMany" })
+    public manyToOne?: TestMyTestModel;
+
+    @Attr({ relationColumn: "manyToMany", isRelationOwner: true })
+    public manyToMany?: TestMyTestModel[];
+
+    @Attr()
+    public noRelation?: TestMyTestModel[];
+
+    @Attr({ isGenerated: "uuid" })
+    public aGeneratedColumn?: UUID;
 
     @Attr()
     public aBoolean: boolean = true;

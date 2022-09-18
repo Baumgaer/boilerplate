@@ -44,6 +44,7 @@ export function getModelClassByName(name: string) {
             });
         });
     } catch (error) {
+        console.error(String(error));
         return null;
     }
 }
