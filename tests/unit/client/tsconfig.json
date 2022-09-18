@@ -29,14 +29,21 @@
     },
     "include": [
         "../../../src/client/**/*.ts",
+        "../../../src/client/**/*.d.ts",
         "../../../src/client/**/*.tsx",
         "../../../src/client/**/*.vue",
         "../../../src/common/**/*.ts",
+        "../../../src/common/**/*.d.ts",
         "../../../src/common/**/*.tsx",
         "./**/*.ts",
+        "./**/*.d.ts",
         "./**/*.tsx",
         "./**/*.vue",
         "./../common/**/*.ts",
+        "./../common/**/*.d.ts",
         "./../common/**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules"
     ]
 }

@@ -2,100 +2,15 @@ import { expect } from "chai";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
 import { v4 as uuIdV4 } from "uuid";
-import { ZodObject, ZodType, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodArray } from "zod";
-import AttributeSchema from "~client/lib/AttributeSchema";
-import BaseModel from "~client/lib/BaseModel";
-import ModelSchema from "~client/lib/ModelSchema";
-import TestModel from "~client/models/TestModel";
-import TestMyTestModel from "~client/models/TestMyTestModel";
-import TestMyTesterModel from "~client/models/TestMyTesterModel";
-import { hasOwnProperty } from "~client/utils/utils";
+import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodArray } from "zod";
+import TestModel from "~env/models/TestModel";
+import TestMyTestModel from "~env/models/TestMyTestModel";
+import TestMyTesterModel from "~env/models/TestMyTesterModel";
+import { hasOwnProperty } from "~env/utils/utils";
 import type { ZodRawShape, ZodUndefined } from "zod";
 
-const attributesToExpect = ["aBoolean", "aString", "aNumber", "aDate"] as const;
-const atLeastAttributesText = `At least: "${attributesToExpect.join("\", \"")}"`;
-
-describe('decorators', () => {
-
-    before("register models", async () => {
-        const MODEL_NAME_TO_MODEL_MAP = { BaseModel, TestModel, TestMyTestModel, TestMyTesterModel };
-        if (global.MODEL_NAME_TO_MODEL_MAP) {
-            Object.assign(global.MODEL_NAME_TO_MODEL_MAP, MODEL_NAME_TO_MODEL_MAP);
-        } else global.MODEL_NAME_TO_MODEL_MAP = MODEL_NAME_TO_MODEL_MAP;
-        const modelClasses = Object.values(MODEL_NAME_TO_MODEL_MAP);
-        await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
-    });
-
-    describe('Model', () => {
-        it('should give a model a className', () => {
-            expect(TestModel.className).to.be.equal("TestModel");
-            const testModel = new TestModel();
-            expect(testModel.className).to.be.equal("TestModel");
-        });
-
-        it('should give a model a collectionName', () => {
-            expect(TestModel.collectionName).to.be.equal("testModels");
-            const testModel = new TestModel();
-            expect(testModel.collectionName).to.be.equal("testModels");
-        });
-
-        it('should have generated a schema', () => {
-            const model = new TestModel();
-
-            let schema = TestModel.getSchema();
-            expect(schema).to.be.instanceOf(ModelSchema);
-
-            schema = model.getSchema();
-            expect(schema).to.be.instanceOf(ModelSchema);
-        });
-
-        it('should gave the schema the decorated class as owner', () => {
-            const schema = TestModel.getSchema();
-            expect(schema?.owner).to.be.equal(TestModel);
-        });
-
-        it('should reflect the passed options in the schema', () => {
-            const schema = TestModel.getSchema();
-            expect(schema?.modelName).to.be.equal("TestModel");
-            expect(schema?.collectionName).to.be.equal("testModels");
-            expect(schema?.isAbstract).to.be.equal(false);
-
-            expect(schema?.options.className).to.be.equal("TestModel");
-            expect(schema?.options.collectionName).to.be.equal("testModels");
-            expect(schema?.options.isAbstract).to.be.equal(false);
-            expect(schema?.options.database).to.be.equal(undefined);
-            expect(schema?.options.engine).to.be.equal(undefined);
-            expect(schema?.options.indexes).to.be.equal(undefined);
-            expect(schema?.options.orderBy).to.be.equal(undefined);
-            expect(schema?.options.schema).to.be.equal(undefined);
-            expect(schema?.options.withoutRowid).to.be.equal(undefined);
-        });
-
-        it(`should have collected the attribute schemas. ${atLeastAttributesText}`, () => {
-            const schema = TestModel.getSchema() as unknown as ModelSchema<typeof TestModel>;
-            for (const expectedAttributeName of attributesToExpect) {
-                // @ts-expect-error 002
-                const attributeSchema = schema?.getAttributeSchema(expectedAttributeName);
-                expect(attributeSchema).to.be.instanceOf(AttributeSchema);
-            }
-        });
-
-        it(`should have have built the schema type containing defined Attributes. ${atLeastAttributesText}`, () => {
-            const schema = TestModel.getSchema() as unknown as ModelSchema<typeof TestModel>;
-
-            const schemaType = schema.getSchemaType();
-            expect(schemaType).to.be.instanceOf(ZodLazy);
-
-            const zodType = schemaType._def.getter();
-            expect(zodType).to.be.instanceOf(ZodObject);
-
-            for (const expectedAttributeName of attributesToExpect) {
-                expect(zodType.shape[expectedAttributeName]).to.be.instanceOf(ZodType);
-            }
-        });
-    });
-
-    describe('Attr', () => {
+export default function () {
+    describe('AttributeSchema', () => {
         it(`has a primary id column`, () => {
             const schema = TestModel.getAttributeSchema("id");
             expect(schema).not.to.be.undefined.and.not.to.be.null;
@@ -496,5 +411,4 @@ describe('decorators', () => {
             }
         });
     });
-
-});
+}

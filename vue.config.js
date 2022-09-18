@@ -51,10 +51,10 @@ module.exports = {
 
         if (process.env.NODE_ENV === "test") {
             const clientPath = path.resolve(arp.path, "tests", "unit", "client");
-            config.resolve.alias.client.push(clientPath);
-            config.resolve.alias["~env"].push(clientPath);
-            config.resolve.alias["~client"].push(clientPath);
-            config.resolve.alias["~common"].push(path.resolve(arp.path, "tests", "unit", "common"));
+            config.resolve.alias.client.unshift(clientPath);
+            config.resolve.alias["~env"].unshift(clientPath);
+            config.resolve.alias["~client"].unshift(clientPath);
+            config.resolve.alias["~common"].unshift(path.resolve(arp.path, "tests", "unit", "common"));
         }
     },
     chainWebpack: (config) => {

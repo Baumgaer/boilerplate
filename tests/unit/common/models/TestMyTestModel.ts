@@ -1,7 +1,14 @@
 import BaseModel from "~env/lib/BaseModel";
-import { Model } from "~env/utils/decorators";
+import { Attr } from "~env/utils/decorators";
+import type TestModel from "~env/models/TestModel";
 
-@Model()
-export default abstract class TestMyTestModel extends BaseModel {
+export default class TestMyTestModel extends BaseModel {
+    @Attr({ relationColumn: "bidirectionalOneToOne" })
+    public bidirectionalOneToOne?: TestModel;
 
+    @Attr({ relationColumn: "manyToOne" })
+    public oneToMany?: TestModel[];
+
+    @Attr({ relationColumn: "manyToMany" })
+    public manyToMany?: TestModel[];
 }

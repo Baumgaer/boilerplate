@@ -29,12 +29,16 @@
     },
     "include": [
         "../../../src/server/**/*.ts",
+        "../../../src/server/**/*.d.ts",
         "../../../src/server/**/*.tsx",
         "../../../src/common/**/*.ts",
+        "../../../src/common/**/*.d.ts",
         "../../../src/common/**/*.tsx",
         "./**/*.ts",
+        "./**/*.d.ts",
         "./**/*.tsx",
         "./../common/**/*.ts",
+        "./../common/**/*.d.ts",
         "./../common/**/*.tsx"
     ]
 }
