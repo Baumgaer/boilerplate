@@ -1,9 +1,9 @@
-import BaseModel from "~client/lib/BaseModel";
 import { Model, Attr } from "~client/utils/decorators";
+import CommonTestMyTestModel from "~common/models/TestMyTestModel";
 import type TestModel from "~client/models/TestModel";
 
 @Model()
-export default class TestMyTestModel extends BaseModel {
+export default class TestMyTestModel extends CommonTestMyTestModel {
 
     @Attr({ relationColumn: "bidirectionalOneToOne" })
     public bidirectionalOneToOne?: TestModel;

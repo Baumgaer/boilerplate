@@ -12,12 +12,17 @@
             "~env/*": [
                 "./*"
             ]
-        }
+        },
+        "plugins": [
+            {
+                "transform": "./dev/transformers/TypeReflectionTransformer.ts",
+                "environment": "server"
+            }
+        ]
     },
     "include": [
         "./**/*.ts",
         "./**/*.tsx",
-        "./**/*.vue",
         "./../common/**/*.ts",
         "./../common/**/*.tsx"
     ]

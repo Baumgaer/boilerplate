@@ -1,18 +1,19 @@
 {
-    "extends": "./../../../src/client/tsconfig.json",
+    "extends": "./../../../src/server/tsconfig.json",
     "compilerOptions": {
         "baseUrl": ".",
         "paths": {
             "~server/*": [
-                "./../../../src/server/*",
-                "./*"
+                "./*",
+                "./../../../src/server/*"
             ],
             "~common/*": [
-                "./../../../src/common/*"
+                "./../../../src/common/*",
+                "./../common/*"
             ],
             "~env/*": [
-                "./../../../src/server/*",
-                "./*"
+                "./*",
+                "./../../../src/server/*"
             ],
             "~test/*": [
                 "./*"
@@ -29,12 +30,10 @@
     "include": [
         "../../../src/server/**/*.ts",
         "../../../src/server/**/*.tsx",
-        "../../../src/server/**/*.vue",
         "../../../src/common/**/*.ts",
         "../../../src/common/**/*.tsx",
         "./**/*.ts",
         "./**/*.tsx",
-        "./**/*.vue",
         "./../common/**/*.ts",
         "./../common/**/*.tsx"
     ]

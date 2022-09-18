@@ -1,11 +1,11 @@
-import TestAbstractModel from "~client/models/TestAbstractModel";
 import { Model, Attr } from "~client/utils/decorators";
+import CommonTestModel from "~common/models/TestModel";
 import type { ITestMyInterface, ITestMySecondInterface } from "~client/@types/ITestMyInterface";
 import type TestMyTestModel from "~client/models/TestMyTestModel";
 import type TestMyTesterModel from "~client/models/TestMyTesterModel";
 
 @Model()
-export default class TestModel extends TestAbstractModel {
+export default class TestModel extends CommonTestModel {
 
     @Attr()
     public oneToOne?: TestMyTestModel;

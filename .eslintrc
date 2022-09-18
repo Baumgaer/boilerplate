@@ -182,8 +182,11 @@
                 // use an array
                 "project": [
                     "src/client/tsconfig.json",
+                    "src/common/tsconfig.json",
                     "src/server/tsconfig.json",
                     "tests/unit/client/tsconfig.json",
+                    "tests/unit/common/tsconfig.json",
+                    "tests/unit/server/tsconfig.json",
                     "dev/eslint-plugin-boilerplate/tsconfig.json"
                 ]
             }

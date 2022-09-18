@@ -216,6 +216,7 @@ export function isValidSourceFile(sourceFile: ts.SourceFile): boolean {
         "/src/common/lib/BaseModel.ts",
         "/src/server/lib/BaseModel.ts",
         "/tests/unit/client/models",
+        "/tests/unit/common/models",
         "/tests/unit/server/models"
     ];
     return validSourceFiles.some((path) => sourceFile.fileName.includes(path));

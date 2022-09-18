@@ -1,6 +1,5 @@
-import BaseModel from "~client/lib/BaseModel";
 import { Model } from "~client/utils/decorators";
+import CommonTestMyTesterModel from "~common/models/TestMyTesterModel";
 
-// @ts-expect-error 001
-@Model({ metadataJson: JSON.stringify({ className: "MyTesterModel", collectionName: "MyTesterModels", isAbstract: false }) })
-export default class TestMyTesterModel extends BaseModel { }
+@Model()
+export default class TestMyTesterModel extends CommonTestMyTesterModel { }
