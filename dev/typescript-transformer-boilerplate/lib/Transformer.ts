@@ -79,7 +79,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                 if (isClassDeclaration(usedNode)) nodeType = "Model";
 
                 if (nodeType) {
-                    console.info(`processing ${nodeType} ${usedNode.name?.getText() || "unknown"}`);
+                    console.info(`processing ${nodeType} ${(usedNode as ValidDeclarations).name?.getText() || "unknown"}`);
                 } else nodeType = fallbackType;
 
                 const metadata: Record<string, any> = {};
