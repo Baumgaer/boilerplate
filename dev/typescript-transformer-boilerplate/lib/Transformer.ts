@@ -73,10 +73,14 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
         function processCallExpression(program: ts.Program, sourceFile: ts.SourceFile, node: ts.CallExpression) {
             if (!isDecoratorNode(node.parent) || !isValidDeclaration(node.parent?.parent)) return node;
 
-            const next = (usedNode: ValidDeclarations) => {
-                let nodeType = "Attr";
-                if (ts.isClassDeclaration(usedNode)) nodeType = "Model";
-                console.info(`processing ${nodeType} ${usedNode.name?.getText() || "unknown"}`);
+            const next = (usedNode: ts.Node, fallbackType = "Attr") => {
+                let nodeType = "";
+                if (isPropertyDeclaration(usedNode)) nodeType = "Attr";
+                if (isClassDeclaration(usedNode)) nodeType = "Model";
+
+                if (nodeType) {
+                    console.info(`processing ${nodeType} ${usedNode.name?.getText() || "unknown"}`);
+                } else nodeType = fallbackType;
 
                 const metadata: Record<string, any> = {};
                 for (const rule of rules) {

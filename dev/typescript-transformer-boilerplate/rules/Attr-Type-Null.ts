@@ -1,5 +1,5 @@
 import { isNullType } from "../../utils/Type";
-import { getTypeFromTypeNode } from "../../utils/utils";
+import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 
 export const AttrTypeNull = createRule({
@@ -7,7 +7,7 @@ export const AttrTypeNull = createRule({
     type: "Attr",
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
-        return isNullType(getTypeFromTypeNode(checker, node.type));
+        return isNullType(getTypeFromNode(checker, node));
     },
     emitType() {
         return {

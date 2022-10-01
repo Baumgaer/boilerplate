@@ -1,5 +1,5 @@
 import { isUndefinedType } from "../../utils/Type";
-import { getTypeFromTypeNode } from "../../utils/utils";
+import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 
 export const AttrTypeUndefined = createRule({
@@ -7,7 +7,7 @@ export const AttrTypeUndefined = createRule({
     type: "Attr",
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
-        return isUndefinedType(getTypeFromTypeNode(checker, node.type));
+        return isUndefinedType(getTypeFromNode(checker, node));
     },
     emitType() {
         return {

@@ -2,7 +2,7 @@ import * as path from "path";
 import minimatch from "minimatch";
 import { isTypeReferenceNode, isNewExpression, isIdentifierNode } from "../../utils/SyntaxKind";
 import { isObjectType, isAnyType, isClassType, isInterfaceType } from "../../utils/Type";
-import { getTypeFromPropertyDeclaration, resolveTypeReferenceTo } from "../../utils/utils";
+import { getTypeFromNode, resolveTypeReferenceTo } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
@@ -13,7 +13,7 @@ export const AttrTypeModel = createRule({
         if (!isTypeReferenceNode(node.type)) return false;
 
         const checker = program.getTypeChecker();
-        const type = getTypeFromPropertyDeclaration(checker, node);
+        const type = getTypeFromNode(checker, node);
         if (!isObjectType(type) && !isAnyType(type) && !isClassType(type) || isInterfaceType(type)) return false;
 
         let nodeToCheck: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined;

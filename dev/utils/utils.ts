@@ -19,7 +19,9 @@ import {
     isDefaultKeyword,
     isTypeReferenceNode,
     isNewExpression,
-    isNamedExportsNode
+    isNamedExportsNode,
+    isTypeNode,
+    isPropertyDeclaration
 } from "./SyntaxKind";
 import type { TypeReturn, TSNodeNames } from "../@types/Utils";
 import type * as ts from "typescript";
@@ -34,10 +36,13 @@ export function getTypeFromExpression(checker: ts.TypeChecker, node?: ts.Express
     return checker.getTypeAtLocation(node);
 }
 
-export function getTypeFromPropertyDeclaration(checker: ts.TypeChecker, node: ts.PropertyDeclaration): TypeReturn {
-    if (node.type) return getTypeFromTypeNode(checker, node.type);
-    if (node.initializer) return getTypeFromExpression(checker, node.initializer);
-    return checker.getTypeAtLocation(node.name);
+export function getTypeFromNode(checker: ts.TypeChecker, node: ts.Node): TypeReturn {
+    if (isPropertyDeclaration(node)) {
+        if (node.type) return getTypeFromTypeNode(checker, node.type);
+        if (node.initializer) return getTypeFromExpression(checker, node.initializer);
+    }
+    if (isTypeNode(node)) return checker.getTypeFromTypeNode(node);
+    return checker.getTypeAtLocation(node);
 }
 
 export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Program, node: ts.TypeReferenceNode | ts.NewExpression | ts.Identifier, typeDeclarationName: T): ts.Statement | undefined {

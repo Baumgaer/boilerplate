@@ -7,7 +7,7 @@ type DecoratorNames = "Model" | "Attr";
 type TsNode<T extends DecoratorNames> = T extends "Attr" ? ts.PropertyDeclaration : ts.ClassDeclaration;
 type NextFunction = (node: ts.PropertyDeclaration) => IAttrMetadata;
 
-type BaseParams<T extends DecoratorNames> = [program: ts.Program, sourceFile: ts.SourceFile, node: TsNode<T>];
+type BaseParams<T extends DecoratorNames> = [program: ts.Program, sourceFile: ts.SourceFile, node: ts.Node];
 
 export interface IOptions<T extends DecoratorNames> {
     name: string;

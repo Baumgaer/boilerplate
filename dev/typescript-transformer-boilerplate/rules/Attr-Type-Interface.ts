@@ -1,6 +1,6 @@
-import { isTypeReferenceNode, isNewExpression, isIdentifierNode } from "../../utils/SyntaxKind";
+import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration } from "../../utils/SyntaxKind";
 import { isObjectType, isAnyType, isInterfaceType } from "../../utils/Type";
-import { getTypeFromPropertyDeclaration, resolveTypeReferenceTo } from "../../utils/utils";
+import { getTypeFromNode, resolveTypeReferenceTo } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
@@ -8,19 +8,22 @@ export const AttrTypeInterface = createRule({
     name: "Attr-Type-Interface",
     type: "Attr",
     detect(program, sourceFile, node) {
-        if (!isTypeReferenceNode(node.type)) return false;
+        let nodeToCheck: ts.Node | undefined = node;
+        if (isPropertyDeclaration(node)) nodeToCheck = node.type;
 
         const checker = program.getTypeChecker();
-        const type = getTypeFromPropertyDeclaration(checker, node);
+        const type = getTypeFromNode(checker, node);
         if (!isObjectType(type) && !isAnyType(type) && !isInterfaceType(type)) return false;
 
-        let nodeToCheck: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined;
-        if (isTypeReferenceNode(node.type)) {
-            nodeToCheck = node.type;
-        } else if (isNewExpression(node.initializer) || isIdentifierNode(node.initializer)) nodeToCheck = node.initializer;
-        if (!nodeToCheck) return false;
+        let nodeToResolve: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined;
+        if (isTypeReferenceNode(nodeToCheck)) {
+            nodeToResolve = nodeToCheck;
+        } else if (isPropertyDeclaration(nodeToCheck) && (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer))) {
+            nodeToResolve = nodeToCheck.initializer;
+        }
+        if (!nodeToResolve) return false;
 
-        const resolvedNode = resolveTypeReferenceTo(program, nodeToCheck, "InterfaceDeclaration");
+        const resolvedNode = resolveTypeReferenceTo(program, nodeToResolve, "InterfaceDeclaration");
         if (!resolvedNode) return false;
 
         const filePath = resolvedNode.getSourceFile()?.fileName;
@@ -29,9 +32,15 @@ export const AttrTypeInterface = createRule({
         return true;
     },
     emitType(program, sourceFile, node) {
-        let nodeToCheck: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined = node.type as ts.TypeReferenceNode;
-        if (!nodeToCheck && isNewExpression(node.initializer) || isIdentifierNode(node.initializer)) nodeToCheck = node.initializer;
-        const resolvedNode = resolveTypeReferenceTo(program, nodeToCheck, "InterfaceDeclaration") as ts.InterfaceDeclaration;
+        let nodeToCheck: ts.Node | undefined = node;
+        if (isPropertyDeclaration(node)) nodeToCheck = node.type;
+
+        let nodeToResolve: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined = nodeToCheck as ts.TypeReferenceNode;
+        if (!nodeToResolve && isPropertyDeclaration(nodeToCheck) && (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer))) {
+            nodeToResolve = nodeToCheck.initializer;
+        }
+
+        const resolvedNode = resolveTypeReferenceTo(program, nodeToResolve, "InterfaceDeclaration") as ts.InterfaceDeclaration;
 
         return {
             identifier: resolvedNode.name?.getText(resolvedNode.getSourceFile()),

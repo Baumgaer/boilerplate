@@ -1,5 +1,5 @@
 import { isBooleanType, isLiteralType } from "../../utils/Type";
-import { getTypeFromTypeNode } from "../../utils/utils";
+import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 
 export const AttrTypeBoolean = createRule({
@@ -7,7 +7,7 @@ export const AttrTypeBoolean = createRule({
     type: "Attr",
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
-        const type = getTypeFromTypeNode(checker, node.type);
+        const type = getTypeFromNode(checker, node);
         return isBooleanType(type) && !isLiteralType(type);
     },
     emitType() {

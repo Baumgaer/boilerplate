@@ -45,6 +45,10 @@ export function isNamedExportsNode(node?: ts.Node): node is ts.NamedExports {
     return isNode("NamedExports", node);
 }
 
+export function isExpressionStatement(node?: ts.Node): node is ts.ExpressionStatement {
+    return isNode("ExpressionStatement", node);
+}
+
 export function isNewExpression(node?: ts.Node): node is ts.NewExpression {
     return isNode("NewExpression", node);
 }
@@ -67,6 +71,10 @@ export function isPropertyDeclaration(node?: ts.Node): node is ts.PropertyDeclar
 
 export function isClassDeclaration(node?: ts.Node): node is ts.ClassDeclaration {
     return isNode("ClassDeclaration", node);
+}
+
+export function isInterfaceDeclaration(node?: ts.Node): node is ts.InterfaceDeclaration {
+    return isNode("InterfaceDeclaration", node);
 }
 
 export function isImportDeclaration(node?: ts.Node): node is ts.ImportDeclaration {

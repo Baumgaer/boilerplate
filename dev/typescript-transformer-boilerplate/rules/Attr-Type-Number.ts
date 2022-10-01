@@ -1,5 +1,5 @@
 import { isNumberType, isLiteralType } from "../../utils/Type";
-import { getTypeFromTypeNode } from "../../utils/utils";
+import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 
 export const AttrTypeNumber = createRule({
@@ -7,7 +7,7 @@ export const AttrTypeNumber = createRule({
     type: "Attr",
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
-        const type = getTypeFromTypeNode(checker, node.type);
+        const type = getTypeFromNode(checker, node);
         return isNumberType(type) && !isLiteralType(type);
     },
     emitType() {
