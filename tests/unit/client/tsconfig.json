@@ -21,9 +21,9 @@
         },
         "plugins": [
             {
-                "transform": "./dev/transformers/TypeReflectionTransformer.ts",
-                "environment": "test",
-                "subEnvironment": "client"
+                "transform": "./dev/typescript-transformer-boilerplate/index.ts",
+                "tsConfigPath": "./tests/unit/client/tsconfig.json",
+                "environment": "client"
             }
         ]
     },

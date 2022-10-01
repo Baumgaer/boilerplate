@@ -56,4 +56,19 @@ export default class TestModel extends TestAbstractModel {
 
     @Attr()
     protected aNumber!: number;
+
+    @Attr()
+    protected aNull?: null;
+
+    @Attr()
+    protected anUndefined?: undefined;
+
+    @Attr()
+    protected aStringLiteral?: "test";
+
+    @Attr()
+    protected aNumberLiteral?: 42;
+
+    @Attr()
+    protected aBooleanLiteral?: true;
 }

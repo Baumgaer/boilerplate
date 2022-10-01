@@ -55,7 +55,6 @@ export default function () {
 
         it(`should have collected the attribute schemas. ${atLeastAttributesText}`, () => {
             const schema = TestModel.getSchema() as unknown as ModelSchema<typeof TestModel>;
-            console.log("DAS SOLLTE DA SEIN:", TestModel.getAttributeSchema("aBoolean"));
             for (const expectedAttributeName of attributesToExpect) {
                 // @ts-expect-error 002
                 const attributeSchema = schema?.getAttributeSchema(expectedAttributeName);

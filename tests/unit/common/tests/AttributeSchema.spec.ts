@@ -2,7 +2,7 @@ import { expect } from "chai";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
 import { v4 as uuIdV4 } from "uuid";
-import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodArray } from "zod";
+import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodArray, ZodNull } from "zod";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 import TestMyTesterModel from "~env/models/TestMyTesterModel";
@@ -51,6 +51,14 @@ export default function () {
         it(`has an immutable "aString" attribute`, () => {
             const stringSchema = TestModel.getAttributeSchema("aString");
             expect(stringSchema).to.have.property("isImmutable", true);
+        });
+
+        it(`should have generated an optional null type`, () => {
+            // @ts-expect-error 002
+            const schema = TestModel.getAttributeSchema("aNull");
+            const type = schema?.getSchemaType() as ZodOptional<ZodNull>;
+            expect(type).to.be.instanceOf(ZodOptional);
+            expect(type._def.innerType).to.be.instanceOf(ZodNull);
         });
 
         it(`should have generated an optional boolean type`, () => {
