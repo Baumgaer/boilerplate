@@ -1,3 +1,4 @@
+import { merge } from "lodash";
 import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration } from "../../utils/SyntaxKind";
 import { isObjectType, isAnyType, isInterfaceType } from "../../utils/Type";
 import { getTypeFromNode, resolveTypeReferenceTo } from "../../utils/utils";
@@ -31,7 +32,7 @@ export const AttrTypeInterface = createRule({
 
         return true;
     },
-    emitType(program, sourceFile, node) {
+    emitType(program, sourceFile, node, next) {
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node)) nodeToCheck = node.type;
 
@@ -41,11 +42,16 @@ export const AttrTypeInterface = createRule({
         }
 
         const resolvedNode = resolveTypeReferenceTo(program, nodeToResolve, "InterfaceDeclaration") as ts.InterfaceDeclaration;
+        const members = resolvedNode.members.reduce((previous, member) => {
+            const result = next(member);
+            return merge(previous, { [result.name]: result });
+        }, {});
 
         return {
             identifier: resolvedNode.name?.getText(resolvedNode.getSourceFile()),
             isObjectType: true,
-            isInterface: true
+            isInterface: true,
+            members
         };
     }
 });

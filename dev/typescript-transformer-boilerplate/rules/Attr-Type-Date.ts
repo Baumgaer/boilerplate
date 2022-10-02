@@ -1,4 +1,4 @@
-import { isDateTypeNode, isPropertyDeclaration } from "../../utils/SyntaxKind";
+import { isDateTypeNode, isPropertyDeclaration, isPropertySignature } from "../../utils/SyntaxKind";
 import { isObjectType } from "../../utils/Type";
 import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
@@ -12,7 +12,7 @@ export const AttrTypeDate = createRule({
         const type = getTypeFromNode(checker, node);
 
         let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node)) nodeToCheck = node.type;
+        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
         return isObjectType(type) && isDateTypeNode(checker, nodeToCheck);
     },
     emitType() {

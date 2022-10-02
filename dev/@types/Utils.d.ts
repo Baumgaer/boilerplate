@@ -4,12 +4,14 @@ export type TSNodeNames =
     "Decorator" | "Identifier" | "NamedImports" | "NamedExports" | "NamespaceImport" |
 
     "TypeNode" | "UnionTypeNode" | "IntersectionTypeNode" | "TypeReferenceNode" |
-    "ArrayTypeNode" | "ParenthesizedTypeNode" |
+    "ArrayTypeNode" | "TupleTypeNode" | "ParenthesizedTypeNode" | "OptionalTypeNode" |
 
     "ExpressionStatement" | "NewExpression" | "ArrayLiteralExpression" |
     "ObjectLiteralExpression" | "ParenthesizedExpression" |
 
     "PropertyDeclaration" | "ClassDeclaration" | "InterfaceDeclaration" |
-    "ImportDeclaration" | "ExportDeclaration";
+    "ImportDeclaration" | "ExportDeclaration" |
+
+    "PropertySignature";
 
 export type TypeReturn = ts.Type | undefined;

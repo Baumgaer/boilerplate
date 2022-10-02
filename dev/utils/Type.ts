@@ -59,7 +59,7 @@ export function isInterfaceType(type?: ts.Type): type is ts.InterfaceType {
 
 export function isClassType(type?: ts.Type) {
     if (!isObjectType(type)) return false;
-    return Boolean(type && (type.objectFlags & ts.ObjectFlags.Class) === ts.ObjectFlags.Class);
+    return Boolean(type && ((type.objectFlags & ts.ObjectFlags.Class) === ts.ObjectFlags.Class || type.isClass()));
 }
 
 export function isModelType(type?: ts.Type) {
@@ -78,15 +78,15 @@ export function isReferenceType(type?: ts.Type): type is ts.TypeReference {
 }
 
 export function isUnionOrIntersectionType(type?: ts.Type): type is ts.UnionOrIntersectionType {
-    return Boolean(type && (type.flags & ts.TypeFlags.UnionOrIntersection) === ts.TypeFlags.UnionOrIntersection);
+    return Boolean(type && ((type.flags & ts.TypeFlags.UnionOrIntersection) === ts.TypeFlags.UnionOrIntersection || type.isUnionOrIntersection()));
 }
 
 export function isUnionType(type?: ts.Type): type is ts.UnionType {
-    return Boolean(type && (type.flags & ts.TypeFlags.Union) === ts.TypeFlags.Union);
+    return Boolean(type && ((type.flags & ts.TypeFlags.Union) === ts.TypeFlags.Union || type.isUnion()));
 }
 
 export function isIntersectionType(type?: ts.Type): type is ts.IntersectionType {
-    return Boolean(type && (type.flags & ts.TypeFlags.Intersection) === ts.TypeFlags.Intersection);
+    return Boolean(type && ((type.flags & ts.TypeFlags.Intersection) === ts.TypeFlags.Intersection || type.isIntersection()));
 }
 
 export function isAnyType(type?: ts.Type) {

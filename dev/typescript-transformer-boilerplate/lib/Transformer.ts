@@ -3,7 +3,13 @@ import * as path from "path";
 import { path as arPart } from "app-root-path";
 import { merge } from "lodash";
 import * as ts from "typescript";
-import { isIdentifierNode, isDecoratorNode, isPropertyDeclaration, isClassDeclaration } from "../../utils/SyntaxKind";
+import {
+    isIdentifierNode,
+    isDecoratorNode,
+    isPropertyDeclaration,
+    isPropertySignature,
+    isClassDeclaration
+} from "../../utils/SyntaxKind";
 import { programFromConfig } from "../../utils/utils";
 import type { IConfiguration, ValidDeclarations } from "../@types/Transformer";
 import type { createRule } from "./RuleContext";
@@ -43,12 +49,6 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
             return Object.values(checkers).some((checker) => checker(node));
         }
 
-        function isDetected(program: ts.Program, sourceFile: ts.SourceFile, rule: ReturnType<typeof createRule>, node: ts.CallExpression) {
-            const usedNode = node.parent.parent as ValidDeclarations;
-            const isValidDecorator = isIdentifierNode(node.expression) && node.expression.escapedText === rule.type;
-            return isValidDecorator && rule.detect(program, sourceFile, usedNode);
-        }
-
         function buildMetadataJson(node: ts.CallExpression, metadata: Record<string, any>) {
             const metadataJson = JSON.stringify(metadata);
             const argument = <ts.ObjectLiteralExpression>node.arguments[0];
@@ -73,28 +73,44 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
         function processCallExpression(program: ts.Program, sourceFile: ts.SourceFile, node: ts.CallExpression) {
             if (!isDecoratorNode(node.parent) || !isValidDeclaration(node.parent?.parent)) return node;
 
-            const next = (usedNode: ts.Node, fallbackType = "Attr") => {
-                let nodeType = "";
-                if (isPropertyDeclaration(usedNode)) nodeType = "Attr";
-                if (isClassDeclaration(usedNode)) nodeType = "Model";
+            const next = (usedNode: ts.Node, dept = 0) => {
+                let echoType = "type";
+                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode)) {
+                    if (isPropertyDeclaration(usedNode)) {
+                        echoType = "attr";
+                    } else echoType = "prop";
+                } else if (isClassDeclaration(usedNode)) echoType = "model";
 
-                if (nodeType) {
-                    console.info(`processing ${nodeType} ${(usedNode as ValidDeclarations).name?.getText() || "unknown"}`);
-                } else nodeType = fallbackType;
+                let name = "unknown";
+                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode) || isClassDeclaration(usedNode)) {
+                    name = usedNode.name?.getText() || "unknown";
+                } else name = usedNode.getText(usedNode.getSourceFile());
 
+                console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
+
+                const matchedRules = [];
                 const metadata: Record<string, any> = {};
                 for (const rule of rules) {
+                    const isValidDecorator = isIdentifierNode(node.expression) && node.expression.escapedText === rule.type;
+                    if (!isValidDecorator) continue;
+
                     rule.config = config;
-                    if (isDetected(program, sourceFile, rule, node)) {
-                        console.info(`${rule.name} matched!`);
+                    if (rule.detect(program, sourceFile, usedNode, matchedRules)) {
+                        matchedRules.push(rule);
+                        console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
                         merge(metadata, rule.emitMetadata(program, sourceFile, usedNode) || {});
-                        merge(metadata, { type: rule.emitType(program, sourceFile, usedNode, next) });
+
+                        const type = rule.emitType(program, sourceFile, usedNode, (node: ts.Node) => next(node, dept + 2));
+                        if (echoType === "type") {
+                            merge(metadata, type);
+                        } else merge(metadata, { type });
                     }
                 }
-                console.log(JSON.stringify(metadata));
                 return metadata;
             };
+
             const metadata = next(node.parent.parent as ValidDeclarations);
+            console.log("Result:", JSON.stringify(metadata), "\n");
             if (!Object.keys(metadata).length) return node;
             const result = buildMetadataJson(node, metadata);
             return result;

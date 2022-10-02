@@ -1,5 +1,13 @@
-import { camelCase } from "lodash";
-import { isAbstractKeyword, isReadonlyKeyword, isPublicKeyword, isPromiseTypeNode } from "../../utils/SyntaxKind";
+import { camelCase, merge } from "lodash";
+import { canHaveModifiers, getModifiers } from "typescript";
+import {
+    isAbstractKeyword,
+    isReadonlyKeyword,
+    isPublicKeyword,
+    isPromiseTypeNode,
+    isPropertyDeclaration,
+    isPropertySignature
+} from "../../utils/SyntaxKind";
 import type { DecoratorNames, IOptions } from "../@types/RuleContext";
 import type { IConfiguration } from "../@types/Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
@@ -42,22 +50,26 @@ class RuleContext<T extends DecoratorNames> {
         const isAbstract = node.modifiers?.some((modifier) => isAbstractKeyword(modifier));
         const className = name;
         const collectionName = `${camelCase(name)}s`;
-        return Object.assign({ isAbstract, className, collectionName }, metadata);
+        return merge({ isAbstract, className, collectionName }, metadata);
     }
 
     private emitMetadataAttr(...params: Parameters<Required<IOptions<T>>["emitMetadata"]>) {
         const program = params[0];
         const checker = program.getTypeChecker();
-        const node = params[2] as ts.PropertyDeclaration;
+        const node = params[2] as ts.Node;
         const metadata = this.options.emitMetadata?.call(this.config, ...params) ?? {};
 
-        const name = node.name.getText();
-        const isRequired = !node.questionToken && !node.initializer || node.exclamationToken && !node.initializer;
-        const isReadOnly = node.modifiers?.some((modifier) => isReadonlyKeyword(modifier));
-        const isInternal = node.modifiers?.every((modifier) => !isPublicKeyword(modifier));
-        const isLazy = isPromiseTypeNode(checker, node.type);
+        let defaultMetadata = {};
+        if (isPropertyDeclaration(node) || isPropertySignature(node)) {
+            const name = node.name.getText();
+            const isRequired = !node.questionToken && !node.initializer || isPropertyDeclaration(node) && node.exclamationToken && !node.initializer;
+            const isReadOnly = canHaveModifiers(node) && getModifiers(node)?.some((modifier) => isReadonlyKeyword(modifier));
+            const isInternal = canHaveModifiers(node) && getModifiers(node)?.every((modifier) => !isPublicKeyword(modifier));
+            const isLazy = isPromiseTypeNode(checker, node.type);
+            defaultMetadata = { name, isInternal, isReadOnly, isRequired, isLazy };
+        }
 
-        return Object.assign({ name, isInternal, isReadOnly, isRequired, isLazy }, metadata);
+        return merge(defaultMetadata, metadata);
     }
 
     private emitTypeModel(...params: Parameters<Required<IOptions<T>>["emitType"]>) {
@@ -69,6 +81,6 @@ class RuleContext<T extends DecoratorNames> {
     }
 }
 
-export function createRule<T extends DecoratorNames>(options: IOptions<T>) {
+export function createRule<T extends DecoratorNames>(options: IOptions<T>): RuleContext<T> {
     return new RuleContext(options);
 }

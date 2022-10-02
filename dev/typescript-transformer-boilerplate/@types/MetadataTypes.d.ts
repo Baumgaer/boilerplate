@@ -52,7 +52,7 @@ export interface IModelType extends IIdentifiedType, IObjectType {
     isModel: boolean;
 }
 
-export interface IUnionOrIntersectionType<T = MetadataType> {
+export interface IUnionOrIntersectionType<T = MetadataType> extends IObjectType {
     isUnionOrIntersection: boolean;
     subTypes: T[];
 }

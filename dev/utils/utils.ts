@@ -21,7 +21,8 @@ import {
     isNewExpression,
     isNamedExportsNode,
     isTypeNode,
-    isPropertyDeclaration
+    isPropertyDeclaration,
+    isPropertySignature
 } from "./SyntaxKind";
 import type { TypeReturn, TSNodeNames } from "../@types/Utils";
 import type * as ts from "typescript";
@@ -37,7 +38,7 @@ export function getTypeFromExpression(checker: ts.TypeChecker, node?: ts.Express
 }
 
 export function getTypeFromNode(checker: ts.TypeChecker, node: ts.Node): TypeReturn {
-    if (isPropertyDeclaration(node)) {
+    if (isPropertyDeclaration(node) || isPropertySignature(node)) {
         if (node.type) return getTypeFromTypeNode(checker, node.type);
         if (node.initializer) return getTypeFromExpression(checker, node.initializer);
     }

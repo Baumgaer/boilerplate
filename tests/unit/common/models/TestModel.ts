@@ -46,6 +46,9 @@ export default class TestModel extends TestAbstractModel {
     public anotherIntersection!: ITestMyInterface & ITestMySecondInterface;
 
     @Attr()
+    public anIntersectionWithinArray?: (ITestMyInterface & ITestMySecondInterface)[];
+
+    @Attr()
     public aTuple!: [string, number, boolean?];
 
     @Attr()

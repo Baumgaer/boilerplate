@@ -29,8 +29,16 @@ export function isArrayTypeNode(node?: ts.Node): node is ts.ArrayTypeNode {
     return isNode("ArrayTypeNode", node);
 }
 
+export function isTupleTypeNode(node?: ts.Node): node is ts.TupleTypeNode {
+    return isNode("TupleTypeNode", node);
+}
+
 export function isParenthesizedTypeNode(node?: ts.Node): node is ts.ParenthesizedTypeNode {
     return isNode("ParenthesizedTypeNode", node);
+}
+
+export function isOptionalTypeNode(node?: ts.Node): node is ts.OptionalTypeNode {
+    return isNode("OptionalTypeNode", node);
 }
 
 export function isNamespaceImportNode(node?: ts.Node): node is ts.NamespaceImport {
@@ -83,6 +91,10 @@ export function isImportDeclaration(node?: ts.Node): node is ts.ImportDeclaratio
 
 export function isExportDeclaration(node?: ts.Node): node is ts.ExportDeclaration {
     return isNode("ExportDeclaration", node);
+}
+
+export function isPropertySignature(node?: ts.Node): node is ts.PropertySignature {
+    return isNode("PropertySignature", node);
 }
 
 export function isDefaultKeyword(node?: ts.Node): node is ts.DefaultKeyword {
