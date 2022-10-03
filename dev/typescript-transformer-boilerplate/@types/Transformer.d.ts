@@ -1,7 +1,8 @@
 import type ts from "typescript";
 
+export type environment = "test" | "client" | "common" | "server";
 export interface IConfiguration {
-    environment: "test" | "client" | "common" | "server";
+    environment: environment;
     tsConfigPath: string;
 }
 

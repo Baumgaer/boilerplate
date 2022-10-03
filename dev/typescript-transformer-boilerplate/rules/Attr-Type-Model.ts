@@ -1,8 +1,6 @@
-import * as path from "path";
-import minimatch from "minimatch";
 import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isPropertySignature } from "../../utils/SyntaxKind";
 import { isObjectType, isAnyType, isClassType, isInterfaceType } from "../../utils/Type";
-import { getTypeFromNode, resolveTypeReferenceTo } from "../../utils/utils";
+import { getTypeFromNode, resolveTypeReferenceTo, isInEnvironmentalPath } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
@@ -43,20 +41,7 @@ export const AttrTypeModel = createRule({
         const filePath = (resolvedNode.getSourceFile()?.fileName || "").replaceAll("\\", "/");
         if (!filePath) return false;
 
-        const environments = [this.environment, "common", "env"];
-        const aliases = program.getCompilerOptions().paths as Record<string, string[]>;
-
-        return Object.keys(aliases).filter((alias) => {
-            return environments.some((environment) => alias.startsWith(`~${environment}`));
-        }).some((alias) => {
-            return aliases[alias].some((pathPattern) => {
-                pathPattern = path.join(path.dirname(this.tsConfigPath), pathPattern).replaceAll("\\", "/");
-                pathPattern = pathPattern.replace(`/${this.environment}/`, `/${this.environment}/models/`);
-                pathPattern = pathPattern.replace("/common/", `/common/models/`);
-                const match = minimatch(filePath, pathPattern);
-                return match;
-            });
-        });
+        return isInEnvironmentalPath(program, this.tsConfigPath, this.environment, "models/", filePath);
     },
     emitType(program, sourceFile, node) {
         const nodeToCheck = getTypeContainingNode(node) as ts.TypeReferenceNode | ts.NewExpression | ts.Identifier;

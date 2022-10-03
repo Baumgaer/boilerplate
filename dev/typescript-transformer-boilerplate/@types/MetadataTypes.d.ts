@@ -1,6 +1,8 @@
+import type { ColumnType } from "typeorm";
+
 export type LiteralTypes = string | number | bigint | boolean | undefined | symbol | null;
 
-export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType | IPrimitiveType | ILiteralType | IObjectType | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType;
+export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType | ICustomType | IPrimitiveType | ILiteralType | IObjectType | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType;
 
 export interface IMixedType {
     isMixed: boolean;
@@ -17,6 +19,11 @@ export interface IOptionalType {
 
 export interface IIdentifiedType {
     identifier: string;
+}
+
+export interface ICustomType {
+    identifier: ColumnType;
+    isCustomType: true;
 }
 
 export interface IPrimitiveType {

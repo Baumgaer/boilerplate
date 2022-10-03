@@ -1,4 +1,5 @@
 import * as path from "path";
+import minimatch from "minimatch";
 import {
     resolveModuleName,
     canHaveModifiers,
@@ -25,6 +26,7 @@ import {
     isPropertySignature
 } from "./SyntaxKind";
 import type { TypeReturn, TSNodeNames } from "../@types/Utils";
+import type { environment } from "../typescript-transformer-boilerplate/@types/Transformer";
 import type * as ts from "typescript";
 
 export function getTypeFromTypeNode(checker: ts.TypeChecker, node?: ts.TypeNode): TypeReturn {
@@ -63,7 +65,7 @@ export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Progra
         function processImportDeclaration(declaration: ts.ImportDeclaration): ts.Statement | undefined {
             const clause = declaration.importClause as ts.ImportClause;
 
-            if (isNamedImportsNode(clause.namedBindings)) {
+            if (isNamedImportsNode(clause.namedBindings)) { // import * as foo from "bar"
                 for (const element of clause.namedBindings?.elements || []) {
                     if (element.name.escapedText.toString() !== typeName) continue;
 
@@ -73,14 +75,14 @@ export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Progra
                     const newTypeName = element.propertyName?.escapedText?.toString() || element.name.escapedText.toString();
                     return findTypeRecursive(newSourceFile, newTypeName);
                 }
-            } else if (isIdentifierNode(clause.name)) {
+            } else if (isIdentifierNode(clause.name)) { // import foo from "bar"
                 if (clause.name.escapedText.toString() !== typeName) return undefined;
 
                 const newSourceFile = getSourceFileByImport(declaration);
                 if (!newSourceFile) return undefined;
 
                 return findTypeRecursive(newSourceFile, "", true);
-            } else if (isNamespaceImportNode(clause.namedBindings)) {
+            } else if (isNamespaceImportNode(clause.namedBindings)) { // import { foo, bar} from "baz"
                 if (clause.namedBindings?.name.escapedText?.toString() !== typeName) return undefined;
 
                 const newSourceFile = getSourceFileByImport(declaration);
@@ -93,14 +95,12 @@ export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Progra
         }
 
         function processExportDeclaration(declaration: ts.ExportDeclaration): ts.Statement | undefined {
-            console.log(declaration.getText(sourceFile));
             const clause = declaration.exportClause;
 
             if (!clause) { // export * from "foo";
                 const newSourceFile = getSourceFileByImport(declaration);
                 if (!newSourceFile) return undefined;
             } else if (isNamedExportsNode(clause)) { // export { foo, bar } from "baz";
-                console.log("hasClause");
                 for (const element of clause.elements) {
                     if (element.name.escapedText.toString() !== typeName) continue;
                     const newSourceFile = getSourceFileByImport(declaration);
@@ -190,4 +190,29 @@ export function programFromConfig(configFilePath: string) {
         projectReferences: configParseResult.projectReferences
     });
     return program;
+}
+
+export function isInEnvironmentalPath(program: ts.Program, tsConfigPath: string, environment: environment, environmentalPath: string, filePath: string) {
+    const environments = [environment, "common", "env"];
+    const aliases = program.getCompilerOptions().paths as Record<string, string[]>;
+
+    return Object.keys(aliases).filter((alias) => {
+        return environments.some((environment) => alias.startsWith(`~${environment}`));
+    }).some((alias) => {
+        return aliases[alias].some((pathPattern) => {
+            pathPattern = path.join(path.dirname(tsConfigPath), pathPattern).replaceAll("\\", "/");
+            pathPattern = pathPattern.replace(`/${environment}/`, `/${environment}/${environmentalPath}`);
+            // To avoid double replacing for common environment
+            if (environment !== "common") pathPattern = pathPattern.replace("/common/", `/common/${environmentalPath}`);
+            if (path.extname(environmentalPath)) {
+                // in case of file remove those characters from the end of the pattern
+                const charsToRemove = ["/", "\\", "{", "}", "*", ".", "!", "?", "[", "]"];
+                while (charsToRemove.includes(pathPattern.substring(pathPattern.length - 1))) {
+                    pathPattern = pathPattern.substring(0, pathPattern.length - 1);
+                }
+            }
+            const match = minimatch(filePath, pathPattern);
+            return match;
+        });
+    });
 }

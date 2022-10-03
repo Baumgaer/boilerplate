@@ -2,6 +2,7 @@ import transformer from "./lib/Transformer";
 import { AttrTypeAny } from "./rules/Attr-Type-Any";
 import { AttrTypeArray } from "./rules/Attr-Type-Array";
 import { AttrTypeBoolean } from "./rules/Attr-Type-Boolean";
+import { AttrTypeCustom } from "./rules/Attr-Type-Custom";
 import { AttrTypeDate } from "./rules/Attr-Type-Date";
 import { AttrTypeInterface } from "./rules/Attr-Type-Interface";
 import { AttrTypeIntersection } from "./rules/Attr-Type-Intersection";
@@ -37,6 +38,7 @@ const rules = [
     AttrTypeArray,
     AttrTypeOptional,
     AttrTypeParenthesized,
+    AttrTypeCustom,
     AttrTypeAny
 ];
 

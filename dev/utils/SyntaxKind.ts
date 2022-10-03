@@ -21,6 +21,10 @@ export function isIntersectionTypeNode(node?: ts.Node): node is ts.IntersectionT
     return isNode("IntersectionTypeNode", node);
 }
 
+export function isLiteralTypeNode(node?: ts.Node): node is ts.LiteralTypeNode {
+    return isNode("LiteralTypeNode", node);
+}
+
 export function isTypeReferenceNode(node?: ts.Node): node is ts.TypeReferenceNode {
     return isNode("TypeReferenceNode", node);
 }

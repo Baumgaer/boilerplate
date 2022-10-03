@@ -5,12 +5,13 @@ export type TSNodeNames =
 
     "TypeNode" | "UnionTypeNode" | "IntersectionTypeNode" | "TypeReferenceNode" |
     "ArrayTypeNode" | "TupleTypeNode" | "ParenthesizedTypeNode" | "OptionalTypeNode" |
+    "LiteralTypeNode" |
 
     "ExpressionStatement" | "NewExpression" | "ArrayLiteralExpression" |
     "ObjectLiteralExpression" | "ParenthesizedExpression" |
 
     "PropertyDeclaration" | "ClassDeclaration" | "InterfaceDeclaration" |
-    "ImportDeclaration" | "ExportDeclaration" |
+    "ImportDeclaration" | "ExportDeclaration" | "TypeAliasDeclaration" |
 
     "PropertySignature";
 
