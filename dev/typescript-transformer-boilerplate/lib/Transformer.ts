@@ -73,12 +73,13 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
         function processCallExpression(program: ts.Program, sourceFile: ts.SourceFile, node: ts.CallExpression) {
             if (!isDecoratorNode(node.parent) || !isValidDeclaration(node.parent?.parent)) return node;
 
-            const next = (usedNode: ts.Node, dept = 0) => {
+            const next = (usedNode: ts.Node, dept = 0, metadata: Record<string, any> = {}) => {
                 let echoType = "type";
                 if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode)) {
                     if (isPropertyDeclaration(usedNode)) {
                         echoType = "attr";
                     } else echoType = "prop";
+                    metadata = {};
                 } else if (isClassDeclaration(usedNode)) echoType = "model";
 
                 let name = "unknown";
@@ -89,7 +90,6 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                 console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
 
                 const matchedRules = [];
-                const metadata: Record<string, any> = {};
                 for (const rule of rules) {
                     const isValidDecorator = isIdentifierNode(node.expression) && node.expression.escapedText === rule.type;
                     if (!isValidDecorator) continue;
@@ -98,11 +98,12 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                     if (rule.detect(program, sourceFile, usedNode, matchedRules)) {
                         matchedRules.push(rule);
                         console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
-                        merge(metadata, rule.emitMetadata(program, sourceFile, usedNode) || {});
 
-                        const type = rule.emitType(program, sourceFile, usedNode, (node: ts.Node) => next(node, dept + 2));
+                        merge(metadata, rule.emitMetadata(program, sourceFile, usedNode) || {});
+                        const type = rule.emitType(program, sourceFile, usedNode, (node: ts.Node) => next(node, dept + 2, metadata));
                         if (echoType === "type") {
-                            merge(metadata, type);
+                            return type;
+                            // merge(metadata, type);
                         } else merge(metadata, { type });
                     }
                 }
