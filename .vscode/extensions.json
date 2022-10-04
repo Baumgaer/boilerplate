@@ -1,0 +1,33 @@
+{
+    "recommendations": [
+        "formulahendry.auto-close-tag",
+        "formulahendry.auto-rename-tag",
+        "streetsidesoftware.code-spell-checker",
+        "joshbolduc.commitlint",
+        "editorconfig.editorconfig",
+        "dbaeumer.vscode-eslint",
+        "eamodio.gitlens",
+        "ionic.ionic",
+        "christian-kohler.path-intellisense",
+        "stylelint.vscode-stylelint",
+        "redhat.vscode-yaml",
+        "redhat.vscode-xml",
+        "vscjava.vscode-gradle",
+        "visualstudioexptteam.vscodeintellicode",
+        "ecmel.vscode-html-css",
+        "github.vscode-pull-request-github",
+        "ms-azuretools.vscode-docker",
+        "bierner.color-info",
+        "ms-kubernetes-tools.vscode-kubernetes-tools",
+        "zignd.html-css-class-completion",
+        "yzhang.markdown-all-in-one",
+        "christian-kohler.npm-intellisense",
+        "mrmlnc.vscode-scss",
+        "jasonnutter.search-node-modules",
+        "mde.select-highlight-minimap",
+        "richie5um2.vscode-sort-json",
+        "mariomatheu.syntax-project-pbxproj",
+        "dotjoshjohnson.xml",
+        "xabikos.JavaScriptSnippets"
+    ]
+}
