@@ -9,7 +9,7 @@ import type { ModelLike } from "~client/@types/ModelClass";
  */
 export default class BaseAttribute<T extends ModelLike> extends CommonBaseAttribute<T> {
 
-    private isChangeTrigger = false;
+    private isChangeTrigger: boolean = false;
 
     /**
      * @inheritdoc

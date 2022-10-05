@@ -49,7 +49,7 @@ export default class ModelSchema<T extends ModelLike> {
     /**
      * Holds a list of all attribute schemas related to the model schema
      */
-    public readonly attributeSchemas = {} as Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>>;
+    public readonly attributeSchemas: Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>>;
 
     /**
      * Holds the options of the entity (model) which were used to construct the schema
@@ -64,7 +64,7 @@ export default class ModelSchema<T extends ModelLike> {
     /**
      * Internal state which determines if the schema is fully built or not
      */
-    private _constructed = false;
+    private _constructed: boolean = false;
 
     public constructor(modelClass: T, name: string, schemas: AttributeSchema<T>[], options: ModelOptions<T>) {
         this.owner = modelClass;

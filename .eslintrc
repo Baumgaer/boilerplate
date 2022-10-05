@@ -71,6 +71,12 @@
             }
         ],
         "@typescript-eslint/restrict-plus-operands": "error",
+        "@typescript-eslint/typedef": [
+            "error",
+            {
+                "memberVariableDeclaration": true
+            }
+        ],
         "@typescript-eslint/unbound-method": "error",
         "arrow-spacing": [
             "error",

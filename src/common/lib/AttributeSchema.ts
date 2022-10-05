@@ -87,7 +87,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     /**
      * The parameters which initializes the schema
      */
-    public readonly parameters = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
+    public readonly parameters: Readonly<AttrOptionsPartialMetadataJson<T>> = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
 
     /**
      * Indicates if an attribute should NOT be sent to another endpoint.
@@ -229,7 +229,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * NOTE: This will be set to true if the schema is fully built
      * (including relation).
      */
-    private _constructed = false;
+    private _constructed: boolean = false;
 
     /**
      * If the relation ends up in an embedded entity, it will be stored here to

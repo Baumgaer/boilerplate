@@ -11,7 +11,8 @@ import ms from "ms";
 import normalizeUrl from "normalize-url";
 import Train from "~server/lib/Train";
 import { middleware as i18nMiddleware } from "~server/utils/language";
-import type { Request, Response, NextFunction } from "express";
+import type { Request, Response, NextFunction, Express } from "express";
+import type { Server } from "http";
 import type { HttpMethods } from "~server/@types/http";
 import type BaseRoute from "~server/lib/BaseRoute";
 
@@ -35,13 +36,13 @@ interface options {
 
 export default abstract class BaseServer {
 
-    protected readonly app = express();
+    protected readonly app: Express = express();
 
-    protected readonly server = createServer(this.app);
+    protected readonly server: Server = createServer(this.app);
 
     private readonly options: options;
 
-    private setupFinished = false;
+    private setupFinished: boolean = false;
 
     public constructor(options: options) {
         this.options = options;

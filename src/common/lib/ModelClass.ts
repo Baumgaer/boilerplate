@@ -53,22 +53,22 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * (because it's inside a factory). This is for example used above when
          * manipulating prototype chain.
          */
-        public static override isModelClass = true;
+        public static override isModelClass: boolean = true;
 
         /**
          * @inheritdoc
          */
-        public static override readonly className = options.className as string;
+        public static override readonly className: string = options.className as string;
 
         /**
          * @inheritdoc
          */
-        public static override readonly collectionName = options.collectionName as string;
+        public static override readonly collectionName: string = options.collectionName as string;
 
         /**
          * @see ModelClass.isModelClass
          */
-        public isModelClass = true;
+        public isModelClass: boolean = true;
 
         /**
          * @inheritdoc

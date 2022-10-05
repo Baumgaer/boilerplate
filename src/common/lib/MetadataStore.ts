@@ -30,7 +30,7 @@ export default class MetadataStore {
      * Holds for each model the corresponding attribute schemas.
      * This has to be a WeakMap to avoid memory leaks when a model is destroyed.
      */
-    private attributes = new WeakMap<InstanceType<ModelLike>, Record<string, BaseAttribute<any>>>();
+    private attributes: WeakMap<InstanceType<ModelLike>, Record<string, BaseAttribute<any>>> = new WeakMap();
 
     public constructor() {
         if (MetadataStore.instance) return MetadataStore.instance;

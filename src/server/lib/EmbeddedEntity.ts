@@ -7,9 +7,9 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
     className = getClassName(className, "server");
 
     class EmbeddedEntity extends commonEmbeddedEntityFactory(className, members, false) {
-        public static override readonly className = className;
+        public static override readonly className: string = className;
 
-        public override readonly className = className;
+        public override readonly className: string = className;
     }
 
     applyMembers(EmbeddedEntity as unknown as ModelLike, members);
