@@ -7,7 +7,8 @@ export const AttrTypeNull = createRule({
     type: "Attr",
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
-        return isNullType(getTypeFromNode(checker, node));
+        if (isNullType(getTypeFromNode(checker, node))) return node;
+        return false;
     },
     emitType() {
         return {

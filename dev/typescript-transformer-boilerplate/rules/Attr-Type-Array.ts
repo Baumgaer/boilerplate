@@ -11,18 +11,16 @@ export const AttrTypeArray = createRule({
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type || node.initializer;
         if (!nodeToCheck) return false;
-        return isArrayTypeNode(nodeToCheck) || isArrayLiteralExpression(nodeToCheck);
+        if (isArrayTypeNode(nodeToCheck) || isArrayLiteralExpression(nodeToCheck)) return nodeToCheck;
+        return false;
     },
     emitType(program, sourceFile, node, next) {
-        let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type || node.initializer;
-
         let subType: MetadataType = { isMixed: true };
-        if (isArrayTypeNode(nodeToCheck)) {
-            subType = next(nodeToCheck.elementType);
-        } else if (isArrayLiteralExpression(nodeToCheck)) {
-            if (nodeToCheck.elements.length) {
-                const types = nodeToCheck.elements.map((element) => next(element));
+        if (isArrayTypeNode(node)) {
+            subType = next(node.elementType);
+        } else if (isArrayLiteralExpression(node)) {
+            if (node.elements.length) {
+                const types = node.elements.map((element) => next(element));
 
                 let toCompareWith = types[0];
                 const allAreEqual = types.slice(1).every((type) => {

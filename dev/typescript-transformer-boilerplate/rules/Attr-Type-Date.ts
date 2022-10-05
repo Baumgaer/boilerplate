@@ -13,7 +13,8 @@ export const AttrTypeDate = createRule({
 
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
-        return isObjectType(type) && isDateTypeNode(checker, nodeToCheck);
+        if (isObjectType(type) && isDateTypeNode(checker, nodeToCheck)) return nodeToCheck;
+        return false;
     },
     emitType() {
         return {

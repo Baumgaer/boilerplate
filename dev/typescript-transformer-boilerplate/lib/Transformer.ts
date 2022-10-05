@@ -95,15 +95,15 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                     if (!isValidDecorator) continue;
 
                     rule.config = config;
-                    if (rule.detect(program, sourceFile, usedNode, matchedRules)) {
+                    const detectedNode = rule.detect(program, sourceFile, usedNode, matchedRules);
+                    if (detectedNode) {
                         matchedRules.push(rule);
                         console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
 
-                        merge(metadata, rule.emitMetadata(program, sourceFile, usedNode) || {});
-                        const type = rule.emitType(program, sourceFile, usedNode, (node: ts.Node) => next(node, dept + 2, metadata));
+                        merge(metadata, rule.emitMetadata(usedNode, program, sourceFile, detectedNode) || {});
+                        const type = rule.emitType(program, sourceFile, detectedNode, (node: ts.Node) => next(node, dept + 2, metadata));
                         if (echoType === "type") {
                             return type;
-                            // merge(metadata, type);
                         } else merge(metadata, { type });
                     }
                 }

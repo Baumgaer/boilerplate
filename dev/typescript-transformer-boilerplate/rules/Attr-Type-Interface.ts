@@ -30,25 +30,16 @@ export const AttrTypeInterface = createRule({
         const filePath = resolvedNode.getSourceFile()?.fileName;
         if (!filePath) return false;
 
-        return true;
+        return resolvedNode as ts.InterfaceDeclaration;
     },
     emitType(program, sourceFile, node, next) {
-        let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node)) nodeToCheck = node.type;
-
-        let nodeToResolve: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined = nodeToCheck as ts.TypeReferenceNode;
-        if (!nodeToResolve && isPropertyDeclaration(nodeToCheck) && (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer))) {
-            nodeToResolve = nodeToCheck.initializer;
-        }
-
-        const resolvedNode = resolveTypeReferenceTo(program, nodeToResolve, "InterfaceDeclaration") as ts.InterfaceDeclaration;
-        const members = resolvedNode.members.reduce((previous, member) => {
+        const members = node.members.reduce((previous, member) => {
             const result = next(member);
             return merge(previous, { [result.name]: result });
         }, {});
 
         return {
-            identifier: resolvedNode.name?.getText(resolvedNode.getSourceFile()),
+            identifier: node.name?.getText(node.getSourceFile()),
             isObjectType: true,
             isInterface: true,
             members

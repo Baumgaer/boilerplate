@@ -8,7 +8,8 @@ export const AttrTypeBoolean = createRule({
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);
-        return isBooleanType(type) && !isLiteralType(type);
+        if (isBooleanType(type) && !isLiteralType(type)) return node;
+        return false;
     },
     emitType() {
         return {

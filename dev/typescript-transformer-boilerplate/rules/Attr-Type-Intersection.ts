@@ -10,18 +10,18 @@ export const AttrTypeIntersection = createRule({
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
 
-        let nodeToCheck: ts.Node | undefined = node;
+        let nodeToCheck: ts.Node | ts.TypeNode | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
         if (!nodeToCheck) return false;
 
         const type = getTypeFromNode(checker, nodeToCheck);
-        return Boolean(isUnionOrIntersectionType(type) && isIntersectionType(type) && !type.aliasSymbol) || isIntersectionTypeNode(nodeToCheck);
+        if (Boolean(isUnionOrIntersectionType(type) && isIntersectionType(type) && !type.aliasSymbol) || isIntersectionTypeNode(nodeToCheck)) {
+            return nodeToCheck;
+        }
+        return false;
     },
     emitType(program, sourceFile, node, next) {
-        let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
-
-        const subTypes = (nodeToCheck as ts.UnionOrIntersectionTypeNode).types.map((typeNode) => next(typeNode));
+        const subTypes = (node as ts.UnionOrIntersectionTypeNode).types.map((typeNode) => next(typeNode));
         return {
             isObjectType: true,
             isUnionOrIntersection: true,

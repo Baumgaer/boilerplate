@@ -7,7 +7,8 @@ export const AttrTypeUndefined = createRule({
     type: "Attr",
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
-        return isUndefinedType(getTypeFromNode(checker, node));
+        if (isUndefinedType(getTypeFromNode(checker, node))) return node;
+        return false;
     },
     emitType() {
         return {

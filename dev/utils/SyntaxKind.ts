@@ -137,7 +137,7 @@ export function isPromiseTypeNode(checker: ts.TypeChecker, node?: ts.Node) {
     return isFunctionScopedVariable && symbol.escapedName === "Promise";
 }
 
-export function isDateTypeNode(checker: ts.TypeChecker, node?: ts.Node) {
+export function isDateTypeNode(checker: ts.TypeChecker, node?: ts.Node): node is ts.TypeReferenceNode {
     if (!node || !isTypeNode(node) || !isTypeReferenceNode(node)) return false;
     const symbol = checker.getSymbolAtLocation(node.typeName);
     if (!symbol) return false;

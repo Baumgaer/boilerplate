@@ -9,7 +9,8 @@ export const AttrTypeLiteral = createRule({
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);
-        return isLiteralType(type);
+        if (isLiteralType(type)) return node;
+        return false;
     },
     emitType(program, sourceFile, node) {
         const checker = program.getTypeChecker();

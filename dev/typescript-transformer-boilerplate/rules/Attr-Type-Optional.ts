@@ -9,13 +9,11 @@ export const AttrTypeOptional = createRule({
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
         if (!nodeToCheck) return false;
-        return isOptionalTypeNode(nodeToCheck);
+        if (isOptionalTypeNode(nodeToCheck)) return nodeToCheck;
+        return false;
     },
     emitType(program, sourceFile, node, next) {
-        let nodeToCheck = node as ts.OptionalTypeNode;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type as ts.OptionalTypeNode;
-
-        const subType = next(nodeToCheck.type);
+        const subType = next(node.type);
         return {
             isOptional: true,
             subType

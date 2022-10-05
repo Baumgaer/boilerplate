@@ -8,7 +8,8 @@ export const AttrTypeNumber = createRule({
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);
-        return isNumberType(type) && !isLiteralType(type);
+        if (isNumberType(type) && !isLiteralType(type)) return node;
+        return false;
     },
     emitType() {
         return {

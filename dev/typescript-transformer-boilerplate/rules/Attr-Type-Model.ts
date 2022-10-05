@@ -41,14 +41,14 @@ export const AttrTypeModel = createRule({
         const filePath = (resolvedNode.getSourceFile()?.fileName || "").replaceAll("\\", "/");
         if (!filePath) return false;
 
-        return isInEnvironmentalPath(program, this.tsConfigPath, this.environment, "models/", filePath);
+        if (isInEnvironmentalPath(program, this.tsConfigPath, this.environment, "models/", filePath)) {
+            return resolvedNode as ts.ClassDeclaration;
+        }
+        return false;
     },
     emitType(program, sourceFile, node) {
-        const nodeToCheck = getTypeContainingNode(node) as ts.TypeReferenceNode | ts.NewExpression | ts.Identifier;
-        const resolvedNode = resolveTypeReferenceTo(program, nodeToCheck, "ClassDeclaration") as ts.ClassDeclaration;
-
         return {
-            identifier: resolvedNode.name?.getText(resolvedNode.getSourceFile()),
+            identifier: node.name?.getText(node.getSourceFile()),
             isObjectType: true,
             isModel: true
         };

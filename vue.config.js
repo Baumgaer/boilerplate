@@ -50,6 +50,7 @@ module.exports = {
         config.resolve.alias["~env"] = [path.resolve(arp.path, "src", "client")];
 
         if (process.env.NODE_ENV === "test") {
+            config.devtool = "inline-cheap-module-source-map";
             const clientPath = path.resolve(arp.path, "tests", "unit", "client");
             config.resolve.alias.client.unshift(clientPath);
             config.resolve.alias["~env"].unshift(clientPath);

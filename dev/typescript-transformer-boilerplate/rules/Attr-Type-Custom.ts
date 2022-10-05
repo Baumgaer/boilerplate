@@ -50,13 +50,13 @@ export const AttrTypeCustom = createRule({
 
         const declarationSourceFile = getDeclaration(program, nodeToCheck)?.getSourceFile();
         if (!declarationSourceFile) return false;
-        return isInEnvironmentalPath(program, this.tsConfigPath, "common", "@types/Datatypes.d.ts", declarationSourceFile.fileName);
+        if (isInEnvironmentalPath(program, this.tsConfigPath, "common", "@types/Datatypes.d.ts", declarationSourceFile.fileName)) {
+            return nodeToCheck;
+        }
+        return false;
     },
     emitMetadata(program, sourceFile, node) {
-        let nodeToCheck = node as ts.TypeReferenceNode;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type as ts.TypeReferenceNode;
-
-        const declaration = getDeclaration(program, nodeToCheck) as ts.TypeAliasDeclaration;
+        const declaration = getDeclaration(program, node) as ts.TypeAliasDeclaration;
         const docTags = getJSDocTags(declaration);
         const PropertyTags = docTags.filter((docTag) => docTag.tagName.getText(docTag.getSourceFile()) === "property");
 
@@ -69,21 +69,18 @@ export const AttrTypeCustom = createRule({
             try {
                 value = JSON.parse(matchArray[1]);
             } catch (error) {
-                value = typeParameterToTypeArgumentValue(declaration, nodeToCheck, matchArray[1]);
+                value = typeParameterToTypeArgumentValue(declaration, node, matchArray[1]);
                 if (value === NOT_FOUND) return [];
             }
             return [name, value];
         }).filter((entry) => Boolean(entry.length)));
     },
     emitType(program, sourceFile, node, next) {
-        let nodeToCheck = node as ts.TypeReferenceNode;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type as ts.TypeReferenceNode;
-
-        const declaration = getDeclaration(program, nodeToCheck) as ts.TypeAliasDeclaration;
+        const declaration = getDeclaration(program, node) as ts.TypeAliasDeclaration;
         const emits = getTagValueFromDeclaration(declaration, "emits");
         if (emits) {
             const typeParameterName = emits.split(" ")[0];
-            const argumentType = typeParameterToTypeArgumentValue(declaration, nodeToCheck, typeParameterName, false);
+            const argumentType = typeParameterToTypeArgumentValue(declaration, node, typeParameterName, false);
             if (argumentType !== NOT_FOUND) return next(argumentType);
             throw new Error(`Could not resolve argumentType`);
         }

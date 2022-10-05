@@ -8,7 +8,8 @@ export const AttrTypeString = createRule({
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);
-        return isStringType(type) && !isLiteralType(type);
+        if (isStringType(type) && !isLiteralType(type)) return node;
+        return false;
     },
     emitType() {
         return {

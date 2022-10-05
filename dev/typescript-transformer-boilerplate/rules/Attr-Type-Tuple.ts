@@ -9,13 +9,11 @@ export const AttrTypeTuple = createRule({
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
         if (!nodeToCheck) return false;
-        return isTupleTypeNode(nodeToCheck);
+        if (isTupleTypeNode(nodeToCheck)) return nodeToCheck;
+        return false;
     },
     emitType(program, sourceFile, node, next) {
-        let nodeToCheck: ts.TupleTypeNode = node as ts.TupleTypeNode;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type as ts.TupleTypeNode;
-
-        const subTypes = nodeToCheck.elements.map((element) => next(element));
+        const subTypes = node.elements.map((element) => next(element));
         return {
             isObjectType: true,
             isArray: true,
