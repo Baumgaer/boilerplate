@@ -33,6 +33,8 @@ import type {
 } from "~env/@types/AttributeSchema";
 import type {
     CombinedDataType,
+    IPrimitiveType,
+    IMixedType,
     IArrayType,
     IAttrMetadata,
     ICustomType,
@@ -41,14 +43,13 @@ import type {
     IIntersectionType,
     ILiteralType,
     IModelType,
-    INullType,
     IOptionalType,
     ITupleType,
-    IUndefinedType,
     IUnionType,
     IUnresolvedType,
     MetadataType,
-    ObjectLikeDataType
+    INamedObject,
+    IObjectType
 } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
@@ -326,7 +327,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     public isUnionType(altType?: IAttrMetadata["type"]): altType is IUnionType {
         const type = altType || this.rawType;
-        return Boolean("isUnion" in type && type.isUnion);
+        return Boolean("isObjectType" in type && "isUnion" in type && type.isUnion);
     }
 
     /**
@@ -338,7 +339,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     public isIntersectionType(altType?: IAttrMetadata["type"]): altType is IIntersectionType {
         const type = altType || this.rawType;
-        return Boolean("isIntersection" in type && type.isIntersection);
+        return Boolean("isObjectType" in type && "isIntersection" in type && type.isIntersection);
     }
 
     /**
@@ -350,7 +351,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     public isLiteralType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<ILiteralType> {
         const type = altType || this.rawType;
-        return "isLiteral" in type && type.isLiteral || this.checkSubTypes(type, this.isLiteralType.bind(this));
+        return "isPrimitive" in type && "isLiteral" in type && type.isLiteral || this.checkSubTypes(type, this.isLiteralType.bind(this));
     }
 
     /**
@@ -360,10 +361,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a string type else false
      */
-    public isStringType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IIdentifiedType<"String"> | ILiteralType<string>> {
+    public isStringType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IPrimitiveType<"String"> | ILiteralType<string, "String">> {
         const type = altType || this.rawType;
-        return "isStringLiteral" in type && type.isStringLiteral ||
-            "identifier" in type && type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
+        return "isPrimitive" in type && type.isPrimitive && type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
     }
 
     /**
@@ -373,10 +373,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a number type else false
      */
-    public isNumberType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IIdentifiedType<"Number"> | ILiteralType<number>> {
+    public isNumberType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IPrimitiveType<"Number"> | ILiteralType<number, "Number">> {
         const type = altType || this.rawType;
-        return "isNumberLiteral" in type && type.isNumberLiteral ||
-            "identifier" in type && type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
+        return "isPrimitive" in type && type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
     }
 
     /**
@@ -386,9 +385,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a boolean type else false
      */
-    public isBooleanType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IIdentifiedType<"Boolean">> {
+    public isBooleanType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IPrimitiveType<"Boolean"> | ILiteralType<boolean, "Boolean">> {
         const type = altType || this.rawType;
-        return "identifier" in type && type.identifier === "Boolean" || this.checkSubTypes(type, this.isBooleanType.bind(this));
+        return "isPrimitive" in type && type.identifier === "Boolean" || this.checkSubTypes(type, this.isBooleanType.bind(this));
     }
 
     /**
@@ -398,9 +397,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a date type else false
      */
-    public isDateType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IIdentifiedType<"Date">> {
+    public isDateType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<INamedObject<"Date">> {
         const type = altType || this.rawType;
-        return "identifier" in type && type.identifier === "Date" || this.checkSubTypes(type, this.isDateType.bind(this));
+        return "isObjectType" in type && "isNamedObject" in type && type.identifier === "Date" || this.checkSubTypes(type, this.isDateType.bind(this));
     }
 
     /**
@@ -412,7 +411,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     public isModelType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IModelType> {
         const type = altType || this.rawType;
-        return Boolean("isModel" in type && type.isModel || this.checkSubTypes(type, this.isModelType.bind(this)));
+        return Boolean("isObjectType" in type && "isModel" in type && type.isModel || this.checkSubTypes(type, this.isModelType.bind(this)));
     }
 
     /**
@@ -421,9 +420,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is an array type else false
      */
-    public isArrayType(altType?: IAttrMetadata["type"]): altType is IArrayType {
+    public isArrayType(altType?: IAttrMetadata["type"]): altType is IArrayType | ITupleType {
         const type = altType || this.rawType;
-        return "isArray" in type && type.isArray;
+        return "isObjectType" in type && "isArray" in type && type.isArray;
     }
 
     /**
@@ -435,7 +434,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     public isTupleType(altType?: IAttrMetadata["type"]): altType is ITupleType {
         const type = altType || this.rawType;
-        return "isTuple" in type && type.isTuple;
+        return "isObjectType" in type && "isTuple" in type && type.isTuple;
     }
 
     /**
@@ -456,9 +455,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is an identified type else false
      */
-    public hasIdentifier(altType?: IAttrMetadata["type"]): altType is IModelType | IIdentifiedType {
+    public hasIdentifier(altType?: IAttrMetadata["type"]): altType is IIdentifiedType<string> {
         const type = altType || this.rawType;
-        return "identifier" in type;
+        return Boolean("identifier" in type && type.identifier);
     }
 
     /**
@@ -468,10 +467,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
      */
-    public isObjectLikeType(altType?: IAttrMetadata["type"]): altType is ObjectLikeDataType {
+    public isObjectLikeType(altType?: IAttrMetadata["type"]): altType is IObjectType {
         const type = altType || this.rawType;
-        return "isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection ||
-            this.isModelType(type) || this.isArrayType(type) || this.checkSubTypes(type, this.isObjectLikeType.bind(this));
+        return "isObjectType" in type && type.isObjectType || this.checkSubTypes(type, this.isObjectLikeType.bind(this), true);
     }
 
     /**
@@ -483,7 +481,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     public isPlainObjectType(altType?: IAttrMetadata["type"]): altType is IInterfaceType {
         const type = altType || this.rawType;
-        return Boolean("isInterface" in type && type.isInterface || this.checkSubTypes(type, this.isPlainObjectType.bind(this)));
+        return Boolean("isObjectType" in type && ("isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection) || this.checkSubTypes(type, this.isPlainObjectType.bind(this), true));
     }
 
     /**
@@ -493,10 +491,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a model type else false
      */
-    public isUnresolvedType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IUnresolvedType> {
+    public isUnresolvedType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IMixedType | IUnresolvedType> {
         const type = altType || this.rawType;
-        return "isMixed" in type && type.isMixed ||
-            "isUnresolvedType" in type && type.isUnresolvedType || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
+        return "isMixed" in type && type.isMixed || "isUnresolved" in type && type.isUnresolved || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
     }
 
     /**
@@ -505,9 +502,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is an undefined type else false
      */
-    public isUndefinedType(altType?: IAttrMetadata["type"]): altType is IUndefinedType {
+    public isUndefinedType(altType?: IAttrMetadata["type"]): altType is IPrimitiveType<"Undefined"> {
         const type = altType || this.rawType;
-        return "isUndefined" in type && type.isUndefined;
+        return "isPrimitive" in type && type.identifier === "Undefined";
     }
 
     /**
@@ -516,9 +513,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is a null type else false
      */
-    public isNullType(altType?: IAttrMetadata["type"]): altType is INullType {
+    public isNullType(altType?: IAttrMetadata["type"]): altType is IPrimitiveType<"Null"> {
         const type = altType || this.rawType;
-        return "isNull" in type && type.isNull;
+        return "isPrimitive" in type && type.identifier === "Null";
     }
 
     /**
@@ -565,7 +562,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     public getTypeIdentifier(altType?: IAttrMetadata["type"]): string | undefined {
         const type = altType || this.rawType;
         if (this.isTupleType(type)) return type.subTypes.find(this.hasIdentifier.bind(this))?.identifier;
-        if (this.isArrayType(type) && this.hasIdentifier(type.subType)) return type.subType.identifier;
+        if (this.isArrayType(type) && !this.isTupleType(type) && this.hasIdentifier(type.subType)) return type.subType.identifier;
         if (this.hasIdentifier(type)) return type.identifier;
     }
 
@@ -646,7 +643,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     protected buildEmbeddedEntity(attributeName: string, type: IAttrMetadata["type"]): ReturnType<typeof embeddedEntityFactory> | null {
         let embeddedType: MetadataType | MetadataType[] = type;
-        if (this.isArrayType(type)) embeddedType = type.subType;
+        if (this.isArrayType(type) && !this.isTupleType(type)) embeddedType = type.subType;
         if (this.isTupleType(type) && type.subTypes.every((subType) => this.isPlainObjectType(subType))) embeddedType = type.subTypes;
         if (!this.isValidEmbeddedType(embeddedType)) return null;
         if (!isArray(embeddedType)) embeddedType = [embeddedType];
@@ -682,9 +679,12 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param checkFunc function that will be called to check the sub types
      * @returns true if all types are of type checked by checkFunc and false else
      */
-    private checkSubTypes(arrayLikeType: IAttrMetadata["type"], checkFunc: ((type?: IAttrMetadata["type"]) => boolean)): boolean {
-        if (this.isUnionType(arrayLikeType)) return arrayLikeType.subTypes.every(checkFunc.bind(this));
-        return false;
+    private checkSubTypes(arrayLikeType: IAttrMetadata["type"], checkFunc: ((type?: IAttrMetadata["type"]) => boolean), includeIntersections: boolean = false): boolean {
+        let intersectionResult = false;
+        let unionResult = false;
+        if (includeIntersections && this.isIntersectionType(arrayLikeType)) intersectionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
+        if (this.isUnionType(arrayLikeType)) unionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
+        return unionResult || intersectionResult;
     }
 
     /**
@@ -833,7 +833,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
         } else if (this.isTupleType(type)) {
             const tupleTypes = type.subTypes.map((subType) => this.buildSchemaType(subType));
             schemaType = baseTypeFuncs.tuple(tupleTypes as [SchemaTypes, ...SchemaTypes[]]);
-        } else if (this.isArrayType(type)) {
+        } else if (this.isArrayType(type) && !this.isTupleType(type)) {
             schemaType = baseTypeFuncs.array(this.buildSchemaType(type.subType));
         } else if (this.isOptionalType(type)) {
             schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType));
@@ -843,10 +843,6 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             const modelSchema = modelClass?.getSchema();
             schemaType = modelClass && modelSchema?.getSchemaType()?.or(
                 baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.never();
-        } else if (this.isPlainObjectType(type)) {
-            if (this.embeddedEntity) {
-                schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
-            } else schemaType = baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
             schemaType = this.buildSchemaType(subTypes.shift() as MetadataType);
@@ -856,11 +852,17 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
                     schemaType = schemaType.and(subSchemaType);
                 } else schemaType = schemaType.or(subSchemaType);
             }
+        } else if (this.isDateType()) {
+            schemaType = baseTypeFuncs.date();
+        } else if (this.isPlainObjectType(type)) {
+            if (this.embeddedEntity) {
+                schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
+            } else schemaType = baseTypeFuncs.never();
         } else if (this.isNullType(type)) {
             schemaType = baseTypeFuncs.null();
         } else if (this.isUndefinedType(type)) {
             schemaType = baseTypeFuncs.undefined();
-        } else if (this.isLiteralType(type) && "value" in type) {
+        } else if (this.isLiteralType(type) && "value" in type && typeof type.value !== "symbol") {
             // "Value" has to be in type because a literal can obviously be an union type
             schemaType = baseTypeFuncs.literal(type.value);
         } else if (this.isStringType(type)) {
@@ -869,8 +871,6 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             schemaType = baseTypeFuncs.number();
         } else if (this.isBooleanType(type)) {
             schemaType = baseTypeFuncs.boolean();
-        } else if (this.isDateType()) {
-            schemaType = baseTypeFuncs.date();
         }
 
         let min = -Infinity;

@@ -46,7 +46,11 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
         }
 
         function isValidDeclaration(node: ts.Node): node is ValidDeclarations {
-            return Object.values(checkers).some((checker) => checker(node));
+            return Object.keys(checkers).some((checkerName) => {
+                return checkers[checkerName as keyof typeof checkers](node) && ts.canHaveDecorators(node) && ts.getDecorators(node)?.some((decorator) => {
+                    return decorator.expression.getText(decorator.getSourceFile()).includes(checkerName);
+                });
+            });
         }
 
         function buildMetadataJson(node: ts.CallExpression, metadata: Record<string, any>) {
@@ -111,8 +115,11 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
             };
 
             const metadata = next(node.parent.parent as ValidDeclarations);
-            console.log("Result:", JSON.stringify(metadata), "\n");
-            if (!Object.keys(metadata).length) return node;
+            if (!Object.keys(metadata).length) {
+                console.info("skipped!");
+                return node;
+            }
+            console.debug("Result:", JSON.stringify(metadata), "\n");
             const result = buildMetadataJson(node, metadata);
             return result;
         }

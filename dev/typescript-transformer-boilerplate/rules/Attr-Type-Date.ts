@@ -19,7 +19,8 @@ export const AttrTypeDate = createRule({
     emitType() {
         return {
             identifier: "Date",
-            isObjectType: true
+            isObjectType: true,
+            isNamedObject: true
         };
     }
 });

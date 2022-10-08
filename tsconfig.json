@@ -54,6 +54,7 @@
         ]
     },
     "include": [
+        "./@types/*.d.ts",
         "./**/*.js",
         "src/**/*.ts",
         "src/**/*.d.ts",

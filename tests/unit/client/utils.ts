@@ -9,13 +9,15 @@ export const typeMap: Record<string, IAttrMetadata["type"]> = {
     aNumber: { identifier: "Number" },
     aDate: { identifier: "Date" },
     anUnion: {
+        isObjectType: true,
         isUnion: true,
         subTypes: [
-            { isLiteral: true, isStringLiteral: true, value: "Test" },
-            { isLiteral: true, isNumberLiteral: true, value: 42 }
+            { isLiteral: true, identifier: "String", value: "Test" },
+            { isLiteral: true, identifier: "Number", value: 42 }
         ]
     },
     anIntersection: {
+        isObjectType: true,
         isIntersection: true,
         subTypes: [{
             isModel: true,
@@ -26,14 +28,17 @@ export const typeMap: Record<string, IAttrMetadata["type"]> = {
         }]
     },
     aTuple: {
+        isObjectType: true,
+        isArray: true,
         isTuple: true,
         subTypes: [
-            { isUndefined: true },
-            { isNull: true },
+            { isPrimitive: true, identifier: "Undefined" },
+            { isPrimitive: true, identifier: "Null" },
             { isOptional: true, subType: { identifier: "Boolean" } }
         ]
     },
     anInterface: {
+        isObjectType: true,
         isInterface: true,
         members: {
             prop1: {
@@ -55,6 +60,7 @@ export const typeMap: Record<string, IAttrMetadata["type"]> = {
         }
     },
     anArray: {
+        isObjectType: true,
         isArray: true,
         subType: { identifier: "String" }
     }

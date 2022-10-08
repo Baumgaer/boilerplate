@@ -107,7 +107,7 @@ export default function () {
             expect(innerType.options[1]._def.innerType.value).to.be.equal(42);
         });
 
-        it(`should have generated an required intersection type with MyTestModel & MyTesterModel`, () => {
+        it(`should have generated an required intersection type with TestMyTestModel & TestMyTesterModel`, () => {
             const schema = TestModel.getAttributeSchema("anIntersection");
             const type = schema?.getSchemaType() as ZodIntersection<ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>, ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>>;
             expect(type).to.be.instanceOf(ZodIntersection);
@@ -176,13 +176,13 @@ export default function () {
                 const schema = TestModel.getAttributeSchema(attributeName);
                 const type = schema?.parameters.type;
                 expect(type).not.to.be.undefined;
-                expect(schema?.isObjectLikeType(type)).to.be.true;
+                expect(schema?.isObjectLikeType(type), `attribute: ${attributeName}, type: ${JSON.stringify(type)}`).to.be.true;
             }
         });
 
         it(`should be an unresolved type`, () => {
             const schema = TestModel.getAttributeSchema("anArray");
-            expect(schema?.isUnresolvedType({ isUnresolvedType: true })).to.be.true;
+            expect(schema?.isUnresolvedType({ isUnresolved: true })).to.be.true;
             expect(schema?.isUnresolvedType({ isMixed: true })).to.be.true;
         });
 

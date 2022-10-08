@@ -259,7 +259,7 @@ describe('decorators', () => {
 
         it(`should be an unresolved type`, () => {
             const schema = TestModel.getAttributeSchema("anArray");
-            expect(schema?.isUnresolvedType({ isUnresolvedType: true })).to.be.true;
+            expect(schema?.isUnresolvedType({ isUnresolved: true })).to.be.true;
             expect(schema?.isUnresolvedType({ isMixed: true })).to.be.true;
         });
 
