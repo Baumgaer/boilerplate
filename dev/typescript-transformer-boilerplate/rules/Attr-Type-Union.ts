@@ -28,8 +28,9 @@ export const AttrTypeUnion = createRule({
     },
     emitType(program, sourceFile, node, next) {
         const subTypes = node.types.map((typeNode) => next(typeNode));
+        const isObjectType = subTypes.every((subType) => subType.isObjectType);
         return {
-            isObjectType: true,
+            isObjectType,
             isUnionOrIntersection: true,
             isUnion: true,
             subTypes

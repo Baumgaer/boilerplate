@@ -784,8 +784,16 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @returns true if a relation was build and false else
      */
     private async buildRelation(attributeName: string, options: RelationOptions) {
+        if (!this.isModelType()) return false;
+        if (this.isArrayType(this.rawType)) {
+            if (!this.isTupleType(this.rawType)) {
+                if (!this.isModelType(this.rawType.subType)) return false;
+            } else if (!this.rawType.subTypes.every((subType) => this.isModelType(subType))) return false;
+        }
+        const identifier = this.getTypeIdentifier() || "";
+        if (!identifier) return false;
         const proto = this._ctor.prototype;
-        const otherModel = await getModelClassByName(this.getTypeIdentifier() || "");
+        const otherModel = await getModelClassByName(identifier);
         if (!otherModel) return false;
 
         const typeFunc = () => otherModel;
