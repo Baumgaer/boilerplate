@@ -159,16 +159,6 @@ export default abstract class BaseAttribute<T extends ModelLike> {
     }
 
     /**
-     * Returns the processing state of the changes. Changes are processed
-     * while they are applied or revoked.
-     *
-     * @returns true if changes are in process and false else
-     */
-    public isProcessingChanges() {
-        return this.processingChanges;
-    }
-
-    /**
      * Iterates al changes in reverse way and performs for each change the
      * opposite action. When everything is revoked, all changes will be removed.
      * Changes to the attribute can not be applied while this action is running.
@@ -229,7 +219,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      */
     public validate(value: unknown) {
         if (!this.owner.isNew() && this.schema.isImmutable) {
-            return new AttributeError(this.name.toString(), "immutable", [], value);
+            return new AggregateError([new AttributeError(this.name.toString(), "immutable", [], value)]);
         }
         return this.schema.validate(value);
     }
@@ -299,18 +289,6 @@ export default abstract class BaseAttribute<T extends ModelLike> {
         Reflect.defineMetadata(activeHookMetaKey, false, this.unProxyfiedOwner);
 
         return value;
-    }
-
-    /**
-     * Checks if the owning model has the hook named by hookName
-     *
-     * @param hookName the name of the hook to check for
-     * @returns true if the owning model has a hook and false else
-     */
-    protected hasHook(hookName: string | string[]) {
-        const check = (name: string) => Boolean(Reflect.getMetadata(`${String(this.name)}:${name}`, this.owner));
-        if (hookName instanceof Array) return hookName.some((name) => check(name));
-        return check(hookName);
     }
 
     /**
@@ -407,8 +385,11 @@ export default abstract class BaseAttribute<T extends ModelLike> {
             this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
             this.addChange({ type: "remove", path, value, previousValue });
         } else if (previousValue !== undefined && value !== undefined) {
-            this.callHook("observer:change", value, { path, oldValue: previousValue });
-            this.addChange({ type: "change", path, value, previousValue });
+            this.callHook("observer:remove", previousValue, { path, oldValue: previousValue });
+            this.addChange({ type: "remove", path, value, previousValue });
+
+            this.callHook("observer:add", value, { path, oldValue: previousValue });
+            this.addChange({ type: "add", path, value, previousValue });
         }
     }
 

@@ -45,6 +45,12 @@ export default function () {
             expect(isEqual(testModel.hookParameters, { path: ["2"], oldValue: true }), `onRemove parameter parameters comparison`).to.be.true;
             expect(testModel.removeCount, "onRemove").to.be.equal(1);  // Respecting the initial undefined value
 
+            value = ["testi", 42];
+            testModel.aTuple[0] = "testi";
+            expect(isEqual(testModel.aTuple, value), `onChange value: ${testModel.aTuple}`).to.be.true;
+            expect(testModel.removeCount, "onRemove").to.be.equal(2);
+            expect(testModel.addCount, "onAdd").to.be.equal(2);
+
             value = { prop1: "test" };
             testModel.anInterface = value;
             expect(isEqual(testModel.anInterface, value), `onChange anInterface value: ${testModel.anInterface}`).to.be.true;
@@ -162,6 +168,88 @@ export default function () {
                 { type: 'add', path: ['4'], value: '5', previousValue: undefined },
                 { type: 'add', path: ['5'], value: '6', previousValue: undefined },
                 { type: 'add', path: ['6'], value: '7', previousValue: undefined }
+            ])).to.be.true;
+        });
+
+        it("should generate changes with all array functions", () => {
+            const anArrayAttribute = testModel.getAttribute("anArray") as unknown as BaseAttribute<typeof TestModel>;
+            expect(anArrayAttribute).to.be.an.instanceOf(BaseAttribute);
+            Reflect.set(testModel, "anArray", undefined);
+            anArrayAttribute.removeChanges();
+            testModel.anArray = ["1"];
+
+            testModel.anArray.push("2", "3", "4", "5");
+            testModel.anArray.pop();
+            testModel.anArray.unshift("0.5");
+            testModel.anArray.shift();
+            testModel.anArray.copyWithin(0, 2);
+            testModel.anArray.fill("0", 0, 2);
+            testModel.anArray.splice(2, 2);
+            expect(isEqual(anArrayAttribute.getChanges(), [
+                { type: 'init', path: [], value: [], previousValue: undefined },
+                { type: 'add', path: ['0'], value: '1', previousValue: undefined },
+                { type: 'add', path: ['1'], value: '2', previousValue: undefined },
+                { type: 'add', path: ['2'], value: '3', previousValue: undefined },
+                { type: 'add', path: ['3'], value: '4', previousValue: undefined },
+                { type: 'add', path: ['4'], value: '5', previousValue: undefined },
+                {
+                    type: 'remove',
+                    path: ['4'],
+                    value: undefined,
+                    previousValue: '5'
+                },
+                {
+                    type: 'add',
+                    path: ['0'],
+                    value: '0.5',
+                    previousValue: undefined
+                },
+                {
+                    type: 'remove',
+                    path: ['0'],
+                    value: undefined,
+                    previousValue: '0.5'
+                },
+                {
+                    type: 'remove',
+                    path: ['0'],
+                    value: undefined,
+                    previousValue: '1'
+                },
+                { type: 'add', path: ['0'], value: '3', previousValue: undefined },
+                {
+                    type: 'remove',
+                    path: ['1'],
+                    value: undefined,
+                    previousValue: '2'
+                },
+                { type: 'add', path: ['1'], value: '4', previousValue: undefined },
+                {
+                    type: 'remove',
+                    path: ['0'],
+                    value: undefined,
+                    previousValue: '3'
+                },
+                { type: 'add', path: ['0'], value: '0', previousValue: undefined },
+                {
+                    type: 'remove',
+                    path: ['1'],
+                    value: undefined,
+                    previousValue: '4'
+                },
+                { type: 'add', path: ['1'], value: '0', previousValue: undefined },
+                {
+                    type: 'remove',
+                    path: ['2'],
+                    value: undefined,
+                    previousValue: '3'
+                },
+                {
+                    type: 'remove',
+                    path: ['3'],
+                    value: undefined,
+                    previousValue: '4'
+                }
             ])).to.be.true;
         });
 
