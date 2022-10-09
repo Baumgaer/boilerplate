@@ -14,7 +14,8 @@ export {
     isUndefined,
     upperFirst,
     isArray,
-    isObject
+    isObject,
+    isEqual
 } from "lodash";
 
 const lodash = addDeepdash(_);

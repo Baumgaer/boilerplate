@@ -1,7 +1,7 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
 import { AttributeError } from "~env/lib/Errors";
-import { setValue, getValue, isChangeObservable, isChangeObserved } from "~env/utils/utils";
+import { setValue, getValue, isChangeObservable, isChangeObserved, isArray, isPlainObject } from "~env/utils/utils";
 import type { Options, ApplyData } from "on-change";
 import type { ChangeMethodsArgs, IAttributeChange } from "~env/@types/AttributeSchema";
 import type { ModelLike } from "~env/@types/ModelClass";
@@ -110,7 +110,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
 
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
         if (setResult && oldValue !== newValue) {
-            this.callHook("observer:change", newValue, { path: [], oldValue: this.unProxyfiedOwner[this.name] });
+            this.callHook("observer:change", newValue, { path: [], oldValue });
             this.addChange({ type: changeType, path: [], value: newValue, previousValue: oldValue });
         }
 
@@ -239,8 +239,21 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      *
      * @param change
      */
-    protected addChange(change: IAttributeChange) {
+    protected addChange(change: IAttributeChange, isTransformed = false) {
         if (this.processingChanges) return;
+        if (["init", "change"].includes(change.type) && (isArray(change.value) || isPlainObject(change.value)) && !isTransformed) {
+            if (isArray(change.value)) {
+                this.addChange({ type: change.type, path: change.path, value: [], previousValue: change.previousValue }, true);
+                for (let index = 0; index < change.value.length; index++) {
+                    const element = change.value[index];
+                    this.addChange({ type: "add", path: [String(index)], value: element, previousValue: undefined }, true);
+                }
+            }
+            if (isPlainObject(change.value)) {
+                this.addChange({ type: change.type, path: change.path, value: Object.assign({}, change.value), previousValue: change.previousValue }, true);
+            }
+            return;
+        }
         this.changes.push(change);
     }
 
@@ -314,7 +327,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
             const idx = Number(!isNaN(parseInt(change.path.slice(-1).toString())) && change.path.slice(-1));
             if (type === "increment" && idx >= index) {
                 change.path[change.path.length - 1] = String(idx + 1);
-            } else if (type === "decrement" && idx <= index) change.path[change.path.length - 1] = String(idx - 1);
+            } else if (type === "decrement" && idx >= index) change.path[change.path.length - 1] = String(idx - 1);
         }
     }
 
@@ -326,7 +339,6 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      * @returns an array of new path, new value and new previous value from local view of the array
      */
     private determineArrayChanges(applyData: ApplyData, ...args: ChangeMethodsArgs<unknown>): ChangeMethodsArgs<unknown>[] {
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
         const [path, _value, previousValue] = args as unknown as ChangeMethodsArgs<unknown[]>;
         const changes: ChangeMethodsArgs<unknown>[] = [];
         const oldLength = Number(previousValue.length);
@@ -408,7 +420,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      * @returns true if its an observable value and false else
      */
     private mustObserveChanges(value: unknown): value is object {
-        return this.hasHook(["observer:add", "observer:remove"]) && isChangeObservable(value) && !isChangeObserved(value);
+        return (this.schema.isArrayType() || this.schema.isPlainObjectType()) && isChangeObservable(value) && !isChangeObserved(value);
     }
 
     /**
