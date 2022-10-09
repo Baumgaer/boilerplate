@@ -19,6 +19,7 @@ export * from "~common/utils/decorators";
  * @param options The Vue component options. See documentation of Vue
  * @returns A component controller as Vue instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Controller(...options: Partial<Parameters<typeof OptionsDecorator>>): ReturnType<typeof OptionsDecorator> {
     const [opts] = options;
     return OptionsDecorator(opts || {});
@@ -32,6 +33,7 @@ export function Controller(...options: Partial<Parameters<typeof OptionsDecorato
  * @param options Options to define requirement, type and default value
  * @returns A Vue property instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Prop(...options: Parameters<typeof PropDecorator>): ReturnType<typeof PropDecorator> {
     return PropDecorator(...options);
 }
@@ -43,6 +45,7 @@ export function Prop(...options: Parameters<typeof PropDecorator>): ReturnType<t
  * @param options Options to provide an event name and the type
  * @returns
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Reflected(...options: Parameters<typeof ModelDecorator>): ReturnType<typeof ModelDecorator> {
     return ModelDecorator(...options);
 }
@@ -56,6 +59,7 @@ export function Reflected(...options: Parameters<typeof ModelDecorator>): Return
  * @param options Options to define the class field to listen to and other behavior options
  * @returns A watch handler instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Watch(...options: Parameters<typeof WatchDecorator>): ReturnType<typeof WatchDecorator> {
     return WatchDecorator(...options);
 }
@@ -71,6 +75,7 @@ export function Watch(...options: Parameters<typeof WatchDecorator>): ReturnType
  * @param options The name of the event in camelCase
  * @returns A Vue event instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Emit(...options: Parameters<typeof EmitDecorator>): ReturnType<typeof EmitDecorator> {
     return EmitDecorator(...options);
 }
@@ -84,6 +89,7 @@ export function Emit(...options: Parameters<typeof EmitDecorator>): ReturnType<t
  * @param options Options to define the name of the data attribute which should be used
  * @returns A vue data attribute instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Inject(...options: Parameters<typeof InjectDecorator>): ReturnType<typeof InjectDecorator> {
     return InjectDecorator(...options);
 }
@@ -95,6 +101,7 @@ export function Inject(...options: Parameters<typeof InjectDecorator>): ReturnTy
  * @param options Options to change the name and value of the property
  * @returns A Vue property instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Provide(...options: Parameters<typeof ProvideDecorator>): ReturnType<typeof ProvideDecorator> {
     return ProvideDecorator(...options);
 }
@@ -106,6 +113,7 @@ export function Provide(...options: Parameters<typeof ProvideDecorator>): Return
  * @param options Options to define the name of the reference
  * @returns A Vue reference instance
  */
+/* istanbul ignore next This is just a wrapper for the original, so we don't need to test it */
 export function Ref(...options: Parameters<typeof RefDecorator>): ReturnType<typeof RefDecorator> {
     return RefDecorator(...options);
 }
