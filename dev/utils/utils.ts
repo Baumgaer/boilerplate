@@ -100,6 +100,7 @@ export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Progra
             if (!clause) { // export * from "foo";
                 const newSourceFile = getSourceFileByImport(declaration);
                 if (!newSourceFile) return undefined;
+                return findTypeRecursive(newSourceFile, typeName);
             } else if (isNamedExportsNode(clause)) { // export { foo, bar } from "baz";
                 for (const element of clause.elements) {
                     if (element.name.escapedText.toString() !== typeName) continue;
