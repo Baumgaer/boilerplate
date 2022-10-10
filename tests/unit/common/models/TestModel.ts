@@ -40,7 +40,7 @@ export default class TestModel extends TestAbstractModel {
     public aUselessField: null | undefined;
 
     @Attr()
-    public anIntersection!: TestMyTestModel & TestMyTesterModel;
+    public anIntersection?: TestMyTestModel & TestMyTesterModel;
 
     @Attr()
     public anotherIntersection!: ITestMyInterface & ITestMySecondInterface;
@@ -88,6 +88,10 @@ export default class TestModel extends TestAbstractModel {
     public hookParameters: any;
 
     public hookValue: any;
+
+    public constructor(params?: ConstructionParams<TestModel>) {
+        super(params);
+    }
 
     @AttrGetter("aDate")
     public getADate() {

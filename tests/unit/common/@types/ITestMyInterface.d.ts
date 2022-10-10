@@ -4,6 +4,6 @@ export interface ITestMyInterface {
 }
 
 export interface ITestMySecondInterface {
-    prop2: number[];
+    prop2: number;
     prop3: boolean;
 }

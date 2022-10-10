@@ -831,7 +831,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param type type to build schema from
      * @returns at least a "ZodAnyType"
      */
-    private buildSchemaType(type: IAttrMetadata["type"]): SchemaTypes {
+    private buildSchemaType(type: IAttrMetadata["type"], applyAttributeSettings = true): SchemaTypes {
         let schemaType: SchemaTypes = baseTypeFuncs.never();
 
         // eslint-disable-next-line import/namespace
@@ -839,12 +839,12 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             // eslint-disable-next-line import/namespace
             schemaType = DataTypes[this.validator]({ min: this.min, max: this.max }).schemaType;
         } else if (this.isTupleType(type)) {
-            const tupleTypes = type.subTypes.map((subType) => this.buildSchemaType(subType));
+            const tupleTypes = type.subTypes.map((subType) => this.buildSchemaType(subType, false));
             schemaType = baseTypeFuncs.tuple(tupleTypes as [SchemaTypes, ...SchemaTypes[]]);
         } else if (this.isArrayType(type) && !this.isTupleType(type)) {
-            schemaType = baseTypeFuncs.array(this.buildSchemaType(type.subType));
+            schemaType = baseTypeFuncs.array(this.buildSchemaType(type.subType, false));
         } else if (this.isOptionalType(type)) {
-            schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType));
+            schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType, false));
         } else if (this.isModelType(type)) {
             const typeIdentifier = this.getTypeIdentifier(type) || "";
             const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
@@ -853,9 +853,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
                 baseTypeFuncs.instanceof(modelClass as unknown as Constructor<BaseModel>)) || baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
-            schemaType = this.buildSchemaType(subTypes.shift() as MetadataType);
+            schemaType = this.buildSchemaType(subTypes.shift() as MetadataType, false);
             for (const subType of subTypes) {
-                const subSchemaType = this.buildSchemaType(subType);
+                const subSchemaType = this.buildSchemaType(subType, false);
                 if (this.isIntersectionType(type)) {
                     schemaType = schemaType.and(subSchemaType);
                 } else schemaType = schemaType.or(subSchemaType);
@@ -881,21 +881,23 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             schemaType = baseTypeFuncs.boolean();
         }
 
-        let min = -Infinity;
-        if (this.isStringType(type)) min = 0;
-        if (this.min !== undefined) min = this.min;
-        if (schemaType instanceof ZodNumber) {
-            schemaType.gte(min);
-        } else if (schemaType instanceof ZodString) schemaType.min(min);
+        if (applyAttributeSettings) {
+            let min = -Infinity;
+            if (this.isStringType(type)) min = 0;
+            if (this.min !== undefined) min = this.min;
+            if (schemaType instanceof ZodNumber) {
+                schemaType.gte(min);
+            } else if (schemaType instanceof ZodString) schemaType.min(min);
 
-        let max = Infinity;
-        if (this.max !== undefined) max = this.max;
-        if (schemaType instanceof ZodNumber) {
-            schemaType.lte(max);
-        } else if (schemaType instanceof ZodString) schemaType.max(max);
+            let max = Infinity;
+            if (this.max !== undefined) max = this.max;
+            if (schemaType instanceof ZodNumber) {
+                schemaType.lte(max);
+            } else if (schemaType instanceof ZodString) schemaType.max(max);
 
-        if (!this.isRequired) schemaType = baseTypeFuncs.optional(schemaType);
-        if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
+            if (!this.isRequired) schemaType = baseTypeFuncs.optional(schemaType);
+            if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
+        }
 
         console.debug(`Created schema type ${this._ctor.name}#${String(this.attributeName)}: ${schemaType._def.typeName}`);
         return schemaType;

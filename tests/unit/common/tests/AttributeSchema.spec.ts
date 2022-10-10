@@ -91,35 +91,36 @@ export default function () {
             expect(type).to.be.instanceOf(ZodDate);
         });
 
-        it(`should have generated a required union type with string literal "Test" and number literal 42`, () => {
+        it(`should have generated a optional union type with string literal "Test" and number literal 42`, () => {
             const schema = TestModel.getAttributeSchema("anUnion");
-            const type = schema?.getSchemaType() as ZodOptional<ZodUnion<[ZodOptional<ZodLiteral<"test">>, ZodOptional<ZodLiteral<42>>]>>;
+            const type = schema?.getSchemaType() as ZodOptional<ZodUnion<[ZodLiteral<"test">, ZodLiteral<42>]>>;
             expect(type).to.be.instanceOf(ZodOptional);
             expect(type._def.innerType).to.be.instanceOf(ZodUnion);
 
             const innerType = type._def.innerType;
-            expect(innerType.options[0]).to.be.instanceOf(ZodOptional);
-            expect(innerType.options[0]._def.innerType).to.be.instanceOf(ZodLiteral);
-            expect(innerType.options[0]._def.innerType.value).to.be.equal("Test");
+            expect(innerType.options[0]).to.be.instanceOf(ZodLiteral);
+            expect(innerType.options[0].value).to.be.equal("Test");
 
-            expect(innerType.options[1]).to.be.instanceOf(ZodOptional);
-            expect(innerType.options[1]._def.innerType).to.be.instanceOf(ZodLiteral);
-            expect(innerType.options[1]._def.innerType.value).to.be.equal(42);
+            expect(innerType.options[1]).to.be.instanceOf(ZodLiteral);
+            expect(innerType.options[1].value).to.be.equal(42);
         });
 
-        it(`should have generated an required intersection type with TestMyTestModel & TestMyTesterModel`, () => {
+        it(`should have generated an optional intersection type with TestMyTestModel & TestMyTesterModel`, () => {
             const schema = TestModel.getAttributeSchema("anIntersection");
-            const type = schema?.getSchemaType() as ZodIntersection<ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>, ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>>;
-            expect(type).to.be.instanceOf(ZodIntersection);
+            const type = schema?.getSchemaType() as ZodOptional<ZodIntersection<ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>, ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>>>;
+            expect(type).to.be.instanceOf(ZodOptional);
 
-            let innerType = type._def.left;
+            const intersection = type._def.innerType;
+            expect(intersection).to.be.instanceOf(ZodIntersection);
+
+            let innerType = intersection._def.left;
             expect(innerType.options[0]).to.be.instanceOf(ZodLazy);
             expect(innerType.options[0].schema).to.be.instanceOf(ZodObject);
             expect(innerType.options[0].schema.shape).to.have.property("name");
 
             expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
 
-            innerType = type._def.right;
+            innerType = intersection._def.right;
             expect(innerType.options[0]).to.be.instanceOf(ZodLazy);
             expect(innerType.options[0].schema).to.be.instanceOf(ZodObject);
             expect(innerType.options[0].schema.shape).to.have.property("name");
@@ -306,7 +307,6 @@ export default function () {
                         }
                     ],
                     invalid: [
-                        undefined,
                         null,
                         new Date(),
                         new TestMyTestModel({ name: randGen.generateString() }),
@@ -322,7 +322,7 @@ export default function () {
                     valid: [
                         {
                             prop1: randGen.generateString(),
-                            prop2: randGen.generateArray({ valTypes: ["number"] }),
+                            prop2: randGen.generateNumber(),
                             prop3: randGen.generateBoolean()
                         }
                     ],
@@ -331,7 +331,7 @@ export default function () {
                         null,
                         {
                             prop1: randGen.generateString(),
-                            prop2: randGen.generateNumber(),
+                            prop2: randGen.generateArray(),
                             prop3: randGen.generateBoolean()
                         },
                         {

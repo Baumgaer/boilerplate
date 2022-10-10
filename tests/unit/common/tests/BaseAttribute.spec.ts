@@ -9,7 +9,7 @@ const testModel = new TestModel();
 export default function () {
     describe('BaseAttribute', () => {
         it("should get the current date", () => {
-            expect(testModel.aDate.toISOString()).to.be.equal(new Date().toISOString());
+            expect(testModel.aDate.toISOString().split(".")[0]).to.be.equal(new Date().toISOString().split(".")[0]);
             expect(testModel.getterCount).to.be.equal(2);  // Counting the initial undefined value
         });
 

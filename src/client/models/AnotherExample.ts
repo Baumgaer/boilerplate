@@ -8,6 +8,9 @@ export default class AnotherExample extends AnotherCommonExample {
     public override name: string = "jojo";
 
     @Attr()
+    public myUnion: "test" | 42 = 42;
+
+    @Attr()
     public anotherExampleClient!: Lazy<number[]>;
 
     public constructor(params?: ConstructionParams<AnotherExample>) {
