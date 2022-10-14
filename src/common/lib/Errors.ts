@@ -21,9 +21,11 @@ export class BaseError extends Error {
 
 export class ValidationError extends BaseError {
 
-    public errors: (AttributeError | AggregateError)[];
+    public override name: string = "ValidationError";
 
-    public constructor(errors: (AttributeError | AggregateError)[], model: BaseModel) {
+    public errors: AggregateError[];
+
+    public constructor(errors: AggregateError[], model: BaseModel) {
         super(`Validation of Model ${model.className}:${model.getId()} failed`);
         this.errors = errors;
     }

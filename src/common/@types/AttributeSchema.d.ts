@@ -87,7 +87,7 @@ export interface IInjectedOptions {
     validator?: keyof typeof DataTypes;
 }
 
-export interface AttrOptions<T extends ModelLike> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, ThisType<T> {
+export interface AttrOptions<T extends ModelLike> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, Partial<Omit<IAttrMetadata, "type", "name">>, ThisType<T> {
 
     /**
      * Defines the attribute as an index column which can be used additionally

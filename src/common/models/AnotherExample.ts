@@ -8,7 +8,7 @@ export default abstract class AnotherExample extends Example {
     public anotherExampleCommon: number[] = [];
 
     @Attr()
-    public myIntersection!: YetAnotherExample & Example;
+    public myIntersection?: YetAnotherExample & Example;
 
     @AttrObserver("anotherExampleCommon", "add")
     protected onAnotherExampleCommonAdd(value: number, parameters?: ObserverParameters<number>) {

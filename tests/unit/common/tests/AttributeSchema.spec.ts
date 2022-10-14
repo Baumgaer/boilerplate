@@ -2,7 +2,7 @@ import { expect } from "chai";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
 import { v4 as uuIdV4 } from "uuid";
-import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodIntersection, ZodEffects, ZodTuple, ZodArray, ZodNull } from "zod";
+import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodTuple, ZodArray, ZodNull } from "zod";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 import TestMyTesterModel from "~env/models/TestMyTesterModel";
@@ -17,10 +17,11 @@ export default function () {
             expect(schema).to.have.property("primary", true);
             expect(schema).to.have.property("validator", "UUID");
 
-            const schemaType = schema?.getSchemaType() as ZodString | undefined;
+            const schemaType = schema?.getSchemaType() as ZodOptional<ZodString> | undefined;
             expect(schemaType).not.to.be.undefined.and.not.to.be.null;
-            expect(schemaType).to.be.instanceOf(ZodString);
-            expect(schemaType?.isUUID).to.be.true;
+            expect(schemaType).to.be.instanceOf(ZodOptional);
+            expect(schemaType?.unwrap()).to.be.instanceOf(ZodString);
+            expect(schemaType?.unwrap().isUUID).to.be.true;
         });
 
         it(`has an required "aDate" and "aNumber" attribute`, () => {
@@ -107,38 +108,30 @@ export default function () {
 
         it(`should have generated an optional intersection type with TestMyTestModel & TestMyTesterModel`, () => {
             const schema = TestModel.getAttributeSchema("anIntersection");
-            const type = schema?.getSchemaType() as ZodOptional<ZodIntersection<ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>, ZodUnion<[ZodLazy<ZodObject<ZodRawShape>>, ZodEffects<ZodObject<ZodRawShape>>]>>>;
+            const type = schema?.getSchemaType() as ZodOptional<ZodObject<any>>;
             expect(type).to.be.instanceOf(ZodOptional);
 
-            const intersection = type._def.innerType;
-            expect(intersection).to.be.instanceOf(ZodIntersection);
-
-            let innerType = intersection._def.left;
-            expect(innerType.options[0]).to.be.instanceOf(ZodLazy);
-            expect(innerType.options[0].schema).to.be.instanceOf(ZodObject);
-            expect(innerType.options[0].schema.shape).to.have.property("name");
-
-            expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
-
-            innerType = intersection._def.right;
-            expect(innerType.options[0]).to.be.instanceOf(ZodLazy);
-            expect(innerType.options[0].schema).to.be.instanceOf(ZodObject);
-            expect(innerType.options[0].schema.shape).to.have.property("name");
-
-            expect(innerType.options[1]).to.be.instanceOf(ZodEffects);
+            const obj = type.unwrap();
+            expect(obj).to.be.instanceOf(ZodObject);
+            expect(obj.shape).to.have.all.keys([
+                "id",
+                "createdAt",
+                "modifiedAt",
+                "deletedAt",
+                "version",
+                "name",
+                "veryUnique",
+                "bidirectionalOneToOne",
+                "oneToMany",
+                "manyToMany"
+            ]);
         });
 
         it(`should have generated an required intersection type with ITestMyInterface & ITestMySecondInterface`, () => {
             const schema = TestModel.getAttributeSchema("anotherIntersection");
-            const type = schema?.getSchemaType() as ZodIntersection<ZodLazy<ZodObject<ZodRawShape>>, ZodLazy<ZodObject<ZodRawShape>>>;
-            expect(type).to.be.instanceOf(ZodIntersection);
-
-            const innerTypes = [type._def.left, type._def.right];
-            for (const innerType of innerTypes) {
-                expect(innerType).to.be.instanceOf(ZodLazy);
-                expect(innerType.schema).to.be.instanceOf(ZodObject);
-                expect(innerType.schema.shape).to.have.all.keys(["prop1", "prop2", "prop3"]);
-            }
+            const type = schema?.getSchemaType() as ZodObject<ZodRawShape>;
+            expect(type).to.be.instanceOf(ZodObject);
+            expect(type.shape).to.have.all.keys(["prop1", "prop2", "prop3"]);
         });
 
         it(`should have generated a required tuple type with string, number and optional boolean`, () => {
@@ -303,7 +296,8 @@ export default function () {
                             created: new Date(),
                             modifiedAt: new Date(),
                             version: 1,
-                            name: randGen.generateString()
+                            name: randGen.generateString(),
+                            veryUnique: "Test"
                         }
                     ],
                     invalid: [

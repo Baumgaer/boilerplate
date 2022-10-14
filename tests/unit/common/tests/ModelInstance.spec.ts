@@ -1,22 +1,73 @@
 import { expect } from "chai";
+import { pick, isEqual } from "lodash";
 import { v4 } from "uuid";
 import TestModel from "~env/models/TestModel";
+import TestMyTestModel from "~env/models/TestMyTestModel";
+import type { ValidationError } from "~env/lib/Errors";
 
-const testModel = new TestModel({
-    id: v4() as UUID,
+const args = {
     name: "TestModel",
-    aDate: new Date(),
     aUselessField: null,
     anotherIntersection: { prop1: "test", prop2: 42, prop3: true },
     aTuple: ["test", 42, true],
     anInterface: { prop1: "test" },
-    anArray: []
-});
+    anArray: ["4", "5", "6", "7"]
+} as ConstructionParams<TestModel>;
+const testModel = new TestModel(Object.assign({}, args, { oneToOne: new TestMyTestModel({ name: "TestMyTestModel" }) }));
 
 export default function () {
     describe('ModelInstance', () => {
-        it("should not fail", () => {
-            expect(testModel).to.be.an.instanceOf(TestModel);
+        it("should successfully validate the dummy test model", () => {
+            const result = testModel.validate();
+            expect(result).to.be.true;
+        });
+
+        it("should get the dummyId id first and the given id then", () => {
+            expect(testModel.getId()).to.be.equal(testModel.dummyId);
+            Reflect.set(testModel, "id", v4());
+            expect(testModel.getId()).to.be.equal(testModel.id);
+        });
+
+        it("should successfully validate the final test model", () => {
+            testModel.removeChanges();
+            expect(testModel.validate()).to.be.true;
+        });
+
+        it("should recognize the inexistent key", () => {
+            testModel.removeChanges();
+            expect((testModel.validate({ inexistentKey: true }) as ValidationError).errors[0].errors[0].name).to.be.equal("InexistentError");
+        });
+
+        it("should recognize the internal key", () => {
+            testModel.removeChanges();
+            expect((testModel.validate({ aNumber: 42 }) as ValidationError).errors[0].errors[0].name).to.be.equal("ForbiddenError");
+        });
+
+        it("should give an object variant ob the model", () => {
+            const result = testModel.toObject();
+            const clone = pick(result, Object.keys(args));
+            expect(isEqual(clone, args)).to.be.true;
+        });
+
+        it("should be a valid JSON with all necessary properties", () => {
+            const result = testModel.toJson();
+            expect(JSON.parse.bind(JSON, result)).not.to.throw();
+
+            const clone = pick(JSON.parse(result), Object.keys(args));
+            expect(isEqual(clone, args)).to.be.true;
+        });
+
+        it("should apply changes", () => {
+            testModel.applyChanges({ aBoolean: [{ type: "change", value: false, path: [], previousValue: true }] });
+            expect(testModel.aBoolean).to.be.false;
+            expect(isEqual(testModel.getChanges(), {})).to.be.true;
+        });
+
+        it("should undo changes", () => {
+            testModel.aBoolean = true;
+            testModel.undoChanges();
+            expect(testModel.aBoolean).to.be.false;
+            expect(isEqual(testModel.getChanges(), {})).to.be.true;
         });
     });
 }

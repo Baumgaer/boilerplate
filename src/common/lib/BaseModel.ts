@@ -34,10 +34,11 @@ export default abstract class BaseModel extends BaseEntity {
 
     /**
      * The ID field in the database to be able to identify each model doubtless.
-     * This will be set by the server.
+     * This will be set by the server. You never should use this to identify a model.
+     * Use getId instead!
      */
     @Attr({ primary: true })
-    public readonly id!: UUID;
+    public readonly id?: UUID;
 
     /**
      * The date of creation. This will be set automatically
@@ -269,7 +270,7 @@ export default abstract class BaseModel extends BaseEntity {
      *
      * @param changes plain object with attribute names as keys and changes as values
      */
-    public applyChanges(changes: ModelChanges<this>) {
+    public applyChanges(changes: Partial<ModelChanges<this>>) {
         for (const attributeName in changes) {
             if (hasOwnProperty(changes, attributeName)) {
                 const attributeChanges = changes[attributeName];
@@ -280,12 +281,14 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public validate(this: EnvBaseModel, obj = this.getValidationObject()) {
-        const errors: (AttributeError | AggregateError)[] = [];
+        const errors: AggregateError[] = [];
         for (const key in obj) {
             if (hasOwnProperty(obj, key)) {
                 const attribute = this.getAttribute(key);
                 if (!attribute) {
-                    errors.push(new AttributeError(key, "inexistent", [key], obj[key]));
+                    errors.push(new AggregateError([new AttributeError(key, "inexistent", [key], obj[key])]));
+                } else if (attribute.schema.isInternal) {
+                    errors.push(new AggregateError([new AttributeError(key, "forbidden", [key], obj[key])]));
                 } else {
                     const validationResult = attribute.validate(obj[key]);
                     if (validationResult instanceof AggregateError) errors.push(validationResult);
@@ -316,14 +319,21 @@ export default abstract class BaseModel extends BaseEntity {
      *
      * @param _value the instance which should be wrapped with a proxy
      */
+    /* istanbul ignore next This is just a mock */
     protected addReactivity(_value: this): this {
         throw new Error("Not implemented");
     }
 
     private getValidationObject() {
-        if (this.isNew()) return Object.fromEntries(this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]));
-        if (this.hasChanges()) return Object.fromEntries(Object.keys(this.getChanges()).map((attributeName) => [attributeName, Reflect.get(this, attributeName)]));
-        return Object.fromEntries(this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]));
+        let entries: any[][] = [];
+        if (this.isNew()) entries = this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]);
+        if (this.hasChanges()) entries = Object.keys(this.getChanges()).map((attributeName) => [attributeName, Reflect.get(this, attributeName)]);
+        return Object.fromEntries(entries.filter((entry) => {
+            return !this.getAttribute(entry[0])?.schema.isInternal;
+        }).map((entry) => {
+            if (entry[1] instanceof BaseModel) return [entry[0], entry[1].toObject()];
+            return entry;
+        }));
     }
 
 }
