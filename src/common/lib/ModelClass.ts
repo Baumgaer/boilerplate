@@ -99,6 +99,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * The proxy handler object for the instance proxy. This has to be
          * complete to ensure a full working proxy
          */
+        /* istanbul ignore next Not needed to bee tested because it's just an assignment */
         private get proxyHandler(): ProxyHandler<this> {
             return {
                 get: this.get.bind(this),

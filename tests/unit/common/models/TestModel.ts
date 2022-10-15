@@ -58,6 +58,24 @@ export default class TestModel extends TestAbstractModel {
     public anArray!: string[];
 
     @Attr()
+    public theLazyOne?: Lazy<string>;
+
+    @Attr()
+    public theTextRange?: TextRange<5, 15>;
+
+    @Attr()
+    public theNumberRange?: NumberRange<5, 15>;
+
+    @Attr()
+    public theEmail?: Email;
+
+    @Attr()
+    public theUniqueOne?: Unique<string>;
+
+    @Attr()
+    public theVarchar?: Varchar<15>;
+
+    @Attr()
     protected aNumber!: number;
 
     @Attr()
