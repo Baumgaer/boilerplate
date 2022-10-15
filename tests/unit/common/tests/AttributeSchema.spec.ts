@@ -3,13 +3,15 @@ import { expect } from "chai";
 import * as randGen from "random-input-generator";
 import { v4 as uuIdV4 } from "uuid";
 import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodTuple, ZodArray, ZodNull } from "zod";
+import { embeddedEntityFactory } from "~common/lib/EmbeddedEntity";
+import ModelSchema from "~env/lib/ModelSchema";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 import TestMyTesterModel from "~env/models/TestMyTesterModel";
-import { hasOwnProperty } from "~env/utils/utils";
+import { hasOwnProperty, upperFirst } from "~env/utils/utils";
 import type { ZodRawShape, ZodUndefined } from "zod";
 
-export default function () {
+export default function (environment = "common") {
     describe('AttributeSchema', () => {
         it(`has a primary id column`, () => {
             const schema = TestModel.getAttributeSchema("id");
@@ -154,6 +156,17 @@ export default function () {
             expect(type.schema._def.shape().prop1).to.be.an.instanceOf(ZodString);
             expect(type.schema._def.shape().prop2).to.be.an.instanceOf(ZodOptional);
             expect(type.schema._def.shape().prop2._def.innerType).to.be.an.instanceOf(ZodNumber);
+        });
+
+        it(`should be an embedded entity`, () => {
+            const schema = TestModel.getAttributeSchema("anInterface");
+            // @ts-expect-error 002
+            const embeddedEntityClass = schema?.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
+            const commonEmbeddedEntityClass = embeddedEntityFactory(`${upperFirst(environment)}TestModelAnInterfaceEmbeddedEntity`, { prop1: {}, prop2: {} }, true);
+            const instance = new commonEmbeddedEntityClass({ prop1: "test" });
+            expect(embeddedEntityClass).to.be.an.instanceOf(commonEmbeddedEntityClass);
+            expect(instance.getSchema()).to.be.an.instanceOf(ModelSchema);
+            expect(instance.isNew()).to.be.true;
         });
 
         it(`should have generated an required array type of strings`, () => {

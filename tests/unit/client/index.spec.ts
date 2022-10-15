@@ -17,7 +17,7 @@ describe("Tests", () => {
         await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
     });
 
-    CommonSpec();
+    CommonSpec("client");
 
     describe("Client", () => {
         ModelSchemaSpec();

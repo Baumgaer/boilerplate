@@ -68,7 +68,7 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
 
         protected static isInstance(instance: unknown): boolean {
             if (!isObject(instance) || isPlainObject(instance)) return false;
-            if (!("className" in instance) || Reflect.get(instance, "className") !== this.className) return false;
+            if (!("className" in instance) || Reflect.get(instance, "className") !== className) return false;
             Object.keys(members).every((key) => hasOwnProperty(instance, key));
             return true;
         }

@@ -7,7 +7,7 @@ import TestModel from "~env/models/TestModel";
 const attributesToExpect = ["aBoolean", "aString", "aNumber", "aDate"] as const;
 const atLeastAttributesText = `At least: "${attributesToExpect.join("\", \"")}"`;
 
-export default function () {
+export default function (_environment = "common") {
     describe('ModelSchema', () => {
         it('should give a model a className', () => {
             expect(TestModel.className).to.be.equal("TestModel");

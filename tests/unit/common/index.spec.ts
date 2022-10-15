@@ -3,11 +3,11 @@ import BaseAttributeSpec from "~common/tests/BaseAttribute.spec";
 import ModelInstance from "~common/tests/ModelInstance.spec";
 import ModelSchemaSpec from "~common/tests/ModelSchema.spec";
 
-export default function () {
+export default function (environment = "common") {
     describe("Common", () => {
-        ModelSchemaSpec();
-        AttributeSchemaSpec();
-        BaseAttributeSpec();
-        ModelInstance();
+        ModelSchemaSpec(environment);
+        AttributeSchemaSpec(environment);
+        BaseAttributeSpec(environment);
+        ModelInstance(environment);
     });
 }

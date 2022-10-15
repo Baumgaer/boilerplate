@@ -15,7 +15,7 @@ const args = {
 } as ConstructionParams<TestModel>;
 const testModel = new TestModel(Object.assign({}, args, { oneToOne: new TestMyTestModel({ name: "TestMyTestModel" }) }));
 
-export default function () {
+export default function (_environment = "common") {
     describe('ModelInstance', () => {
         it("should successfully validate the dummy test model", () => {
             const result = testModel.validate();

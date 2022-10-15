@@ -6,7 +6,7 @@ import type { IAttributeChange } from "~env/@types/AttributeSchema";
 
 const testModel = new TestModel();
 
-export default function () {
+export default function (_environment = "common") {
     describe('BaseAttribute', () => {
         it("should get the current date", () => {
             expect(testModel.aDate.toISOString().split(".")[0]).to.be.equal(new Date().toISOString().split(".")[0]);
