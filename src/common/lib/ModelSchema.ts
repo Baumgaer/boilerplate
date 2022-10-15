@@ -141,10 +141,10 @@ export default class ModelSchema<T extends ModelLike> {
     private async applyEntity() {
         // Wait for all attribute schemas constructed to ensure order of decorators
         await Promise.all(Object.values(this.attributeSchemas).map((attributeSchema) => attributeSchema.awaitConstruction()));
-        const proto: typeof BaseModel = Object.getPrototypeOf(this.owner);
+        const proto: typeof BaseModel = Object.getPrototypeOf(Object.getPrototypeOf(Object.getPrototypeOf(this.owner)));
         const options = Object.assign({}, this.options, { name: this.options.collectionName });
 
-        if (proto.getSchema()?.isAbstract) {
+        if (proto?.getSchema?.()?.isAbstract) {
             ChildEntity(this.modelName)(this.owner);
         } else if (this.isAbstract) {
             Entity(options.collectionName, options)(this.owner);

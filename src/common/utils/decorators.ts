@@ -29,6 +29,9 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {})
         // that properties on whole prototype chain
         const options = metadataOptions;
         const proto: typeof BaseModel = Object.getPrototypeOf(target);
+
+        if (target.name !== proto.name) return; // This is a common model which will never be a "real" model
+
         // @ts-expect-error This is readonly to prevent setting it while normal development
         proto.className = options.className;
         // @ts-expect-error This is readonly to prevent setting it while normal development
