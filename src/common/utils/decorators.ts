@@ -139,20 +139,3 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
         Reflect.defineMetadata(`${String(attributeName)}:observer:${type}`, descriptor, target);
     };
 }
-
-/**
- * Registers a method as a transformer for an attribute. This method get the
- * current value as well as the user who asked for the attribute as parameters
- * and has to return a value where its type corresponds to the type of the attribute.
- * This will be called when getting the model as an object.
- *
- * @template T the model class the attribute belongs to (automatically detected)
- * @param attributeName the name of the attribute
- * @param type the type of the observer
- * @returns a decorator which registers the method as a transformer
- */
-export function AttrTransformer<T>(attributeName: keyof T, type: AttrObserverTypes) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<TransformerHookFunction<T[typeof attributeName], unknown>>) => {
-        Reflect.defineMetadata(`${String(attributeName)}:transformer:${type}`, descriptor, target);
-    };
-}
