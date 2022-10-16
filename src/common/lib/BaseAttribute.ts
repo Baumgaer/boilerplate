@@ -221,7 +221,13 @@ export default abstract class BaseAttribute<T extends ModelLike> {
         if (!this.owner.isNew() && this.schema.isImmutable) {
             return new AggregateError([new AttributeError(this.name.toString(), "immutable", [], value)]);
         }
-        return this.schema.validate(value);
+        let result = this.schema.validate(value);
+        const hookValue = this.callHook("validator", value) as boolean | AttributeError;
+        if (hookValue instanceof AttributeError) {
+            if (result instanceof AggregateError) result.errors.push(hookValue);
+            result = new AggregateError([hookValue]);
+        }
+        return result;
     }
 
     /**

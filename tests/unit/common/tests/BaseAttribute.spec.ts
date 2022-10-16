@@ -1,4 +1,5 @@
 import { expect } from "chai";
+import { AttributeError, ValidationError } from "~common/lib/Errors";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import TestModel from "~env/models/TestModel";
 import { isEqual } from "~env/utils/utils";
@@ -21,6 +22,18 @@ export default function (_environment = "common") {
             testModel.anArray = ["5"];
             expect(isEqual(testModel.anArray, ["5"])).to.be.true;
             expect(testModel.setterCount).to.be.equal(2);  // Respecting the initial undefined value
+        });
+
+        it("should trigger the validator", () => {
+            let result = testModel.validate({ aString: "lol" });
+            expect(result).to.be.true;
+            expect(testModel.validateCount).to.be.equal(1);
+
+            result = testModel.validate({ aString: "meep" });
+            expect(result).to.be.an.instanceOf(ValidationError);
+            expect((result as ValidationError).errors[0]).to.be.an.instanceOf(AggregateError);
+            expect(((result as ValidationError).errors[0] as AggregateError).errors[0]).to.be.an.instanceOf(AttributeError);
+            expect(testModel.validateCount).to.be.equal(2);
         });
 
         it("should trigger the observer", () => {
@@ -192,64 +205,19 @@ export default function (_environment = "common") {
                 { type: 'add', path: ['2'], value: '3', previousValue: undefined },
                 { type: 'add', path: ['3'], value: '4', previousValue: undefined },
                 { type: 'add', path: ['4'], value: '5', previousValue: undefined },
-                {
-                    type: 'remove',
-                    path: ['4'],
-                    value: undefined,
-                    previousValue: '5'
-                },
-                {
-                    type: 'add',
-                    path: ['0'],
-                    value: '0.5',
-                    previousValue: undefined
-                },
-                {
-                    type: 'remove',
-                    path: ['0'],
-                    value: undefined,
-                    previousValue: '0.5'
-                },
-                {
-                    type: 'remove',
-                    path: ['0'],
-                    value: undefined,
-                    previousValue: '1'
-                },
+                { type: 'remove', path: ['4'], value: undefined, previousValue: '5' },
+                { type: 'add', path: ['0'], value: '0.5', previousValue: undefined },
+                { type: 'remove', path: ['0'], value: undefined, previousValue: '0.5' },
+                { type: 'remove', path: ['0'], value: undefined, previousValue: '1' },
                 { type: 'add', path: ['0'], value: '3', previousValue: undefined },
-                {
-                    type: 'remove',
-                    path: ['1'],
-                    value: undefined,
-                    previousValue: '2'
-                },
+                { type: 'remove', path: ['1'], value: undefined, previousValue: '2' },
                 { type: 'add', path: ['1'], value: '4', previousValue: undefined },
-                {
-                    type: 'remove',
-                    path: ['0'],
-                    value: undefined,
-                    previousValue: '3'
-                },
+                { type: 'remove', path: ['0'], value: undefined, previousValue: '3' },
                 { type: 'add', path: ['0'], value: '0', previousValue: undefined },
-                {
-                    type: 'remove',
-                    path: ['1'],
-                    value: undefined,
-                    previousValue: '4'
-                },
+                { type: 'remove', path: ['1'], value: undefined, previousValue: '4' },
                 { type: 'add', path: ['1'], value: '0', previousValue: undefined },
-                {
-                    type: 'remove',
-                    path: ['2'],
-                    value: undefined,
-                    previousValue: '3'
-                },
-                {
-                    type: 'remove',
-                    path: ['3'],
-                    value: undefined,
-                    previousValue: '4'
-                }
+                { type: 'remove', path: ['2'], value: undefined, previousValue: '3' },
+                { type: 'remove', path: ['3'], value: undefined, previousValue: '4' }
             ])).to.be.true;
         });
 

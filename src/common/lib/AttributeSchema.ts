@@ -14,7 +14,7 @@ import {
     VersionColumn,
     Index
 } from "typeorm";
-import { ZodLazy, ZodNumber, ZodString } from "zod";
+import { ZodLazy, ZodNumber, ZodString, ZodUnion } from "zod";
 import * as DataTypes from "~common/lib/DataTypes";
 import { baseTypeFuncs } from "~common/utils/schema";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
@@ -22,7 +22,7 @@ import { AttributeError } from "~env/lib/Errors";
 import { merge, getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
-import type { ZodObject } from "zod";
+import type { ZodObject, SafeParseReturnType } from "zod";
 import type {
     AttrOptions,
     AllColumnOptions,
@@ -303,7 +303,13 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             (value as any[]).length = length;
         }
 
-        const result = this.getSchemaType().safeParse(value);
+        let result: SafeParseReturnType<string, string> | SafeParseReturnType<number, number>;
+        // eslint-disable-next-line import/namespace
+        if (this.validator && DataTypes[this.validator]) {
+            // eslint-disable-next-line import/namespace
+            result = DataTypes[this.validator]({ min: this.min, max: this.max }).validate(value);
+        } else result = this.getSchemaType().safeParse(value);
+
         if (!result.success) {
             const errors: AttributeError[] = [];
             result.error.issues.forEach((issue) => {
@@ -848,14 +854,16 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             const typeIdentifier = this.getTypeIdentifier(type) || "";
             const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
             const modelSchema = modelClass?.getSchema();
-            schemaType = modelSchema?.getSchemaType() || baseTypeFuncs.never();
+            schemaType = modelSchema?.getSchemaType().or(baseTypeFuncs.instanceof(modelClass as any)) || baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
             schemaType = this.buildSchemaType(subTypes.shift() as MetadataType, false);
             for (const subType of subTypes) {
                 let subSchemaType = this.buildSchemaType(subType, false) as ZodObject<any>;
                 if (this.isIntersectionType(type)) {
+                    if (subSchemaType instanceof ZodUnion) subSchemaType = subSchemaType.options[0];
                     if (subSchemaType instanceof ZodLazy) subSchemaType = subSchemaType.schema;
+                    if (schemaType instanceof ZodUnion) schemaType = schemaType.options[0];
                     if (schemaType instanceof ZodLazy) {
                         schemaType = baseTypeFuncs.object(Object.assign({}, schemaType.schema.shape, subSchemaType.shape));
                     } else schemaType = Object.assign({}, (schemaType as ZodObject<any>).shape, subSchemaType.shape);
@@ -864,9 +872,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
         } else if (this.isDateType()) {
             schemaType = baseTypeFuncs.date();
         } else if (this.isPlainObjectType(type)) {
-            if (this.embeddedEntity) {
-                schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
-            } else schemaType = baseTypeFuncs.never();
+            if (this.embeddedEntity) schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
         } else if (this.isNullType(type)) {
             schemaType = baseTypeFuncs.null();
         } else if (this.isUndefinedType(type)) {

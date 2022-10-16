@@ -7,6 +7,7 @@ import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetada
 import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
 import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
+import type { AttributeError } from "~env/lib/Errors";
 
 /**
  * Defines a BaseModel inherited class as a real model which will be stored in
@@ -87,7 +88,7 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
  * @returns a decorator which registers the method as a validator
  */
 export function AttrValidator<T>(attributeName: keyof T) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], boolean>>) => {
+    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], true | AttributeError>>) => {
         Reflect.defineMetadata(`${String(attributeName)}:validator`, descriptor, target);
     };
 }

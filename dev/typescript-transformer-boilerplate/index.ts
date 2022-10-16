@@ -22,6 +22,7 @@ import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 import type ts from "typescript";
 
 const rules = [
+    AttrTypeParenthesized,
     Model,
     AttrTypeNull,
     AttrTypeUndefined,
@@ -37,7 +38,6 @@ const rules = [
     AttrTypeTuple,
     AttrTypeArray,
     AttrTypeOptional,
-    AttrTypeParenthesized,
     AttrTypeCustom,
     AttrTypeAny
 ];

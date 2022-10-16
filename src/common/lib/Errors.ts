@@ -1,8 +1,8 @@
 import HttpErrors from "http-errors";
+import BaseModel from "~env/lib/BaseModel";
 import { upperFirst } from "~env/utils/utils";
 import type { PascalCase } from "type-fest";
 import type { AttributeKinds } from "~common/@types/Errors";
-import type BaseModel from "~env/lib/BaseModel";
 
 export class BaseError extends Error {
 
@@ -25,8 +25,11 @@ export class ValidationError extends BaseError {
 
     public errors: AggregateError[];
 
-    public constructor(errors: AggregateError[], model: BaseModel) {
-        super(`Validation of Model ${model.className}:${model.getId()} failed`);
+    public constructor(errors: AggregateError[], model: BaseModel | typeof BaseModel) {
+
+        let message = `Validation of Model ${model.className} failed`;
+        if (model instanceof BaseModel) message = `Validation of Model ${model.className}:${model.getId()} failed`;
+        super(message);
         this.errors = errors;
     }
 }

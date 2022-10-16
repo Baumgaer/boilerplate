@@ -15,7 +15,6 @@ declare type ModuleLike<T> = { [key: string]: T, default: T };
 declare type GeneralHookFunction<V, R> = (value: V) => R;
 declare type UnspecificHookFunction<T, V, S, R> = (this: T, value: V, parametersOrUser: S) => R;
 declare type ObserverHookFunction<T> = (value: T, parameters?: ObserverParameters<T>) => void;
-declare type TransformerHookFunction<V, U> = (value: V, user: U) => V;
 
 declare interface ObserverParameters<T> {
     path: (string | symbol)[],

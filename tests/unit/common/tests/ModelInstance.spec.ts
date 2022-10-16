@@ -1,9 +1,9 @@
 import { expect } from "chai";
 import { pick, isEqual } from "lodash";
 import { v4 } from "uuid";
+import { ValidationError } from "~env/lib/Errors";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
-import type { ValidationError } from "~env/lib/Errors";
 
 const args = {
     name: "TestModel",
@@ -11,7 +11,8 @@ const args = {
     anotherIntersection: { prop1: "test", prop2: 42, prop3: true },
     aTuple: ["test", 42, true],
     anInterface: { prop1: "test" },
-    anArray: ["4", "5", "6", "7"]
+    anArray: ["4", "5", "6", "7"],
+    aString: "lolHaha"
 } as ConstructionParams<TestModel>;
 const testModel = new TestModel(Object.assign({}, args, { oneToOne: new TestMyTestModel({ name: "TestMyTestModel" }) }));
 
@@ -31,6 +32,7 @@ export default function (_environment = "common") {
         it("should successfully validate the final test model", () => {
             testModel.removeChanges();
             expect(testModel.validate()).to.be.true;
+            expect(testModel.validate({ aString: "meep" })).to.be.an.instanceOf(ValidationError);
         });
 
         it("should recognize the inexistent key", () => {

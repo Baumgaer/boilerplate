@@ -1,3 +1,4 @@
+import { AttributeError } from "~client/lib/Errors";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model } from "~client/utils/decorators";
 import AnotherCommonExample from "~common/models/AnotherExample";
 
@@ -18,9 +19,9 @@ export default class AnotherExample extends AnotherCommonExample {
     }
 
     @AttrValidator("name")
-    public validateName(value: string): boolean {
+    public validateName(value: string) {
         if (value === "lala") return true;
-        return false;
+        return new AttributeError("name", "format", [], value);
     }
 
     @AttrGetter("name")

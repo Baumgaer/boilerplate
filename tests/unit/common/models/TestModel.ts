@@ -1,5 +1,6 @@
+import { AttributeError } from "~common/lib/Errors";
 import TestAbstractModel from "~env/models/TestAbstractModel";
-import { Attr, AttrGetter, AttrSetter, AttrObserver/*, AttrTransformer, AttrValidator*/ } from "~env/utils/decorators";
+import { Attr, AttrGetter, AttrSetter, AttrObserver, AttrValidator } from "~env/utils/decorators";
 import type { ITestMyInterface, ITestMySecondInterface } from "~env/@types/ITestMyInterface";
 import type TestMyTestModel from "~env/models/TestMyTestModel";
 import type TestMyTesterModel from "~env/models/TestMyTesterModel";
@@ -8,6 +9,9 @@ export default class TestModel extends TestAbstractModel {
 
     @Attr()
     public oneToOne?: TestMyTestModel;
+
+    @Attr()
+    public oneToOneUnion?: TestMyTestModel | TestMyTesterModel;
 
     @Attr({ relationColumn: "bidirectionalOneToOne", isRelationOwner: true })
     public bidirectionalOneToOne?: TestMyTestModel;
@@ -35,6 +39,9 @@ export default class TestModel extends TestAbstractModel {
 
     @Attr()
     public anUnion: "Test" | 42 = 42;
+
+    @Attr()
+    public aParenthesizedUnion: "Test" | 42 | ("tseT" | 24) = 42;
 
     @Attr()
     public aUselessField: null | undefined;
@@ -103,6 +110,8 @@ export default class TestModel extends TestAbstractModel {
 
     public removeCount: number = 0;
 
+    public validateCount: number = 0;
+
     public hookParameters: any;
 
     public hookValue: any;
@@ -112,13 +121,13 @@ export default class TestModel extends TestAbstractModel {
     }
 
     @AttrGetter("aDate")
-    public getADate() {
+    protected getADate() {
         this.getterCount++;
         return new Date();
     }
 
     @AttrSetter("anArray")
-    public setAnArray(value: string[]) {
+    protected setAnArray(value: string[]) {
         if (!value) return;
         this.setterCount++;
         if (!value.length) return ["1", "2", "3"];
@@ -126,30 +135,37 @@ export default class TestModel extends TestAbstractModel {
     }
 
     @AttrObserver("anInterface", "change")
-    public onAnInterfaceAdd(value: typeof this["anInterface"], parameters?: ObserverParameters<typeof this["anInterface"]>): void {
+    protected onAnInterfaceAdd(value: typeof this["anInterface"], parameters?: ObserverParameters<typeof this["anInterface"]>): void {
         this.changeCount++;
         this.hookValue = value;
         this.hookParameters = parameters;
     }
 
     @AttrObserver("aTuple", "change")
-    public onATupleChange(value: typeof this["aTuple"], parameters?: ObserverParameters<typeof this["aTuple"]>): void {
+    protected onATupleChange(value: typeof this["aTuple"], parameters?: ObserverParameters<typeof this["aTuple"]>): void {
         this.changeCount++;
         this.hookValue = value;
         this.hookParameters = parameters;
     }
 
     @AttrObserver("aTuple", "add")
-    public onATupleAdd(value: typeof this["aTuple"], parameters?: ObserverParameters<typeof this["aTuple"]>): void {
+    protected onATupleAdd(value: typeof this["aTuple"], parameters?: ObserverParameters<typeof this["aTuple"]>): void {
         this.addCount++;
         this.hookValue = value;
         this.hookParameters = parameters;
     }
 
     @AttrObserver("aTuple", "remove")
-    public onATupleRemove(value: typeof this["aTuple"], parameters?: ObserverParameters<typeof this["aTuple"]>): void {
+    protected onATupleRemove(value: typeof this["aTuple"], parameters?: ObserverParameters<typeof this["aTuple"]>): void {
         this.removeCount++;
         this.hookValue = value;
         this.hookParameters = parameters;
+    }
+
+    @AttrValidator("aString")
+    protected validateAString(value: this["aString"]) {
+        this.validateCount++;
+        if (!value?.startsWith("lol")) return new AttributeError("aString", "format", [], value);
+        return true;
     }
 }
