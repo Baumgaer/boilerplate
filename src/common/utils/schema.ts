@@ -1,4 +1,7 @@
 import { z } from "zod";
+import { TypeError } from "~env/lib/Errors";
+import type { SafeParseReturnType } from "zod";
+import type { ValidationResult, AttributeKinds } from "~env/@types/Errors";
 
 export const baseTypeFuncs = {
     any: z.any.bind(z),
@@ -39,3 +42,27 @@ export const baseTypeFuncs = {
     unknown: z.unknown.bind(z),
     void: z.void.bind(z)
 };
+
+export function toInternalValidationReturnType(result: SafeParseReturnType<any, any>): ValidationResult {
+    if (result.success) return { success: result.success, errors: [] };
+
+    const errors = [];
+    for (const issue of result.error.issues) {
+        let kind: AttributeKinds = "unknown";
+        if (issue.message === "Required") {
+            kind = "required";
+        } else if (issue.code === "too_big") {
+            kind = "rangeOverflow";
+        } else if (issue.code === "too_small") {
+            kind = "rangeUnderflow";
+        } else if (issue.code === "unrecognized_keys") {
+            kind = "inexistent";
+        } else if (issue.code.startsWith("invalid") && !issue.code.endsWith("type")) {
+            kind = "format";
+        } else kind = "type";
+        errors.push(new TypeError("Error while validating type", kind, issue.path));
+    }
+
+    if (errors.length) return { success: false, errors };
+    return { success: true, errors: [] };
+}

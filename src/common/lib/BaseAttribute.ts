@@ -1,11 +1,13 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
-import { AttributeError } from "~env/lib/Errors";
+import { BaseError, AttributeError } from "~env/lib/Errors";
 import { setValue, getValue, isChangeObservable, isChangeObserved, isArray, isPlainObject } from "~env/utils/utils";
 import type { Options, ApplyData } from "on-change";
 import type { ChangeMethodsArgs, IAttributeChange } from "~env/@types/AttributeSchema";
+import type { ValidationResult } from "~env/@types/Errors";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type AttributeSchema from "~env/lib/AttributeSchema";
+
 
 /**
  * Manages basic reactivity inside the model and calls hooks depending on type
@@ -217,15 +219,16 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      * @param value the value to check
      * @returns true if the value is valid and an error else
      */
-    public validate(value: unknown) {
+    public validate(value: unknown): ValidationResult {
         if (!this.owner.isNew() && this.schema.isImmutable) {
-            return new AggregateError([new AttributeError(this.name.toString(), "immutable", [], value)]);
+            return { success: false, errors: [new AttributeError(this.name.toString(), "immutable", [], value)] };
         }
         let result = this.schema.validate(value);
-        const hookValue = this.callHook("validator", value) as boolean | AttributeError;
-        if (hookValue instanceof AttributeError) {
-            if (result instanceof AggregateError) result.errors.push(hookValue);
-            result = new AggregateError([hookValue]);
+        const hookValue = this.callHook("validator", value);
+        if (hookValue instanceof BaseError) {
+            if (!result.success) {
+                result.errors.push(hookValue);
+            } else result = { success: false, errors: [hookValue] };
         }
         return result;
     }

@@ -1,48 +1,52 @@
-import HttpErrors from "http-errors";
-import BaseModel from "~env/lib/BaseModel";
+import { Forbidden as HttpForbidden, InternalServerError as HttpInternalServerError, NotAcceptable as HttpNotAcceptable, NotFound as HttpNotFound } from "http-errors";
 import { upperFirst } from "~env/utils/utils";
 import type { PascalCase } from "type-fest";
-import type { AttributeKinds } from "~common/@types/Errors";
+import type { AttributeKinds } from "~env/@types/Errors";
 
 export class BaseError extends Error {
 
-    public override name: string = "UnknownError";
+    public override readonly name: string = "UnknownError";
 
-    public status: number = 500;
+    public readonly status: number = 500;
 
-    public statusCode: number = 500;
+    public readonly statusCode: number = 500;
 
-    public expose: boolean = true;
+    public readonly expose: boolean = true;
 
     public constructor(message: string) {
         super(message);
     }
 }
 
-export class ValidationError extends BaseError {
+export class TypeError extends BaseError {
 
-    public override name: string = "ValidationError";
+    public override readonly name: string = "TyeError";
 
-    public errors: AggregateError[];
+    public override readonly status: number = 400;
 
-    public constructor(errors: AggregateError[], model: BaseModel | typeof BaseModel) {
+    public override readonly statusCode: number = 400;
 
-        let message = `Validation of Model ${model.className} failed`;
-        if (model instanceof BaseModel) message = `Validation of Model ${model.className}:${model.getId()} failed`;
+    public readonly kind: string = "unknown";
+
+    public readonly path: (string | number)[];
+
+    public constructor(message: string, kind: AttributeKinds, path: (string | number)[]) {
         super(message);
-        this.errors = errors;
+        this.kind = kind;
+        this.path = path;
     }
+
 }
 
 export class AttributeError extends BaseError {
 
-    public override name: `${Capitalize<AttributeKinds>}Error`;
+    public override readonly name: `${Capitalize<AttributeKinds>}Error`;
 
-    public attribute: string;
+    public readonly attribute: string;
 
-    public path: (string | number)[];
+    public readonly path: (string | number)[];
 
-    public value: unknown;
+    public readonly value: unknown;
 
     public constructor(attributeName: string, kind: AttributeKinds, path: (string | number)[], value: unknown) {
         const errorName = <PascalCase<AttributeKinds>>upperFirst(kind);
@@ -54,10 +58,10 @@ export class AttributeError extends BaseError {
     }
 }
 
-export class Forbidden extends HttpErrors.Forbidden { }
+export class Forbidden extends HttpForbidden { }
 
-export class InternalServerError extends HttpErrors.InternalServerError { }
+export class InternalServerError extends HttpInternalServerError { }
 
-export class NotAcceptable extends HttpErrors.NotAcceptable { }
+export class NotAcceptable extends HttpNotAcceptable { }
 
-export class NotFound extends HttpErrors.NotFound { }
+export class NotFound extends HttpNotFound { }

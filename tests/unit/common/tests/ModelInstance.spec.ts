@@ -1,7 +1,6 @@
 import { expect } from "chai";
 import { pick, isEqual } from "lodash";
 import { v4 } from "uuid";
-import { ValidationError } from "~env/lib/Errors";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 
@@ -20,7 +19,7 @@ export default function (_environment = "common") {
     describe('ModelInstance', () => {
         it("should successfully validate the dummy test model", () => {
             const result = testModel.validate();
-            expect(result).to.be.true;
+            expect(result.success).to.be.true;
         });
 
         it("should get the dummyId id first and the given id then", () => {
@@ -31,18 +30,18 @@ export default function (_environment = "common") {
 
         it("should successfully validate the final test model", () => {
             testModel.removeChanges();
-            expect(testModel.validate()).to.be.true;
-            expect(testModel.validate({ aString: "meep" })).to.be.an.instanceOf(ValidationError);
+            expect(testModel.validate().success).to.be.true;
+            expect(testModel.validate({ aString: "meep" }).success).to.be.false;
         });
 
         it("should recognize the inexistent key", () => {
             testModel.removeChanges();
-            expect((testModel.validate({ inexistentKey: true }) as ValidationError).errors[0].errors[0].name).to.be.equal("InexistentError");
+            expect(testModel.validate({ inexistentKey: true }).errors[0].name).to.be.equal("InexistentError");
         });
 
         it("should recognize the internal key", () => {
             testModel.removeChanges();
-            expect((testModel.validate({ aNumber: 42 }) as ValidationError).errors[0].errors[0].name).to.be.equal("ForbiddenError");
+            expect(testModel.validate({ aNumber: 42 }).errors[0].name).to.be.equal("ForbiddenError");
         });
 
         it("should give an object variant ob the model", () => {

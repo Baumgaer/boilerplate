@@ -2,7 +2,6 @@ import { expect } from "chai";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
 import { v1, v4 } from "uuid";
-import { ZodError } from "zod";
 import { Varchar, NumberRange, TextRange, Email, UUID } from "~common/lib/DataTypes";
 import TestModel from "~env/models/TestModel";
 
@@ -18,9 +17,9 @@ export default function (_environment = "common") {
         it("should be a varchar", () => {
             const schema = TestModel.getAttributeSchema("theVarchar");
             expect(schema?.validator).to.be.equal("Varchar");
-            expect(schema?.validate("")).to.be.true;
-            expect(schema?.validate(randGen.generateString(0, 15))).to.be.true;
-            expect(schema?.validate(randGen.generateString(16, 17))).to.be.an.instanceOf(AggregateError);
+            expect(schema?.validate("").success).to.be.true;
+            expect(schema?.validate(randGen.generateString(0, 15)).success).to.be.true;
+            expect(schema?.validate(randGen.generateString(16, 17)).success).to.be.false;
 
             const varchar = Varchar();
             expect(varchar.validate(randGen.generateString(0, 65535)).success).to.be.true;
@@ -33,9 +32,9 @@ export default function (_environment = "common") {
         it("should be a number range", () => {
             const schema = TestModel.getAttributeSchema("theNumberRange");
             expect(schema?.validator).to.be.equal("NumberRange");
-            expect(schema?.validate(randGen.generateNumber(5, 15))).to.be.true;
-            expect(schema?.validate(randGen.generateNumber(-Infinity, 4))).to.be.an.instanceOf(AggregateError);
-            expect(schema?.validate(randGen.generateNumber(16, Infinity))).to.be.an.instanceOf(AggregateError);
+            expect(schema?.validate(randGen.generateNumber(5, 15)).success).to.be.true;
+            expect(schema?.validate(randGen.generateNumber(-Infinity, 4)).success).to.be.false;
+            expect(schema?.validate(randGen.generateNumber(16, Infinity)).success).to.be.false;
 
             const numberRange = NumberRange();
             expect(numberRange.validate(randGen.generateNumber()).success).to.be.true;
@@ -50,9 +49,9 @@ export default function (_environment = "common") {
         it("should be a text range", () => {
             const schema = TestModel.getAttributeSchema("theTextRange");
             expect(schema?.validator).to.be.equal("TextRange");
-            expect(schema?.validate(randGen.generateString(5, 15))).to.be.true;
-            expect(schema?.validate(randGen.generateString(0, 4))).to.be.an.instanceOf(AggregateError);
-            expect(schema?.validate(randGen.generateString(16, 20))).to.be.an.instanceOf(AggregateError);
+            expect(schema?.validate(randGen.generateString(5, 15)).success).to.be.true;
+            expect(schema?.validate(randGen.generateString(0, 4)).success).to.be.false;
+            expect(schema?.validate(randGen.generateString(16, 20)).success).to.be.false;
 
             const textRange = TextRange();
             expect(textRange.validate(randGen.generateString()).success).to.be.true;
@@ -70,8 +69,8 @@ export default function (_environment = "common") {
             expect(schema?.validator).to.be.equal("Email");
 
             const validMail = `${randGen.generateString(3, 25, false)}@${randGen.generateString(3, 25, false)}.${randGen.generateString(2, 4, false)}`;
-            expect(schema?.validate(validMail)).to.be.true;
-            expect(schema?.validate(randGen.generateString())).to.be.an.instanceOf(AggregateError);
+            expect(schema?.validate(validMail).success).to.be.true;
+            expect(schema?.validate(randGen.generateString()).success).to.be.false;
 
             const email = Email();
             expect(email.validate(validMail).success).to.be.true;
@@ -79,15 +78,15 @@ export default function (_environment = "common") {
             expect(email.guard(randGen.generateNumber())).to.be.false;
             expect(email.guard(randGen.generateString())).to.be.false;
             expect(email.cast(validMail)).to.be.equal(validMail);
-            expect(email.cast(randGen.generateString())).to.be.an.instanceOf(ZodError);
+            expect(email.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
         });
 
         it("should be an UUID", () => {
             const schema = TestModel.getAttributeSchema("aGeneratedColumn");
             expect(schema?.validator).to.be.equal("UUID");
-            expect(schema?.validate(v1()), "v1").to.be.true;
-            expect(schema?.validate(v4()), "v4").to.be.true;
-            expect(schema?.validate(randGen.generateString())).to.be.an.instanceOf(AggregateError);
+            expect(schema?.validate(v1()).success, "v1").to.be.true;
+            expect(schema?.validate(v4()).success, "v4").to.be.true;
+            expect(schema?.validate(randGen.generateString()).success).to.be.false;
 
             const email = UUID();
             const validUUID = v1();
@@ -96,7 +95,7 @@ export default function (_environment = "common") {
             expect(email.guard(randGen.generateNumber())).to.be.false;
             expect(email.guard(randGen.generateString())).to.be.false;
             expect(email.cast(validUUID)).to.be.equal(validUUID);
-            expect(email.cast(randGen.generateString())).to.be.an.instanceOf(ZodError);
+            expect(email.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
         });
     });
 }

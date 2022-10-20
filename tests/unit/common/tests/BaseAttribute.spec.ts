@@ -1,5 +1,5 @@
 import { expect } from "chai";
-import { AttributeError, ValidationError } from "~common/lib/Errors";
+import { AttributeError } from "~common/lib/Errors";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import TestModel from "~env/models/TestModel";
 import { isEqual } from "~env/utils/utils";
@@ -26,13 +26,12 @@ export default function (_environment = "common") {
 
         it("should trigger the validator", () => {
             let result = testModel.validate({ aString: "lol" });
-            expect(result).to.be.true;
+            expect(result.success).to.be.true;
             expect(testModel.validateCount).to.be.equal(1);
 
             result = testModel.validate({ aString: "meep" });
-            expect(result).to.be.an.instanceOf(ValidationError);
-            expect((result as ValidationError).errors[0]).to.be.an.instanceOf(AggregateError);
-            expect(((result as ValidationError).errors[0] as AggregateError).errors[0]).to.be.an.instanceOf(AttributeError);
+            expect(result.success).to.be.false;
+            expect(result.errors[0]).to.be.an.instanceOf(AttributeError);
             expect(testModel.validateCount).to.be.equal(2);
         });
 
@@ -224,8 +223,8 @@ export default function (_environment = "common") {
         it("should validate", () => {
             const aTupleAttribute = testModel.getAttribute("aTuple") as unknown as BaseAttribute<typeof TestModel>;
             expect(aTupleAttribute).to.be.an.instanceOf(BaseAttribute);
-            expect(aTupleAttribute.validate(testModel.aTuple)).to.be.true;
-            expect(aTupleAttribute.validate(testModel.aBoolean)).to.be.an.instanceOf(AggregateError);  // it's new, so an AggregateError is expected
+            expect(aTupleAttribute.validate(testModel.aTuple).success).to.be.true;
+            expect(aTupleAttribute.validate(testModel.aBoolean).success).to.be.false;  // it's new, so an AggregateError is expected
         });
     });
 }

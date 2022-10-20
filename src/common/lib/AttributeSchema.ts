@@ -15,14 +15,14 @@ import {
     Index
 } from "typeorm";
 import { ZodLazy, ZodNumber, ZodString, ZodUnion } from "zod";
-import * as DataTypes from "~common/lib/DataTypes";
-import { baseTypeFuncs } from "~common/utils/schema";
+import { baseTypeFuncs, toInternalValidationReturnType } from "~common/utils/schema";
+import * as DataTypes from "~env/lib/DataTypes";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 import { AttributeError } from "~env/lib/Errors";
 import { merge, getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
-import type { ZodObject, SafeParseReturnType } from "zod";
+import type { ZodObject } from "zod";
 import type {
     AttrOptions,
     AllColumnOptions,
@@ -31,6 +31,7 @@ import type {
     SchemaNameByModelClass,
     SchemaTypes
 } from "~env/@types/AttributeSchema";
+import type { ValidationResult } from "~env/@types/Errors";
 import type {
     CombinedDataType,
     IPrimitiveType,
@@ -291,36 +292,26 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @param value the value to check
      * @returns true if valid and an error else
      */
-    public validate(value: unknown) {
+    public validate(value: unknown): ValidationResult {
         const name = this.attributeName.toString();
 
         const rawType = this.parameters.type;
         if (isArray(value) && this.isTupleType(rawType)) {
             const length = rawType.subTypes.length;
             const min = rawType.subTypes.findIndex((subType) => this.isOptionalType(subType));
-            if (value.length < min) return new AggregateError([new AttributeError(name, "rangeUnderflow", [], value)]);
+            if (value.length < min) return { success: false, errors: [new AttributeError(name, "rangeUnderflow", [], value)] };
             value = value.slice();
             (value as any[]).length = length;
         }
 
-        let result: SafeParseReturnType<string, string> | SafeParseReturnType<number, number>;
+        let result: ValidationResult;
         // eslint-disable-next-line import/namespace
-        if (this.validator && DataTypes[this.validator]) {
-            // eslint-disable-next-line import/namespace
-            result = DataTypes[this.validator]({ min: this.min, max: this.max }).validate(value);
-        } else result = this.getSchemaType().safeParse(value);
+        const DataType = this.validator && DataTypes[this.validator];
+        if (DataType) {
+            result = DataType({ min: this.min, max: this.max, name: this.getTypeIdentifier(), getAttribute: () => this as any }).validate(value);
+        } else result = toInternalValidationReturnType(this.getSchemaType().safeParse(value));
 
-        if (!result.success) {
-            const errors: AttributeError[] = [];
-            result.error.issues.forEach((issue) => {
-                if (issue.message === "Required") {
-                    errors.push(new AttributeError(name, "required", issue.path, value));
-                } else errors.push(new AttributeError(name, "type", issue.path, value));
-            });
-            return new AggregateError(errors);
-        }
-
-        return true;
+        return result;
     }
 
     /**

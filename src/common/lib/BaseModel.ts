@@ -1,12 +1,11 @@
 import { BaseEntity } from "typeorm";
 import MetadataStore from "~common/lib/MetadataStore";
-import AttributeSchema from "~env/lib/AttributeSchema";
-import BaseAttribute from "~env/lib/BaseAttribute";
-import { AttributeError, ValidationError } from "~env/lib/Errors";
+import { Model } from "~env/lib/DataTypes";
 import { Attr, AttrObserver } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~env/utils/utils";
-import type { AttributeSchemaName, ModelChanges, RawObject, getAttributeForValidation } from "~common/@types/BaseModel";
+import type { AttributeSchemaName, ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
 
 /**
@@ -120,31 +119,6 @@ export default abstract class BaseModel extends BaseEntity {
      */
     public static getAttributeSchema<T extends typeof EnvBaseModel>(this: T, name: AttributeSchemaName<T>) {
         return this.getSchema()?.getAttributeSchema(name);
-    }
-
-    public static validate<T extends typeof EnvBaseModel>(this: T, obj: any) {
-        return this._validate(obj, (name) => this.getAttributeSchema(name));
-    }
-
-    private static _validate<T extends typeof EnvBaseModel>(this: T, obj: any, getAttribute: getAttributeForValidation) {
-        const errors: AggregateError[] = [];
-        for (const key in obj) {
-            if (hasOwnProperty(obj, key)) {
-                const attribute = getAttribute(key);
-                if (!attribute) {
-                    errors.push(new AggregateError([new AttributeError(key, "inexistent", [key], obj[key])]));
-                } else if (attribute instanceof AttributeSchema && attribute.isInternal) {
-                    errors.push(new AggregateError([new AttributeError(key, "forbidden", [key], obj[key])]));
-                } else if (attribute instanceof BaseAttribute && attribute.schema.isInternal) {
-                    errors.push(new AggregateError([new AttributeError(key, "forbidden", [key], obj[key])]));
-                } else {
-                    const validationResult = attribute.validate(obj[key]);
-                    if (validationResult instanceof AggregateError) errors.push(validationResult);
-                }
-            }
-        }
-        if (errors.length) return new ValidationError(errors, this);
-        return true;
     }
 
     /**
@@ -306,8 +280,8 @@ export default abstract class BaseModel extends BaseEntity {
         }
     }
 
-    public validate(this: EnvBaseModel, obj = this.getValidationObject()) {
-        return (this.constructor as typeof EnvBaseModel)._validate(obj, (name) => this.getAttribute(name));
+    public validate(obj = this.getValidationObject()) {
+        return Model({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
     }
 
     /**

@@ -1,6 +1,8 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
 import { baseTypeFuncs } from "~common/utils/schema";
+import { Model } from "~env/lib/DataTypes";
 import type { ZodLazy, ZodObject, ZodType } from "zod";
+import type { AttributeSchemaName } from "~env/@types/BaseModel";
 import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseModel from "~env/lib/BaseModel";
@@ -131,6 +133,14 @@ export default class ModelSchema<T extends ModelLike> {
      */
     public getSchemaType() {
         return this.schemaType;
+    }
+
+    public validate(value: unknown) {
+        const getAttribute = (name: AttributeSchemaName<ModelLike>) => {
+            return this.getAttributeSchema(name) as unknown as AttributeSchema<ModelLike>;
+        };
+
+        return Model({ name: this.modelName, getAttribute }).validate(value);
     }
 
     /**

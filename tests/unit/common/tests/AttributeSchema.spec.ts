@@ -417,10 +417,10 @@ export default function (environment = "common") {
                     const attributeSchema = modelSchema?.attributeSchemas[attrName];
                     const possibleInputs = inputs[attrName];
                     for (const valid of possibleInputs.valid) {
-                        expect(attributeSchema?.validate(valid), `attribute ${attrName}, value ${JSON.stringify(valid)}`).to.be.true;
+                        expect(attributeSchema?.validate(valid).success, `attribute ${attrName}, value ${JSON.stringify(valid)}`).to.be.true;
                     }
                     for (const invalid of possibleInputs.invalid) {
-                        expect(attributeSchema?.validate(invalid), `attribute ${attrName}, value ${JSON.stringify(invalid)}`).to.be.instanceOf(AggregateError);
+                        expect(attributeSchema?.validate(invalid).success, `attribute ${attrName}, value ${JSON.stringify(invalid)}`).to.be.false;
                     }
                 }
             }
