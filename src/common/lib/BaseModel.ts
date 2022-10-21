@@ -2,7 +2,7 @@ import { BaseEntity } from "typeorm";
 import MetadataStore from "~common/lib/MetadataStore";
 import { Model } from "~env/lib/DataTypes";
 import { Attr, AttrObserver } from "~env/utils/decorators";
-import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~env/utils/utils";
+import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type BaseAttribute from "~env/lib/BaseAttribute";
@@ -130,6 +130,19 @@ export default abstract class BaseModel extends BaseEntity {
     protected onIdChange(value: string): void {
         if (!value) return;
         this.dummyId = "";
+    }
+
+    /**
+     * Provides the possibility to check if a value is a model.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check.
+     *
+     * @param value the value to check for model instance
+     * @returns true if the given value is a model and false else
+     */
+    public isModel(value: unknown): value is BaseModel {
+        if (!value || !isObject(value)) return false;
+        return value instanceof BaseModel;
     }
 
     /**

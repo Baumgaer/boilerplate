@@ -1,13 +1,13 @@
 import { baseTypeFuncs, toInternalValidationReturnType } from "~common/utils/schema";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import BaseAttribute from "~env/lib/BaseAttribute";
-import BaseModel from "~env/lib/BaseModel";
 import { TypeError, AttributeError, BaseError } from "~env/lib/Errors";
 import { isObject, isPlainObject, hasOwnProperty } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { getAttributeForValidation } from "~env/@types/BaseModel";
 import type { ValidationResult } from "~env/@types/Errors";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type BaseModel from "~env/lib/BaseModel";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Varchar<_TMin extends number, TMax extends number>(params: { max?: TMax } = {}) {
@@ -99,7 +99,7 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             if (!isObject(value)) {
                 return { success: false, errors: [new TypeError("Value is not an object", "type", [])] };
             }
-            if (value instanceof BaseModel) return value.validate();
+            if (Reflect.get(value, "isModel")?.(value)) return (value as BaseModel).validate();
             const errors: BaseError[] = [];
             for (const key in value) {
                 if (hasOwnProperty(value, key)) {
