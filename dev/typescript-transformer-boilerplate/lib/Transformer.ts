@@ -91,7 +91,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                     name = usedNode.name?.getText() || "unknown";
                 } else name = usedNode.getText(usedNode.getSourceFile());
 
-                console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
+                if (process.env.NODE_ENV !== "production") console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
 
                 const matchedRules = [];
                 for (const rule of rules) {
@@ -102,7 +102,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                     const detectedNode = rule.detect(program, sourceFile, usedNode, matchedRules);
                     if (detectedNode) {
                         matchedRules.push(rule);
-                        console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
+                        if (process.env.NODE_ENV !== "production") console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
 
                         merge(metadata, rule.emitMetadata(usedNode, program, sourceFile, detectedNode) || {});
                         const type = rule.emitType(program, sourceFile, detectedNode, (node: ts.Node) => next(node, dept + 2, metadata));
@@ -116,10 +116,10 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
 
             const metadata = next(node.parent.parent as ValidDeclarations);
             if (!Object.keys(metadata).length) {
-                console.info("skipped!");
+                if (process.env.NODE_ENV !== "production") console.info("skipped!");
                 return node;
             }
-            console.debug("Result:", JSON.stringify(metadata), "\n");
+            if (process.env.NODE_ENV !== "production") console.debug("Result:", JSON.stringify(metadata), "\n");
             const result = buildMetadataJson(node, metadata);
             return result;
         }

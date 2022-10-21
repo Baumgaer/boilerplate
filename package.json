@@ -19,7 +19,7 @@
         "//2": "",
         "build": "npm-run-all -p build:!(app)",
         "build:server": "echo 'no build:server script'",
-        "build:web": "vue-cli-service build",
+        "build:web": "cross-env NODE_OPTIONS=--no-warnings vue-cli-service build",
         "//3": "",
         "build:app": "npm run build:web && cap copy && cap sync && cap open",
         "build:app:android": "npm run build:web && cap copy && cap sync && cap open android",
