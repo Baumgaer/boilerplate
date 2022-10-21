@@ -3,7 +3,7 @@ import { pick } from "lodash";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
 import { v1, v4 } from "uuid";
-import { ZodLazy, ZodObject } from "zod";
+import { ZodLazy, ZodNever, ZodObject } from "zod";
 import { Varchar, NumberRange, TextRange, Email, UUID, Model } from "~common/lib/DataTypes";
 import { getExtendedTestModelArgs } from "~env/TestUtils";
 import TestModel from "~env/models/TestModel";
@@ -63,6 +63,7 @@ export default function (_environment = "common") {
             const anotherTextRange = TextRange({ min: 3, max: 20 });
             expect(anotherTextRange.cast(randGen.generateString(0, 2))).to.have.a.lengthOf(3);
             expect(anotherTextRange.cast(randGen.generateString(21, 23))).to.have.a.lengthOf(20);
+            expect(anotherTextRange.cast("12345678")).to.have.a.lengthOf(8);
             expect(anotherTextRange.cast(randGen.generateNumber()).length).to.be.above(2).and.below(21);
         });
 
@@ -123,6 +124,14 @@ export default function (_environment = "common") {
             expect(model.cast(args)).to.be.an.instanceOf(TestModel);
             expect(model.cast(testModel)).to.be.an.instanceOf(TestModel);
             expect(model.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
+        });
+
+        it("should be an Model datatype", () => {
+            const model = Model();
+            expect(model.schemaType).to.be.an.instanceOf(ZodNever);
+            expect(model.validate({}).success).to.be.false;
+            expect(model.guard<TestModel>({})).to.be.false;
+            expect(model.cast({})).to.be.an.instanceOf(AggregateError);
         });
     });
 }

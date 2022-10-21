@@ -63,5 +63,10 @@ export default function (_environment = "common") {
             expect(testModel.aBoolean).to.be.false;
             expect(isEqual(testModel.getChanges(), {})).to.be.true;
         });
+
+        it("should not have changes", () => {
+            const newTestModel = new TestModel(getExtendedTestModelArgs({ id: v4() }));
+            expect(Object.keys(newTestModel.getChanges()).length).to.be.equal(0);
+        });
     });
 }

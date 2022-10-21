@@ -263,6 +263,38 @@ export default function (environment = "common") {
             expect(schema?.isLazy).to.be.true;
         });
 
+        it(`should use every time its own raw type`, () => {
+            let schema = TestModel.getAttributeSchema("aBoolean");
+            expect(schema?.isArrayType()).to.be.false;
+            expect(schema?.isBooleanType()).to.be.true;
+            expect(schema?.isCustomType()).to.be.false;
+            expect(schema?.isDateType()).to.be.false;
+            expect(schema?.isIntersectionType()).to.be.false;
+            expect(schema?.isUnionType()).to.be.false;
+            expect(schema?.isLiteralType()).to.be.false;
+            expect(schema?.isModelType()).to.be.false;
+            expect(schema?.isNullType()).to.be.false;
+            expect(schema?.isNumberType()).to.be.false;
+            expect(schema?.isObjectLikeType()).to.be.false;
+            expect(schema?.isOptionalType()).to.be.false;
+            expect(schema?.isPlainObjectType()).to.be.false;
+            expect(schema?.isStringType()).to.be.false;
+            expect(schema?.isTupleType()).to.be.false;
+            expect(schema?.isUndefinedType()).to.be.false;
+            expect(schema?.isUnresolvedType()).to.be.false;
+
+            expect(schema?.hasIdentifier()).to.be.true;
+            expect(schema?.getUnionTypeValues().length).to.be.equal(0);
+
+            schema = TestModel.getAttributeSchema("aTuple");
+            expect(schema?.getTypeIdentifier()).to.be.equal("String");
+        });
+
+        it(`should not have a relation type`, async () => {
+            const schema = TestModel.getAttributeSchema("aBoolean");
+            expect(await schema?.getRelationType()).to.be.null;
+        });
+
         it(`should validate correctly`, () => {
             const modelSchema = TestModel.getSchema();
 

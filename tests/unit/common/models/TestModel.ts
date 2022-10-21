@@ -1,10 +1,11 @@
 import { AttributeError } from "~common/lib/Errors";
 import TestAbstractModel from "~env/models/TestAbstractModel";
-import { Attr, AttrGetter, AttrSetter, AttrObserver, AttrValidator } from "~env/utils/decorators";
+import { Attr, AttrGetter, AttrSetter, AttrObserver, AttrValidator, Model } from "~env/utils/decorators";
 import type { ITestMyInterface, ITestMySecondInterface } from "~env/@types/ITestMyInterface";
 import type TestMyTestModel from "~env/models/TestMyTestModel";
 import type TestMyTesterModel from "~env/models/TestMyTesterModel";
 
+@Model()
 export default class TestModel extends TestAbstractModel {
 
     @Attr()
@@ -31,7 +32,7 @@ export default class TestModel extends TestAbstractModel {
     @Attr()
     public aBoolean: boolean = true;
 
-    @Attr()
+    @Attr({ index: { unique: true } })
     public readonly aString?: string;
 
     @Attr()

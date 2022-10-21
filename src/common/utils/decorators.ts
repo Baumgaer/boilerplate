@@ -19,7 +19,7 @@ import type { AttributeError } from "~env/lib/Errors";
  * @param [options={}] Options based on TypeORM and some additional options
  * @returns a ClassDecorator which invokes the ModelClass which extends the given model and adds basic functions
  */
-export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {}): ClassDecorator {
+export function Model<T extends typeof BaseModel>(options?: ModelOptions<T>): ClassDecorator {
     const metadataStore = new MetadataStore();
     const metadata: IModelMetadata = JSON.parse((<ModelOptionsWithMetadataJson<T>>options).metadataJson);
     const metadataOptions: ModelOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <ModelOptionsWithMetadataJson<T>>options);
@@ -57,7 +57,7 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {})
  * @param [options={}] Options based on TypeORM and some additional options
  * @returns a PropertyDecorator which invokes the attribute
  */
-export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): PropertyDecorator {
+export function Attr<T extends typeof BaseModel>(options?: AttrOptions<T>): PropertyDecorator {
     const metadataStore = new MetadataStore();
     const metadata: IAttrMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
     const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <AttrOptionsWithMetadataJson<T>>options);

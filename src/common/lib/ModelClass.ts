@@ -1,7 +1,7 @@
 import { v4 as uuid } from "uuid";
 import MetadataStore from "~common/lib/MetadataStore";
 import BaseAttribute from "~env/lib/BaseAttribute";
-import { hasOwnProperty, camelCase } from "~env/utils/utils";
+import { hasOwnProperty, upperFirst, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { ModelOptions } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
@@ -12,7 +12,7 @@ import type BaseModel from "~env/lib/BaseModel";
 const attributes: Record<string, Constructor<BaseAttribute<typeof BaseModel>>> = {};
 const context = require.context("~env/attributes/", true, /.+\.ts/, "sync");
 context.keys().forEach((key) => {
-    attributes[camelCase(key.substring(2, key.length - 3))] = (<ModuleLike<Constructor<BaseAttribute<typeof BaseModel>>>>context(key)).default;
+    attributes[upperFirst(camelCase(key.substring(2, key.length - 3)))] = (<ModuleLike<Constructor<BaseAttribute<typeof BaseModel>>>>context(key)).default;
 });
 
 /**
@@ -147,7 +147,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const attributeSchemas = this.getSchema()?.attributeSchemas || {};
             for (const key in attributeSchemas) {
                 if (hasOwnProperty(attributeSchemas, key)) {
-                    const attribute = new (attributes[key] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
+                    const attribute = new (attributes[upperFirst(key)] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
                     metadataStore.setAttribute(proxy, key, attribute);
                 }
             }

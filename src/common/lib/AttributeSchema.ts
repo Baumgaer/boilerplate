@@ -781,11 +781,11 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     private async buildRelation(attributeName: string, options: RelationOptions) {
         if (!this.isModelType()) return false;
-        if (this.isArrayType(this.rawType)) {
-            if (!this.isTupleType(this.rawType)) {
-                if (!this.isModelType(this.rawType.subType)) return false;
-            } else if (!this.rawType.subTypes.every((subType) => this.isModelType(subType))) return false;
-        }
+        // if (this.isArrayType(this.rawType)) {
+        //     if (!this.isTupleType(this.rawType)) {
+        //         if (!this.isModelType(this.rawType.subType)) return false;
+        //     } else if (!this.rawType.subTypes.every((subType) => this.isModelType(subType))) return false;
+        // }
         const identifier = this.getTypeIdentifier() || "";
         if (!identifier) return false;
         const proto = this._ctor.prototype;
