@@ -1,6 +1,7 @@
 import { expect } from "chai";
 import { AttributeError } from "~common/lib/Errors";
 import BaseAttribute from "~env/lib/BaseAttribute";
+import { TypeError } from "~env/lib/Errors";
 import TestModel from "~env/models/TestModel";
 import { isEqual } from "~env/utils/utils";
 import type { IAttributeChange } from "~env/@types/AttributeSchema";
@@ -33,6 +34,11 @@ export default function (_environment = "common") {
             expect(result.success).to.be.false;
             expect(result.errors[0]).to.be.an.instanceOf(AttributeError);
             expect(testModel.validateCount).to.be.equal(2);
+
+            result = testModel.validate({ aString: 24 });
+            expect(result.success).to.be.false;
+            expect(result.errors[0]).to.be.an.instanceOf(TypeError);
+            expect(testModel.validateCount).to.be.equal(2); // Validator is only triggered when type is correct
         });
 
         it("should trigger the observer", () => {

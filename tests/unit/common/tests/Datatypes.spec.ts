@@ -1,10 +1,12 @@
 import { expect } from "chai";
+import { pick } from "lodash";
 // @ts-expect-error there are no type definitions
 import * as randGen from "random-input-generator";
 import { v1, v4 } from "uuid";
-import { Varchar, NumberRange, TextRange, Email, UUID } from "~common/lib/DataTypes";
+import { ZodLazy, ZodObject } from "zod";
+import { Varchar, NumberRange, TextRange, Email, UUID, Model } from "~common/lib/DataTypes";
+import { getExtendedTestModelArgs } from "~env/TestUtils";
 import TestModel from "~env/models/TestModel";
-
 
 export default function (_environment = "common") {
     describe('Datatypes', () => {
@@ -96,6 +98,31 @@ export default function (_environment = "common") {
             expect(email.guard(randGen.generateString())).to.be.false;
             expect(email.cast(validUUID)).to.be.equal(validUUID);
             expect(email.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
+        });
+
+        it("should be a Model", () => {
+            const staticModel = Model({ name: "TestModel", getAttribute: (name) => TestModel.getAttributeSchema(name) });
+
+            const args = getExtendedTestModelArgs({ aDate: new Date() });
+
+            expect(staticModel.validate(Object.assign({}, args, { aNumber: 24 })).success).to.be.false;
+
+            const testModel = new TestModel(Object.assign({}, args));
+            const model = Model({ name: "TestModel", getAttribute: (name) => testModel.getAttribute(name) });
+            const schemaType = model.schemaType as ZodLazy<ZodObject<any>>;
+
+            expect(schemaType).to.be.an.instanceOf(ZodLazy);
+            expect(schemaType.schema).to.be.an.instanceOf(ZodObject);
+
+            const clone = pick(schemaType.schema.shape, Object.keys(args));
+            expect(clone).to.to.have.keys(Object.keys(args));
+
+            expect(model.validate(testModel).success).to.be.true;
+            expect(model.validate(args).success).to.be.true;
+            expect(model.guard<TestModel>(testModel)).to.be.true;
+            expect(model.cast(args)).to.be.an.instanceOf(TestModel);
+            expect(model.cast(testModel)).to.be.an.instanceOf(TestModel);
+            expect(model.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
         });
     });
 }

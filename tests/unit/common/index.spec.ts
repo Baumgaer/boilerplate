@@ -6,9 +6,9 @@ import ModelSchemaSpec from "~common/tests/ModelSchema.spec";
 
 export default function (environment = "common") {
     describe("Common", () => {
-        ModelSchemaSpec(environment);
-        AttributeSchemaSpec(environment);
         DatatypesSpec(environment);
+        AttributeSchemaSpec(environment);
+        ModelSchemaSpec(environment);
         BaseAttributeSpec(environment);
         ModelInstance(environment);
     });

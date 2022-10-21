@@ -159,12 +159,35 @@ export default function (environment = "common") {
         });
 
         it(`should be an embedded entity`, () => {
+            const className = `${upperFirst(environment)}TestModelAnInterfaceEmbeddedEntity`;
+
+            class FakeClass {
+                public className: string = className;
+            }
+
+            class AnotherFakeClass extends FakeClass {
+
+                public getSchema() {
+                    return {
+                        attributeSchemas: {
+                            prop1: "test"
+                        }
+                    };
+                }
+            }
+
             const schema = TestModel.getAttributeSchema("anInterface");
             // @ts-expect-error 002
             const embeddedEntityClass = schema?.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
-            const commonEmbeddedEntityClass = embeddedEntityFactory(`${upperFirst(environment)}TestModelAnInterfaceEmbeddedEntity`, { prop1: {}, prop2: {} }, true);
+            const commonEmbeddedEntityClass = embeddedEntityFactory(className, { prop1: { isRequired: true }, prop2: { isRequired: false } }, true);
             const instance = new commonEmbeddedEntityClass({ prop1: "test" });
+
             expect(embeddedEntityClass).to.be.an.instanceOf(commonEmbeddedEntityClass);
+            expect(new AnotherFakeClass()).to.be.an.instanceOf(commonEmbeddedEntityClass);
+            expect("test").not.to.be.an.instanceOf(commonEmbeddedEntityClass);
+            expect({ prop1: "test" }).not.to.be.an.instanceOf(commonEmbeddedEntityClass);
+            expect(TestModel).not.to.be.an.instanceOf(commonEmbeddedEntityClass);
+            expect(new FakeClass()).not.to.be.an.instanceOf(commonEmbeddedEntityClass);
             expect(instance.getSchema()).to.be.an.instanceOf(ModelSchema);
             expect(instance.isNew()).to.be.true;
         });

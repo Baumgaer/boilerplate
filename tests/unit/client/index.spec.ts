@@ -20,7 +20,7 @@ describe("Tests", () => {
     CommonSpec("client");
 
     describe("Client", () => {
-        ModelSchemaSpec();
         AttributeSchemaSpec();
+        ModelSchemaSpec();
     });
 });

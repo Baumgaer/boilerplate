@@ -1,5 +1,7 @@
 import { expect } from "chai";
+import { isEqual } from "lodash";
 import { ZodObject, ZodType, ZodLazy } from "zod";
+import { TestModelArgs } from "~env/TestUtils";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import ModelSchema from "~env/lib/ModelSchema";
 import TestModel from "~env/models/TestModel";
@@ -47,7 +49,7 @@ export default function (_environment = "common") {
             expect(schema?.options.isAbstract).to.be.equal(false);
             expect(schema?.options.database).to.be.equal(undefined);
             expect(schema?.options.engine).to.be.equal(undefined);
-            expect(schema?.options.indexes).to.be.equal(undefined);
+            expect(isEqual(schema?.options.indexes, [{ columns: ["anUnion"] }])).to.be.true;
             expect(schema?.options.orderBy).to.be.equal(undefined);
             expect(schema?.options.schema).to.be.equal(undefined);
             expect(schema?.options.withoutRowid).to.be.equal(undefined);
@@ -74,6 +76,11 @@ export default function (_environment = "common") {
             for (const expectedAttributeName of attributesToExpect) {
                 expect(zodType.shape[expectedAttributeName], `AttributeName "${expectedAttributeName}"`).to.be.instanceOf(ZodType);
             }
+        });
+
+        it(`should validate correctly`, () => {
+            const schema = TestModel.getSchema() as unknown as ModelSchema<typeof TestModel>;
+            schema.validate(TestModelArgs);
         });
     });
 }

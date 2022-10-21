@@ -1,13 +1,13 @@
 import { baseTypeFuncs, toInternalValidationReturnType } from "~common/utils/schema";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import BaseAttribute from "~env/lib/BaseAttribute";
-import { TypeError, AttributeError } from "~env/lib/Errors";
-import { isObject, hasOwnProperty } from "~env/utils/utils";
+import BaseModel from "~env/lib/BaseModel";
+import { TypeError, AttributeError, BaseError } from "~env/lib/Errors";
+import { isObject, isPlainObject, hasOwnProperty } from "~env/utils/utils";
+import type { Constructor } from "type-fest";
 import type { getAttributeForValidation } from "~env/@types/BaseModel";
 import type { ValidationResult } from "~env/@types/Errors";
 import type { ModelLike } from "~env/@types/ModelClass";
-import type BaseModel from "~env/lib/BaseModel";
-import type { BaseError } from "~env/lib/Errors";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 export function Varchar<_TMin extends number, TMax extends number>(params: { max?: TMax } = {}) {
@@ -87,15 +87,19 @@ export function UUID() {
 
 export function Model(params: { name?: string, getAttribute?: getAttributeForValidation<ModelLike> } = {}) {
     const { name, getAttribute } = params;
-    const schemaType = baseTypeFuncs.string().uuid();
+    const schemaType = baseTypeFuncs.never();
 
-    return {
-        schemaType,
+    const funcs = {
+        get schemaType() {
+            if (!name || !(name in global.MODEL_NAME_TO_MODEL_MAP)) return schemaType;
+            return global.MODEL_NAME_TO_MODEL_MAP[name].getSchema()?.getSchemaType() || schemaType;
+        },
         validate: (value: unknown): ValidationResult => {
             if (!getAttribute) return { success: false, errors: [new TypeError("no attribute getter given", "unknown", [])] };
             if (!isObject(value)) {
                 return { success: false, errors: [new TypeError("Value is not an object", "type", [])] };
             }
+            if (value instanceof BaseModel) return value.validate();
             const errors: BaseError[] = [];
             for (const key in value) {
                 if (hasOwnProperty(value, key)) {
@@ -119,10 +123,15 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             if (!name || !(name in global.MODEL_NAME_TO_MODEL_MAP) || !isObject(value)) return false;
             return value instanceof global.MODEL_NAME_TO_MODEL_MAP[name];
         },
-        cast: (value: unknown) => {
-            const result = schemaType.safeParse(value);
-            if (result.success) return value as BaseModel;
-            return new AggregateError(toInternalValidationReturnType(result).errors);
+        cast: <T extends BaseModel>(value: unknown) => {
+            if (!name || !(name in global.MODEL_NAME_TO_MODEL_MAP)) return new AggregateError([new BaseError("unknown model name")]);
+            const result = funcs.validate(value);
+            if (result.success) {
+                if (isPlainObject(value)) return new (global.MODEL_NAME_TO_MODEL_MAP[name] as unknown as Constructor<T>)(value);
+                return value as T;
+            }
+            return new AggregateError(result.errors);
         }
     };
+    return funcs;
 }

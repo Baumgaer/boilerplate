@@ -117,17 +117,6 @@ export default class ModelSchema<T extends ModelLike> {
     }
 
     /**
-     * Removes the given schema from the attributes object in a controlled way
-     * using its name
-     *
-     * @param schema the schema to remove
-     * @returns true if it was removed and false else
-     */
-    public removeAttributeSchema(schema: AttributeSchema<T>) {
-        return Reflect.deleteProperty(this.attributeSchemas, schema.attributeName);
-    }
-
-    /**
      * @returns the schema type which will be used by the attribute schemas to
      * provide a type based schema type them self.
      */

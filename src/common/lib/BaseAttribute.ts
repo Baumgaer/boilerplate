@@ -224,11 +224,9 @@ export default abstract class BaseAttribute<T extends ModelLike> {
             return { success: false, errors: [new AttributeError(this.name.toString(), "immutable", [], value)] };
         }
         let result = this.schema.validate(value);
-        const hookValue = this.callHook("validator", value);
-        if (hookValue instanceof BaseError) {
-            if (!result.success) {
-                result.errors.push(hookValue);
-            } else result = { success: false, errors: [hookValue] };
+        if (result.success) {
+            const hookValue = this.callHook("validator", value);
+            if (hookValue instanceof BaseError) result = { success: false, errors: [hookValue] };
         }
         return result;
     }

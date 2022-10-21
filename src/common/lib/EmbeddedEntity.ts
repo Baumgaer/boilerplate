@@ -69,8 +69,13 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
         protected static isInstance(instance: unknown): boolean {
             if (!isObject(instance) || isPlainObject(instance)) return false;
             if (!("className" in instance) || Reflect.get(instance, "className") !== className) return false;
-            Object.keys(members).every((key) => hasOwnProperty(instance, key));
-            return true;
+
+            const schema = (instance as EmbeddedEntity)?.getSchema?.();
+            if (!schema || !schema.attributeSchemas || !isObject(schema.attributeSchemas)) return false;
+
+            return Object.keys(members).every((key) => {
+                return !Reflect.get(members, key).isRequired || hasOwnProperty(schema.attributeSchemas, String(key));
+            });
         }
 
         public isNew() {

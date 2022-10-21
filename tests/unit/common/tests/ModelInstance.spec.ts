@@ -1,18 +1,11 @@
 import { expect } from "chai";
 import { pick, isEqual } from "lodash";
 import { v4 } from "uuid";
+import { getExtendedTestModelArgs } from "~env/TestUtils";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 
-const args = {
-    name: "TestModel",
-    aUselessField: null,
-    anotherIntersection: { prop1: "test", prop2: 42, prop3: true },
-    aTuple: ["test", 42, true],
-    anInterface: { prop1: "test" },
-    anArray: ["4", "5", "6", "7"],
-    aString: "lolHaha"
-} as ConstructionParams<TestModel>;
+const args = getExtendedTestModelArgs({ aString: "lolHaha" });
 const testModel = new TestModel(Object.assign({}, args, { oneToOne: new TestMyTestModel({ name: "TestMyTestModel" }) }));
 
 export default function (_environment = "common") {
