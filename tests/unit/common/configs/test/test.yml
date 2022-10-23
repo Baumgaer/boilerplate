@@ -1,0 +1,3 @@
+testObject:
+    test2: "boolean"
+    test3: "object"

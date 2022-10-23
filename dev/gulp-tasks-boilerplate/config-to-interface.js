@@ -3,16 +3,53 @@ const path = require("path");
 const arp = require("app-root-path");
 const { watch } = require("gulp");
 const jsonToTs = require("json-to-ts");
+const { parseConfigFileTextToJson, parseJsonConfigFileContent, sys } = require("typescript");
 const { parse } = require("yaml");
 
+const partialDefaultConfigPath = "configs/default";
 
-function readConfigDir(environment) {
+function readTsConfigJson(configFilePath) {
+    const configFile = sys.readFile(configFilePath);
+    if (!configFile) throw new Error("No configuration found");
+
+    const result = parseConfigFileTextToJson(configFilePath, configFile);
+    const configObject = result.config;
+    return parseJsonConfigFileContent(configObject, sys, path.dirname(configFilePath), {}, path.basename(configFilePath));
+}
+
+function readConfigDir(basePath) {
     return new Promise((resolve, reject) => {
-        const configPath = path.join(arp.path, "src", environment, "configs", "default");
+        const configPath = path.join(basePath, "configs", "default");
         readdir(configPath, { encoding: "utf-8", withFileTypes: true }, (error, files) => {
             if (error) return reject(error);
             resolve(files.filter((file) => file.isFile() && file.name.endsWith(".yml")).map((file) => path.join(configPath, file.name)));
         });
+    });
+}
+
+function readConfigDirs(basePaths, environment) {
+    return new Promise((resolve, reject) => {
+        const allPathLists = [];
+        for (const basePath of basePaths) {
+            allPathLists.push(readConfigDir(basePath));
+        }
+
+        Promise.all(allPathLists).then((allPathLists) => {
+            const allPaths = [];
+            for (const pathList of allPathLists) {
+                for (const aPath of pathList) {
+                    const splitter = path.join(`${path.sep}${environment}${path.sep}${partialDefaultConfigPath}${path.sep}`);
+                    if (!aPath.includes(splitter)) continue;
+
+                    const relativeConfigPath = aPath.split(splitter)[1];
+                    if (allPaths.some((onePath) => onePath.split(splitter)[1] === relativeConfigPath)) continue;
+
+                    allPaths.push(aPath);
+                }
+            }
+
+            resolve(allPaths);
+        }).catch((error) => reject(error));
     });
 }
 
@@ -34,16 +71,16 @@ function readConfigFiles(files) {
     return Promise.all(allFilesDataPromises);
 }
 
-function writeConfigFile(environment, data) {
+function writeConfigFile(baseUrl, environment, data) {
     return new Promise((resolve, reject) => {
-        writeFile(path.join(arp.path, "src", environment, "@types", "Config.d.ts"), data, (error) => {
+        writeFile(path.join(baseUrl, "..", environment, "@types", "Config.d.ts"), data, (error) => {
             if (error) return reject(error);
             resolve();
         });
     });
 }
 
-function buildConfig(environment, allFilesData) {
+function buildConfig(baseUrl, environment, allFilesData) {
     const filesData = {};
     for (let index = 0; index < allFilesData.length; index = index + 2) {
         const name = path.basename(allFilesData[index]).split(".")[0];
@@ -51,37 +88,44 @@ function buildConfig(environment, allFilesData) {
         filesData[name] = parse(data);
     }
 
-    let configContent = "/* eslint-disable @typescript-eslint/no-empty-interface */\nexport ";
+    let configContent = `/* eslint-disable @typescript-eslint/no-empty-interface */\n/*\n *   / \\     THIS FILE IS AUTO GENERATED!\n *  / | \\    DO NOT ADD CONTENT HERE!\n * /__.__\\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!\n */\nexport `;
     jsonToTs(filesData, { rootName: "IConfig" }).forEach((interface) => { configContent += String(interface.replaceAll("  ", "    ")) + "\n"; });
 
-    return writeConfigFile(environment, configContent);
+    return writeConfigFile(baseUrl, environment, configContent);
 }
 
-function createInterface(environment, callback) {
+function createInterface(baseUrl, basePaths, environment, callback) {
     console.info("creating configuration interface for", environment);
     const allFiles = [];
-    readConfigDir("common").then((files) => {
+    readConfigDirs(basePaths, "common").then((files) => {
         allFiles.push(...files);
         return readConfigFiles(files);
     }).then((allFilesData) => {
-        return buildConfig("common", allFilesData);
+        return buildConfig(baseUrl, "common", allFilesData);
     }).then(() => {
-        return readConfigDir(environment);
+        return readConfigDirs(basePaths, environment);
     }).then((files) => {
         allFiles.push(...files);
     }).then(() => {
         return readConfigFiles(allFiles);
     }).then((allFilesData) => {
-        return buildConfig(environment, allFilesData);
+        return buildConfig(baseUrl, environment, allFilesData);
     }).then(callback);
 }
 
 exports.default = function (config, callback) {
-    createInterface(config.environment, () => !config.watch ? callback() : console.info("watching config on environment:", config.environment));
+    const tsConfigJson = readTsConfigJson(path.join(arp.path, config.tsConfigPath));
+
+    const basePaths = [];
+    const relevantEnvironments = ["~common/*", `~${config.environment}/*`];
+    for (const relevantEnvironment of relevantEnvironments) {
+        for (const mappedPath of tsConfigJson.options.paths[relevantEnvironment]) {
+            basePaths.push(path.join(tsConfigJson.options.baseUrl, mappedPath.replace("*", "")));
+        }
+    }
+
+    createInterface(tsConfigJson.options.baseUrl, basePaths, config.environment, () => !config.watch ? callback() : console.info("watching config on environment:", config.environment));
     if (config.watch) {
-        watch([
-            path.join(arp.path, "src", "common", "configs/default/*.yml").replaceAll(path.sep, "/"),
-            path.join(arp.path, "src", config.environment, "configs/default/*.yml").replaceAll(path.sep, "/")
-        ], (callback) => createInterface(config.environment, callback));
+        watch(basePaths.map((basePath) => path.join(basePath, partialDefaultConfigPath, "/*.yml").replaceAll(path.sep, "/")), (callback) => createInterface(tsConfigJson.options.baseUrl, basePaths, config.environment, callback));
     }
 };

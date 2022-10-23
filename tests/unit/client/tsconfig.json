@@ -8,8 +8,8 @@
                 "./../../../src/client/*"
             ],
             "~common/*": [
-                "./../../../src/common/*",
-                "./../common/*"
+                "./../common/*",
+                "./../../../src/common/*"
             ],
             "~env/*": [
                 "./*",

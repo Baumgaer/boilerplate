@@ -1,0 +1,5 @@
+number: 42
+object:
+    string: "test"
+    number: 1
+    boolean: false

@@ -1,0 +1,6 @@
+string: "42"
+number: 24
+boolean: true
+list:
+    - "1"
+    - "2"
