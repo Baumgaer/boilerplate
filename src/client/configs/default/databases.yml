@@ -1,0 +1,8 @@
+web:
+    type: "sqljs"
+    autoSave: true
+    location: "main"
+    useLocalForage: true
+    logger: "debug"
+    logging:
+        - "error"

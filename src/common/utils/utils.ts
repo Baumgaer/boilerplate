@@ -15,7 +15,8 @@ export {
     upperFirst,
     isArray,
     isObject,
-    isEqual
+    isEqual,
+    cloneDeep
 } from "lodash";
 
 const lodash = addDeepdash(_);

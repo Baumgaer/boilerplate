@@ -23,13 +23,14 @@ npm-debug.log*
 /.sourcemaps
 /.versions
 /.vscode/launch.json
+/.nyc_output
 !/.vscode/settings.json
 !/.vscode/extensions.json
 /coverage
+/coverage-ts
+/src/*/configs/development/*.yml
 /dist
 /node_modules
 /platforms
 /plugins
 /www
-/coverage-ts
-/.nyc_output

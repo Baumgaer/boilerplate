@@ -3,7 +3,9 @@ import { IonicVue } from '@ionic/vue';
 import { DataSource } from "typeorm";
 import { createApp } from 'vue';
 import App from '~client/App.vue';
+import Configurator from "~client/lib/Configurator";
 import router from '~client/routes';
+import type { DataSourceOptions } from "typeorm";
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -27,6 +29,8 @@ import '~client/themes/default.css';
 /* Web database */
 import "sql.js/dist/sql-wasm.js";
 
+const configurator = new Configurator();
+
 global.MODEL_NAME_TO_MODEL_MAP = {};
 const context = require.context("~env/models/", true, /.+\.ts/, "sync");
 context.keys().forEach((key) => {
@@ -38,23 +42,14 @@ const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
 // Wait for all model schemas constructed to ensure all models have correct relations
 const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
 await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
-await new DataSource({
-    type: "sqljs",
-    autoSave: true,
-    location: "test",
-    useLocalForage: true,
+
+await new DataSource(Object.assign(configurator.get("databases.web") as DataSourceOptions, {
     entities: modelClasses,
-    synchronize: true,
-    logging: ["info", "error", "log", "schema", "warn"],
     sqlJsConfig: {
         locateFile: () => sqlWasm.href
     }
-}).initialize();
+})).initialize();
 
-const app = createApp(App)
-    .use(IonicVue)
-    .use(router);
-
-router.isReady().then(() => {
-    app.mount('#app');
-});
+const app = createApp(App).use(IonicVue).use(router);
+await router.isReady();
+app.mount('#app');

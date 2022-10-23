@@ -1,4 +1,4 @@
-import { merge, setValue, getValue, eachDeep, isObject, isArray } from "~env/utils/utils";
+import { merge, setValue, getValue, eachDeep, isObject, isArray, cloneDeep } from "~env/utils/utils";
 import type { Get } from "type-fest";
 import type { Paths } from "~common/@types/Configurator";
 import type { IConfig } from "~env/@types/Config";
@@ -29,7 +29,7 @@ export default class Configurator {
      * @returns the value if the given path if exists and undefined else
      */
     public get<TPath extends Paths<IConfig>>(path: TPath): Get<IConfig, TPath> {
-        return getValue(this.config, (path as string).split("."));
+        return cloneDeep(getValue(this.config, (path as string).split(".")));
     }
 
     /**
