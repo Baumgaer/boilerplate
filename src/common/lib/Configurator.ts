@@ -46,7 +46,7 @@ export default class Configurator {
             eachDeep(oldValue, (currentValue, key, parentValue, context) => {
                 let allowedTypes: string[] = [typeof currentValue];
                 if (isArray(parentValue)) {
-                    if (!parentValue.length) return; // No type to determine
+                    if (!parentValue.length || isArray(value) && key >= value.length) return; // No type to determine
                     allowedTypes = Array.from(new Set(parentValue.map((item) => typeof item)));
                 }
                 if (context.path && !allowedTypes.includes(typeof getValue(value, context.path))) {
@@ -55,7 +55,16 @@ export default class Configurator {
                 }
             }, { leavesOnly: true, pathFormat: "array" });
             if (!areEqualTypes) return false;
-        } else if (!oldValue || typeof oldValue !== typeof value) return false;
+        } else {
+            const parentValue = getValue(this.config, pathAsArray.slice(0, pathAsArray.length - 1));
+            let allowedTypes: string[] = [typeof oldValue];
+            if (isArray(parentValue)) {
+                if (parentValue.length) {
+                    allowedTypes = Array.from(new Set(parentValue.map((item) => typeof item)));
+                } else allowedTypes = [];
+            }
+            if (allowedTypes.length && !allowedTypes.includes(typeof value)) return false;
+        }
         return Boolean(setValue(this.config, pathAsArray, value));
     }
 
