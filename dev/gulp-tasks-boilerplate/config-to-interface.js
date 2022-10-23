@@ -1,8 +1,10 @@
+/* eslint-disable @typescript-eslint/unbound-method */
 const { readdir, readFile, writeFile } = require("fs");
 const path = require("path");
 const arp = require("app-root-path");
 const { watch } = require("gulp");
 const jsonToTs = require("json-to-ts");
+const { merge } = require("lodash");
 const { parseConfigFileTextToJson, parseJsonConfigFileContent, sys } = require("typescript");
 const { parse } = require("yaml");
 
@@ -85,7 +87,9 @@ function buildConfig(baseUrl, environment, allFilesData) {
     for (let index = 0; index < allFilesData.length; index = index + 2) {
         const name = path.basename(allFilesData[index]).split(".")[0];
         const data = allFilesData[index + 1];
-        filesData[name] = parse(data);
+        if (!(name in filesData)) {
+            filesData[name] = parse(data);
+        } else merge(filesData[name], parse(data));
     }
 
     let configContent = `/* eslint-disable @typescript-eslint/no-empty-interface */\n/*\n *   / \\     THIS FILE IS AUTO GENERATED!\n *  / | \\    DO NOT ADD CONTENT HERE!\n * /__.__\\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!\n */\nexport `;
