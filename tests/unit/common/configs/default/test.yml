@@ -1,3 +1,15 @@
+string: "0"
+number: 0
+boolean: true
+list: []
 testObject:
-    test1: "string"
-    test2: "number"
+    test1: ""
+    test2: ""
+    test3: ""
+    test4:
+        - 42
+        - 43
+myObject:
+    string: ""
+    number: 0
+    boolean: true

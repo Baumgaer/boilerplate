@@ -17,3 +17,4 @@ export default class TestMyTestModel extends BaseModel { }
 ### Error codes
 - 001: because we are using mocks here, we have to pass a normally unaccessible property
 - 002: because we want to test for a non public attribute
+- 003: because we want to test some disallowed types as user input

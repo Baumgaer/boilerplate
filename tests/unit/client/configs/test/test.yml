@@ -1,5 +1,5 @@
 number: 42
-object:
+myObject:
     string: "test"
     number: 1
     boolean: false
