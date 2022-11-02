@@ -13,6 +13,7 @@ declare var MODEL_NAME_TO_MODEL_MAP: Record<string, typeof import("~common/lib/B
 declare type ModuleLike<T> = { [key: string]: T, default: T };
 
 declare type GeneralHookFunction<V, R> = (value: V) => R;
+declare type ActionFunction = (...value: any[]) => Promise<any>;
 declare type UnspecificHookFunction<T, V, S, R> = (this: T, value: V, parametersOrUser: S) => R;
 declare type ObserverHookFunction<T> = (value: T, parameters?: ObserverParameters<T>) => void;
 

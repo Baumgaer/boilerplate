@@ -1,9 +1,10 @@
-import { mergeWith } from "lodash";
 import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
+import ApiClient from "~env/lib/ApiClient";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import ModelSchema from "~env/lib/ModelSchema";
-import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
+import { mergeWith, isUndefined } from "~env/utils/utils";
+import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes, ActionParameters, ArgParameters } from "~env/@types/AttributeSchema";
 import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
 import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
@@ -138,5 +139,60 @@ export function AttrSetter<T>(attributeName: keyof T) {
 export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
     return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<ObserverHookFunction<any>>) => {
         Reflect.defineMetadata(`${String(attributeName)}:observer:${type}`, descriptor, target);
+    };
+}
+
+function action<T extends BaseModel | typeof BaseModel>(params: ActionParameters, target: T, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) {
+    const args = Reflect.getOwnMetadata("arguments", target, methodName) as Record<string, { index: number, isId: boolean }>;
+    const method = descriptor.value;
+    descriptor.value = async (...internalArgs: any[]) => {
+        if (!method) throw new Error(`${String(methodName)} is not a standard method`);
+
+        const methodResult = method.call(target, ...internalArgs);
+        const entries = Object.entries(args);
+
+        const parameters = entries.filter((entry) => {
+            return !entry[1].isId && !isUndefined(internalArgs[entry[1].index]);
+        }).map((entry) => [entry[0], internalArgs[entry[1].index]]) as [string, any][];
+
+        let id = "";
+        let idParameterIndex = entries.findIndex((entry) => entry[1].isId);
+        if ("isNew" in target && !target.isNew()) {
+            id = target.getId();
+        } else if (idParameterIndex > -1) {
+            idParameterIndex = entries[idParameterIndex][1].index;
+            if (isUndefined(internalArgs[idParameterIndex])) {
+                id = "";
+            } else id = internalArgs[idParameterIndex];
+        }
+
+        if (!params.local) {
+            const httpMethod = (params.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionParameters["httpMethod"], undefined>>;
+            ApiClient[httpMethod]({ collectionName: target.collectionName, actionName: params.name || "", id, parameters });
+        }
+
+        return methodResult;
+    };
+}
+
+export function Mutation<T extends BaseModel | typeof BaseModel>(params: ActionParameters) {
+    return (target: T, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
+        params.httpMethod = params.httpMethod ?? "POST";
+        action(params, target, methodName, descriptor);
+    };
+}
+
+export function Query<T extends BaseModel | typeof BaseModel>(params: ActionParameters) {
+    return (target: T, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
+        params.httpMethod = params.httpMethod ?? "GET";
+        action(params, target, methodName, descriptor);
+    };
+}
+
+export function Arg<T>(params: ArgParameters) {
+    return (target: Partial<T>, methodName: string | symbol, index: number) => {
+        const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};
+        args[params.name || ""] = { index, isId: Boolean(params.isId) };
+        Reflect.defineMetadata(`arguments`, args, target, methodName);
     };
 }

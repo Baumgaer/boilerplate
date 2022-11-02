@@ -161,7 +161,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @returns dummyId if exists and id else
      */
     public getId() {
-        return this.dummyId || this.id;
+        return this.dummyId || this.id || "";
     }
 
     /**
@@ -315,7 +315,7 @@ export default abstract class BaseModel extends BaseEntity {
      * instance to enable reactivity for a framework or something else in
      * addition to the models reactivity.
      *
-     * @param _value the instance which should be wrapped with a proxy
+     * @param value the instance which should be wrapped with a proxy
      */
     /* istanbul ignore next This is just a mock */
     protected addReactivity(_value: this): this {

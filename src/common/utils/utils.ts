@@ -10,6 +10,7 @@ export {
     difference,
     camelCase,
     merge,
+    mergeWith,
     isPlainObject,
     isUndefined,
     upperFirst,

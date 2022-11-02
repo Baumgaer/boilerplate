@@ -120,3 +120,15 @@ export type AttrObserverTypes = "add" | "remove" | "change"
 export type ChangeMethodsArgs<V> = [(string | symbol)[], V, V]
 
 export type SchemaTypes = ZodTypeAny;
+
+export interface ActionParameters {
+    name?: string;
+    local?: boolean;
+    httpMethod?: "GET" | "POST" | "PUT" | "PATCH" | "OPTIONS" | "DELETE"
+    accessRight: () => boolean;
+}
+
+export interface ArgParameters {
+    name?: string;
+    isId?: boolean;
+}
