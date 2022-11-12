@@ -5,7 +5,7 @@ import ModelSchema from "~env/lib/ModelSchema";
 import { mergeWith } from "~env/utils/utils";
 import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
 import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
-import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson, ActionParameters, ArgParameters } from "~env/@types/ModelClass";
+import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson, ActionParameters, ArgParameters, ArgParametersWithMetadataJson, ArgParametersPartialMetadataJson } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 import type { AttributeError } from "~env/lib/Errors";
 
@@ -59,8 +59,8 @@ export function Model<T extends typeof BaseModel>(options?: ModelOptions<T>): Cl
  */
 export function Attr<T extends typeof BaseModel>(options?: AttrOptions<T>): PropertyDecorator {
     const metadataStore = new MetadataStore();
-    const metadata: IAttrMetadata = JSON.parse((<AttrOptionsWithMetadataJson<T>>options).metadataJson);
-    const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <AttrOptionsWithMetadataJson<T>>options);
+    const metadata: IAttrMetadata = JSON.parse((options as AttrOptionsWithMetadataJson<T>).metadataJson);
+    const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as AttrOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
 
     return (target) => {
@@ -189,10 +189,14 @@ export function Query(params: ActionParameters) {
  * @param params the parameters which control the behavior of the parameter
  * @returns a decorator which registers the parameter as an action parameter
  */
-export function Arg<T>(params: ArgParameters) {
+export function Arg<T>(params?: ArgParameters) {
+    const metadata: IAttrMetadata = JSON.parse((params as ArgParametersWithMetadataJson).metadataJson);
+    const metadataParams: ArgParametersPartialMetadataJson = mergeWith({}, metadata, params as ArgParametersWithMetadataJson);
+    delete metadataParams.metadataJson;
+
     return (target: Partial<T>, methodName: string | symbol, index: number) => {
         const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};
-        args[params.name || ""] = { index, isId: Boolean(params.isId) };
+        args[metadataParams.name] = { index, isId: Boolean(metadataParams.isId) };
         Reflect.defineMetadata(`arguments`, args, target, methodName);
     };
 }

@@ -3,9 +3,9 @@ import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
-export const AttrTypeLiteral = createRule({
-    name: "Attr-Type-Literal",
-    type: "Attr",
+export const TypeLiteral = createRule({
+    name: "Type-Literal",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);

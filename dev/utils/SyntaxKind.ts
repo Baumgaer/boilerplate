@@ -81,6 +81,10 @@ export function isPropertyDeclaration(node?: ts.Node): node is ts.PropertyDeclar
     return isNode("PropertyDeclaration", node);
 }
 
+export function isParameter(node?: ts.Node): node is ts.ParameterDeclaration {
+    return isNode("Parameter", node);
+}
+
 export function isClassDeclaration(node?: ts.Node): node is ts.ClassDeclaration {
     return isNode("ClassDeclaration", node);
 }

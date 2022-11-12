@@ -8,7 +8,8 @@ import {
     isDecoratorNode,
     isPropertyDeclaration,
     isPropertySignature,
-    isClassDeclaration
+    isClassDeclaration,
+    isParameter
 } from "../../utils/SyntaxKind";
 import { programFromConfig } from "../../utils/utils";
 import type { IConfiguration, ValidDeclarations } from "../@types/Transformer";
@@ -17,6 +18,7 @@ import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 
 const checkers = {
     Attr: isPropertyDeclaration,
+    Arg: isParameter,
     Model: isClassDeclaration
 };
 
@@ -79,15 +81,17 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
 
             const next = (usedNode: ts.Node, dept = 0, metadata: Record<string, any> = {}) => {
                 let echoType = "type";
-                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode)) {
+                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode) || isParameter(usedNode)) {
                     if (isPropertyDeclaration(usedNode)) {
                         echoType = "attr";
+                    } else if (isParameter(usedNode)) {
+                        echoType = "arg";
                     } else echoType = "prop";
                     metadata = {};
                 } else if (isClassDeclaration(usedNode)) echoType = "model";
 
                 let name = "unknown";
-                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode) || isClassDeclaration(usedNode)) {
+                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode) || isParameter(usedNode) || isClassDeclaration(usedNode)) {
                     name = usedNode.name?.getText() || "unknown";
                 } else name = usedNode.getText(usedNode.getSourceFile());
 
@@ -95,7 +99,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
 
                 const matchedRules = [];
                 for (const rule of rules) {
-                    const isValidDecorator = isIdentifierNode(node.expression) && node.expression.escapedText === rule.type;
+                    const isValidDecorator = isIdentifierNode(node.expression) && (rule.type as string[]).includes(node.expression.escapedText.toString());
                     if (!isValidDecorator) continue;
 
                     rule.config = config;

@@ -2,6 +2,7 @@ import { getJSDocTags } from "typescript";
 import {
     isPropertyDeclaration,
     isPropertySignature,
+    isParameter,
     isTypeNode,
     isTypeReferenceNode,
     isLiteralTypeNode
@@ -40,12 +41,12 @@ function typeParameterToTypeArgumentValue(declaration: ts.TypeAliasDeclaration, 
     return NOT_FOUND;
 }
 
-export const AttrTypeCustom = createRule({
-    name: "Attr-Type-Custom",
-    type: "Attr",
+export const TypeCustom = createRule({
+    name: "Type-Custom",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
+        if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type;
         if (!nodeToCheck || !isTypeNode(nodeToCheck) || !isTypeReferenceNode(nodeToCheck)) return false;
 
         const declarationSourceFile = getDeclaration(program, nodeToCheck)?.getSourceFile();

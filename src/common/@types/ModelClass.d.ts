@@ -3,7 +3,7 @@ import type { EntityOptions, IndexOptions } from "typeorm";
 // Need to be imported from common due to reference loop in common embedded entity
 // eslint-disable-next-line boilerplate/prefer-env-import
 import type { embeddedEntityFactory } from "~common/lib/EmbeddedEntity";
-import type { IModelMetadata } from "~env/@types/MetadataTypes";
+import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
 import type BaseModel from "~env/lib/BaseModel";
 
 export type ModelLike = typeof BaseModel | ReturnType<typeof embeddedEntityFactory>;
@@ -94,6 +94,8 @@ export interface ActionDefinition {
     args: ArgParameters;
 }
 
+export type ArgParametersWithMetadataJson = ArgParameters & { metadataJson: string }
+export type ArgParametersPartialMetadataJson = IAttrMetadata & SetOptional<ArgParametersWithMetadataJson, "metadataJson">;
 export type ModelOptions<T extends ModelLike> = Pick<EntityOptions, AllowedModelFields> & IExtraOptions & ThisType<T>;
 export type ModelOptionsWithMetadataJson<T extends ModelLike> = ModelOptions<T> & { metadataJson: string }
 export type ModelOptionsPartialMetadataJson<T extends ModelLike> = IModelMetadata & SetOptional<ModelOptionsWithMetadataJson<T>, "metadataJson">;

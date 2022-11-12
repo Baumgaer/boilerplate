@@ -1,17 +1,17 @@
-import { isPropertyDeclaration, isPropertySignature, isIntersectionTypeNode } from "../../utils/SyntaxKind";
+import { isPropertyDeclaration, isPropertySignature, isIntersectionTypeNode, isParameter } from "../../utils/SyntaxKind";
 import { isUnionOrIntersectionType, isIntersectionType } from "../../utils/Type";
 import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
-export const AttrTypeIntersection = createRule({
-    name: "Attr-Type-Intersection",
-    type: "Attr",
+export const TypeIntersection = createRule({
+    name: "Type-Intersection",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
 
         let nodeToCheck: ts.Node | ts.TypeNode | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
+        if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type;
         if (!nodeToCheck) return false;
 
         const type = getTypeFromNode(checker, nodeToCheck);

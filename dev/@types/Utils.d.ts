@@ -12,6 +12,7 @@ export type TSNodeNames =
 
     "PropertyDeclaration" | "ClassDeclaration" | "InterfaceDeclaration" |
     "ImportDeclaration" | "ExportDeclaration" | "TypeAliasDeclaration" |
+    "Parameter" |
 
     "PropertySignature";
 

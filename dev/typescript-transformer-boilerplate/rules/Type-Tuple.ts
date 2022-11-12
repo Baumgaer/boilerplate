@@ -1,13 +1,13 @@
-import { isPropertyDeclaration, isPropertySignature, isTupleTypeNode } from "../../utils/SyntaxKind";
+import { isPropertyDeclaration, isPropertySignature, isTupleTypeNode, isParameter } from "../../utils/SyntaxKind";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
-export const AttrTypeTuple = createRule({
-    name: "Attr-Type-Tuple",
-    type: "Attr",
+export const TypeTuple = createRule({
+    name: "Type-Tuple",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
+        if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type;
         if (!nodeToCheck) return false;
         if (isTupleTypeNode(nodeToCheck)) return nodeToCheck;
         return false;

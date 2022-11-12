@@ -1,19 +1,19 @@
-import { isBooleanType, isLiteralType } from "../../utils/Type";
+import { isNumberType, isLiteralType } from "../../utils/Type";
 import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 
-export const AttrTypeBoolean = createRule({
-    name: "Attr-Type-Boolean",
-    type: "Attr",
+export const TypeNumber = createRule({
+    name: "Type-Number",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);
-        if (isBooleanType(type) && !isLiteralType(type)) return node;
+        if (isNumberType(type) && !isLiteralType(type)) return node;
         return false;
     },
     emitType() {
         return {
-            identifier: "Boolean",
+            identifier: "Number",
             isPrimitive: true
         };
     }

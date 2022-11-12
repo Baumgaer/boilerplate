@@ -1,45 +1,45 @@
 import transformer from "./lib/Transformer";
-import { AttrTypeAny } from "./rules/Attr-Type-Any";
-import { AttrTypeArray } from "./rules/Attr-Type-Array";
-import { AttrTypeBoolean } from "./rules/Attr-Type-Boolean";
-import { AttrTypeCustom } from "./rules/Attr-Type-Custom";
-import { AttrTypeDate } from "./rules/Attr-Type-Date";
-import { AttrTypeInterface } from "./rules/Attr-Type-Interface";
-import { AttrTypeIntersection } from "./rules/Attr-Type-Intersection";
-import { AttrTypeLiteral } from "./rules/Attr-Type-Literal";
-import { AttrTypeModel } from "./rules/Attr-Type-Model";
-import { AttrTypeNull } from "./rules/Attr-Type-Null";
-import { AttrTypeNumber } from "./rules/Attr-Type-Number";
-import { AttrTypeOptional } from "./rules/Attr-Type-Optional";
-import { AttrTypeParenthesized } from "./rules/Attr-Type-Parenthesized";
-import { AttrTypeString } from "./rules/Attr-Type-String";
-import { AttrTypeTuple } from "./rules/Attr-Type-Tuple";
-import { AttrTypeUndefined } from "./rules/Attr-Type-Undefined";
-import { AttrTypeUnion } from "./rules/Attr-Type-Union";
 import { Model } from "./rules/Model";
+import { TypeAny } from "./rules/Type-Any";
+import { TypeArray } from "./rules/Type-Array";
+import { TypeBoolean } from "./rules/Type-Boolean";
+import { TypeCustom } from "./rules/Type-Custom";
+import { TypeDate } from "./rules/Type-Date";
+import { TypeInterface } from "./rules/Type-Interface";
+import { TypeIntersection } from "./rules/Type-Intersection";
+import { TypeLiteral } from "./rules/Type-Literal";
+import { TypeModel } from "./rules/Type-Model";
+import { TypeNull } from "./rules/Type-Null";
+import { TypeNumber } from "./rules/Type-Number";
+import { TypeOptional } from "./rules/Type-Optional";
+import { TypeParenthesized } from "./rules/Type-Parenthesized";
+import { TypeString } from "./rules/Type-String";
+import { TypeTuple } from "./rules/Type-Tuple";
+import { TypeUndefined } from "./rules/Type-Undefined";
+import { TypeUnion } from "./rules/Type-Union";
 import type { IConfiguration } from "./@types/Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 import type ts from "typescript";
 
 const rules = [
-    AttrTypeParenthesized,
+    TypeParenthesized,
     Model,
-    AttrTypeNull,
-    AttrTypeUndefined,
-    AttrTypeString,
-    AttrTypeNumber,
-    AttrTypeBoolean,
-    AttrTypeLiteral,
-    AttrTypeDate,
-    AttrTypeModel,
-    AttrTypeInterface,
-    AttrTypeUnion,
-    AttrTypeIntersection,
-    AttrTypeTuple,
-    AttrTypeArray,
-    AttrTypeOptional,
-    AttrTypeCustom,
-    AttrTypeAny
+    TypeNull,
+    TypeUndefined,
+    TypeString,
+    TypeNumber,
+    TypeBoolean,
+    TypeLiteral,
+    TypeDate,
+    TypeModel,
+    TypeInterface,
+    TypeUnion,
+    TypeIntersection,
+    TypeTuple,
+    TypeArray,
+    TypeOptional,
+    TypeCustom,
+    TypeAny
 ];
 
 export default function (_prog: ts.Program, config: PluginConfig & IConfiguration) {

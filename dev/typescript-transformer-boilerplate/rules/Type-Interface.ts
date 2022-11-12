@@ -1,16 +1,16 @@
 import { merge } from "lodash";
-import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration } from "../../utils/SyntaxKind";
+import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isParameter } from "../../utils/SyntaxKind";
 import { isObjectType, isAnyType, isInterfaceType } from "../../utils/Type";
 import { getTypeFromNode, resolveTypeReferenceTo } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
-export const AttrTypeInterface = createRule({
-    name: "Attr-Type-Interface",
-    type: "Attr",
+export const TypeInterface = createRule({
+    name: "Type-Interface",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node)) nodeToCheck = node.type;
+        if (isPropertyDeclaration(node) || isParameter(node)) nodeToCheck = node.type;
 
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);
@@ -19,7 +19,7 @@ export const AttrTypeInterface = createRule({
         let nodeToResolve: ts.Identifier | ts.TypeReferenceNode | ts.NewExpression | undefined;
         if (isTypeReferenceNode(nodeToCheck)) {
             nodeToResolve = nodeToCheck;
-        } else if (isPropertyDeclaration(nodeToCheck) && (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer))) {
+        } else if ((isPropertyDeclaration(nodeToCheck) || isParameter(nodeToCheck)) && (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer))) {
             nodeToResolve = nodeToCheck.initializer;
         }
         if (!nodeToResolve) return false;

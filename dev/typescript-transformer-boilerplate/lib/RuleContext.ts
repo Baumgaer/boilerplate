@@ -6,12 +6,15 @@ import {
     isPublicKeyword,
     isPromiseTypeNode,
     isPropertyDeclaration,
-    isPropertySignature
+    isPropertySignature,
+    isParameter
 } from "../../utils/SyntaxKind";
-import type { DecoratorNames, IOptions } from "../@types/RuleContext";
+import type { DecoratorNames, IOptions, TypeEmittingDecoratorNames } from "../@types/RuleContext";
 import type { IConfiguration } from "../@types/Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 import type ts from "typescript";
+
+const typeEmittingDecoratorNames = ["Attr", "Arg"] as TypeEmittingDecoratorNames;
 
 class RuleContext<T extends DecoratorNames, D extends ts.Node> {
 
@@ -34,13 +37,17 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
     }
 
     public emitMetadata(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitMetadata"]>) {
-        if (this.type === "Attr") return this.emitMetadataAttr(declarationNode, ...params);
+        if (this.isTypeEmittingDecorator(this.type)) return this.emitMetadataTypeEmitting(declarationNode, ...params);
         return this.emitMetadataModel(declarationNode, ...params);
     }
 
     public emitType(...params: Parameters<Required<IOptions<T, D>>["emitType"]>) {
-        if (this.type === "Attr") return this.emitTypeAttr(...params);
+        if (this.isTypeEmittingDecorator(this.type)) return this.emitTypeTypeEmitting(...params);
         return this.emitTypeModel(...params);
+    }
+
+    private isTypeEmittingDecorator(type: string[]): type is TypeEmittingDecoratorNames {
+        return type.every((theType) => typeEmittingDecoratorNames.includes(theType as any));
     }
 
     private emitMetadataModel(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitMetadata"]>) {
@@ -53,14 +60,14 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
         return merge({ isAbstract, className, collectionName }, metadata);
     }
 
-    private emitMetadataAttr(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitMetadata"]>) {
+    private emitMetadataTypeEmitting(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitMetadata"]>) {
         const program = params[0];
         const checker = program.getTypeChecker();
         const node = declarationNode as ts.PropertyDeclaration | ts.PropertySignature;
         const metadata = this.options.emitMetadata?.call(this.config, ...params) ?? {};
 
         let defaultMetadata = {};
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) {
+        if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) {
             const name = node.name.getText();
             const isRequired = !node.questionToken && !node.initializer || isPropertyDeclaration(node) && node.exclamationToken && !node.initializer;
             const isReadOnly = canHaveModifiers(node) && getModifiers(node)?.some((modifier) => isReadonlyKeyword(modifier));
@@ -76,7 +83,7 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
         return this.options.emitType?.call(this.config, ...params) ?? {};
     }
 
-    private emitTypeAttr(...params: Parameters<Required<IOptions<T, D>>["emitType"]>) {
+    private emitTypeTypeEmitting(...params: Parameters<Required<IOptions<T, D>>["emitType"]>) {
         return this.options.emitType?.call(this.config, ...params) ?? {};
     }
 }

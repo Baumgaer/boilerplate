@@ -1,8 +1,8 @@
 import { createRule } from "../lib/RuleContext";
 
-export const AttrTypeAny = createRule({
-    name: "Attr-Type-Any",
-    type: "Attr",
+export const TypeAny = createRule({
+    name: "Type-Any",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node, matchedRules) {
         if (matchedRules.length) return false;
         return node;

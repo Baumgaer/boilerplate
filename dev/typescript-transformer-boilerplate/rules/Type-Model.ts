@@ -1,11 +1,11 @@
-import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isPropertySignature } from "../../utils/SyntaxKind";
+import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isPropertySignature, isParameter } from "../../utils/SyntaxKind";
 import { isObjectType, isAnyType, isClassType, isInterfaceType } from "../../utils/Type";
 import { getTypeFromNode, resolveTypeReferenceTo, isInEnvironmentalPath } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
 import type ts from "typescript";
 
 function getTypeContainingNode(node: ts.Node) {
-    if (isPropertyDeclaration(node) || isPropertySignature(node)) {
+    if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) {
         if (isTypeReferenceNode(node.type)) {
             return node.type;
         } else if (isNewExpression(node.initializer) || isIdentifierNode(node.initializer)) return node.initializer;
@@ -14,20 +14,20 @@ function getTypeContainingNode(node: ts.Node) {
     return node;
 }
 
-export const AttrTypeModel = createRule({
-    name: "Attr-Type-Model",
-    type: "Attr",
+export const TypeModel = createRule({
+    name: "Type-Model",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
 
         let nodeToCheck: ts.Identifier | ts.Node | ts.NewExpression | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type;
+        if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type;
         if (!nodeToCheck) return false;
 
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, nodeToCheck);
         if (!isObjectType(type) && !isAnyType(type) && !isClassType(type) || isInterfaceType(type)) return false;
 
-        if (isPropertyDeclaration(nodeToCheck) || isPropertySignature(nodeToCheck)) {
+        if (isPropertyDeclaration(nodeToCheck) || isPropertySignature(nodeToCheck) || isParameter(nodeToCheck)) {
             if (isTypeReferenceNode(nodeToCheck.type)) {
                 nodeToCheck = nodeToCheck.type;
             } else if (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer)) nodeToCheck = nodeToCheck.initializer;

@@ -1,15 +1,15 @@
 import { isEqual } from "lodash";
-import { isPropertyDeclaration, isPropertySignature, isArrayTypeNode, isArrayLiteralExpression } from "../../utils/SyntaxKind";
+import { isPropertyDeclaration, isPropertySignature, isParameter, isArrayTypeNode, isArrayLiteralExpression } from "../../utils/SyntaxKind";
 import { createRule } from "../lib/RuleContext";
 import type { MetadataType } from "../@types/MetadataTypes";
 import type ts from "typescript";
 
-export const AttrTypeArray = createRule({
-    name: "Attr-Type-Array",
-    type: "Attr",
+export const TypeArray = createRule({
+    name: "Type-Array",
+    type: ["Attr", "Arg"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
-        if (isPropertyDeclaration(node) || isPropertySignature(node)) nodeToCheck = node.type || node.initializer;
+        if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type || node.initializer;
         if (!nodeToCheck) return false;
         if (isArrayTypeNode(nodeToCheck) || isArrayLiteralExpression(nodeToCheck)) return nodeToCheck;
         return false;
