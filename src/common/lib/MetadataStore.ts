@@ -1,5 +1,5 @@
 import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
-import type { ModelLike } from "~env/@types/ModelClass";
+import type { ModelLike, ActionDefinition } from "~env/@types/ModelClass";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type ModelSchema from "~env/lib/ModelSchema";
@@ -115,7 +115,7 @@ export default class MetadataStore {
      *
      * @param target the static model class to get the schema from
      * @param schemaName the name of the schema
-     * @returns returns the schema of the model if found and null else
+     * @returns the schema of the model if found and null else
      */
     public getModelSchema<T extends ModelLike>(target?: T, schemaName?: string): ModelSchema<T> | null {
         if (schemaName && this.modelSchemas[schemaName]) return this.modelSchemas[schemaName];
@@ -156,5 +156,27 @@ export default class MetadataStore {
      */
     public getAttributes<T extends ModelLike>(target: InstanceType<T>): BaseAttribute<T>[] {
         return Object.values(this.attributes.get(target) ?? {});
+    }
+
+    /**
+     * Registers an action on the target which will also be accessible for sub classed.
+     *
+     * @param target the model instance or class to get the attribute from
+     * @param methodName the name of the method
+     * @param action the definition of the action
+     */
+    public setAction<T extends ModelLike>(target: InstanceType<T>, methodName: string, action: ActionDefinition) {
+        Reflect.defineMetadata(`action:${methodName}`, action, target);
+    }
+
+    /**
+     * Searches for registered action by name and returns it
+     *
+     * @param target the model instance or class to get the attribute from
+     * @param methodName the name of the method
+     * @returns the registered action with corresponding name if exists
+     */
+    public getAction<T extends ModelLike>(target: InstanceType<T>, methodName: string) {
+        return Reflect.getMetadata(`action:${methodName}`, target);
     }
 }

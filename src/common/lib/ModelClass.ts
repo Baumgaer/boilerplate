@@ -1,9 +1,10 @@
 import { v4 as uuid } from "uuid";
 import MetadataStore from "~common/lib/MetadataStore";
+import ApiClient from "~env/lib/ApiClient";
 import BaseAttribute from "~env/lib/BaseAttribute";
-import { hasOwnProperty, upperFirst, camelCase } from "~env/utils/utils";
+import { hasOwnProperty, upperFirst, camelCase, isUndefined } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
-import type { ModelOptions } from "~env/@types/ModelClass";
+import type { ModelOptions, ActionParameters, ActionDefinition } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
 // Here we are storing all attributes during construction time to have access
@@ -119,6 +120,48 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         }
 
         /**
+         * Wraps the given action and calls it with the given this arg and passes
+         * all collected parameters. It also calls the server if not a local action.
+         *
+         * @param thisArg model instance or class to use as this type
+         * @param actionDefinition the defined action to call
+         * @returns a function which invokes the the original action
+         */
+        public static callAction(thisArg: ModelClass | typeof ModelClass, actionDefinition: ActionDefinition) {
+            const { descriptor, params, args } = actionDefinition;
+            const method = actionDefinition.descriptor.value;
+
+            return (...internalArgs: any[]) => {
+                if (!method) throw new Error(`This is not a standard method: ${descriptor}`);
+
+                const methodResult = method.call(thisArg, ...internalArgs);
+                const entries = Object.entries(args);
+
+                const parameters = entries.filter((entry) => {
+                    return !entry[1].isId && !isUndefined(internalArgs[entry[1].index]);
+                }).map((entry) => [entry[0], internalArgs[entry[1].index]]) as [string, any][];
+
+                let id = "";
+                let idParameterIndex = entries.findIndex((entry) => entry[1].isId);
+                if ("isNew" in thisArg && !thisArg.isNew()) {
+                    id = thisArg.getId();
+                } else if (idParameterIndex > -1) {
+                    idParameterIndex = entries[idParameterIndex][1].index;
+                    if (isUndefined(internalArgs[idParameterIndex])) {
+                        id = "";
+                    } else id = internalArgs[idParameterIndex];
+                }
+
+                if (!params.local) {
+                    const httpMethod = (params.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionParameters["httpMethod"], undefined>>;
+                    ApiClient[httpMethod]({ collectionName: thisArg.collectionName, actionName: params.name || "", id, parameters });
+                }
+
+                return methodResult;
+            };
+        }
+
+        /**
          * @inheritdoc
          */
         protected mergeProperties(proxy: this, properties: Record<string, any> = {}) {
@@ -167,9 +210,9 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * attributes and normal properties and reacts corresponding on the type.
          * If the property is an attribute it calls its getter and returns its value.
          *
-         * @param target the proxy wrapped instance of the model
+         * @param target the instance of the model without proxy
          * @param propertyName the name of the accessed property
-         * @param receiver the instance of the model without proxy
+         * @param receiver the instance of the model with proxy
          * @returns the value of the asked attribute or property
          */
         private get(target: this, propertyName: string | symbol, receiver: this) {
@@ -180,6 +223,10 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
+
+            const action = metadataStore.getAction(target as unknown as BaseModel, stringProperty);
+            if (action) return ModelClass.callAction(receiver, action);
+
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
@@ -193,10 +240,10 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * property is an attribute, it calls its setter and returns its return
          * value. This has to be a boolean. Otherwise JS will throw a ValueError.
          *
-         * @param target the proxy wrapped instance of the model
+         * @param target the instance of the model without proxy
          * @param propertyName the name of the accessed property
          * @param value the value which has to be set on the property
-         * @param receiver the instance of the model without proxy
+         * @param receiver the instance of the model with proxy
          * @returns the value of the asked attribute or property
          */
         private set(target: this, propertyName: string | symbol, value: any, receiver: this) {
@@ -216,6 +263,15 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     // database the right way and to be able to minify the className on compile time.
     // We need to disable that lint on this line to be able to provide the variable above
     // eslint-disable-next-line prefer-const
-    constructorProxy = new Proxy(ModelClass, { get: (target, property) => property === "name" ? options.className : Reflect.get(target, property) });
+    constructorProxy = new Proxy(ModelClass, {
+        get(target, property) {
+            const metadataStore = new MetadataStore();
+            const action = metadataStore.getAction(target as unknown as BaseModel, String(property));
+
+            if (property === "name") return options.className;
+            if (action) return ModelClass.callAction(constructorProxy, action);
+            return Reflect.get(target, property);
+        }
+    });
     return constructorProxy;
 }

@@ -1,12 +1,11 @@
 import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
-import ApiClient from "~env/lib/ApiClient";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import ModelSchema from "~env/lib/ModelSchema";
-import { mergeWith, isUndefined } from "~env/utils/utils";
-import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes, ActionParameters, ArgParameters } from "~env/@types/AttributeSchema";
+import { mergeWith } from "~env/utils/utils";
+import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
 import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
-import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~env/@types/ModelClass";
+import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson, ActionParameters, ArgParameters } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 import type { AttributeError } from "~env/lib/Errors";
 
@@ -142,53 +141,54 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
     };
 }
 
-function action<T extends BaseModel | typeof BaseModel>(params: ActionParameters, target: T, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) {
-    const args = Reflect.getOwnMetadata("arguments", target, methodName) as Record<string, { index: number, isId: boolean }>;
-    const method = descriptor.value;
-    descriptor.value = async (...internalArgs: any[]) => {
-        if (!method) throw new Error(`${String(methodName)} is not a standard method`);
-
-        const methodResult = method.call(target, ...internalArgs);
-        const entries = Object.entries(args);
-
-        const parameters = entries.filter((entry) => {
-            return !entry[1].isId && !isUndefined(internalArgs[entry[1].index]);
-        }).map((entry) => [entry[0], internalArgs[entry[1].index]]) as [string, any][];
-
-        let id = "";
-        let idParameterIndex = entries.findIndex((entry) => entry[1].isId);
-        if ("isNew" in target && !target.isNew()) {
-            id = target.getId();
-        } else if (idParameterIndex > -1) {
-            idParameterIndex = entries[idParameterIndex][1].index;
-            if (isUndefined(internalArgs[idParameterIndex])) {
-                id = "";
-            } else id = internalArgs[idParameterIndex];
-        }
-
-        if (!params.local) {
-            const httpMethod = (params.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionParameters["httpMethod"], undefined>>;
-            ApiClient[httpMethod]({ collectionName: target.collectionName, actionName: params.name || "", id, parameters });
-        }
-
-        return methodResult;
-    };
-}
-
-export function Mutation<T extends BaseModel | typeof BaseModel>(params: ActionParameters) {
-    return (target: T, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
+/**
+ * Registers a method as a mutation action. This method can have any parameters
+ * which also can be marked with @Arg(). The decorated method will always return
+ * a promise event if there is no async code.
+ *
+ * @param params the parameters which control the behavior of the action
+ * @returns a decorator which registers the method as a mutation action
+ */
+export function Mutation(params: ActionParameters) {
+    return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
+        const defaultAccessRight = () => false;
         params.httpMethod = params.httpMethod ?? "POST";
-        action(params, target, methodName, descriptor);
+        params.accessRight = params.accessRight ?? defaultAccessRight;
+
+        const args = Reflect.getOwnMetadata("arguments", target, methodName);
+        const metadataStore = new MetadataStore();
+        metadataStore.setAction(target, String(methodName), { params, descriptor, args });
     };
 }
 
-export function Query<T extends BaseModel | typeof BaseModel>(params: ActionParameters) {
-    return (target: T, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
+/**
+ * Registers a method as a query action. This method can have any parameters
+ * which also can be marked with @Arg(). The decorated method will always return
+ * a promise event if there is no async code.
+ *
+ * @param params the parameters which control the behavior of the action
+ * @returns a decorator which registers the method as a query action
+ */
+export function Query(params: ActionParameters) {
+    return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
+        const defaultAccessRight = () => false;
         params.httpMethod = params.httpMethod ?? "GET";
-        action(params, target, methodName, descriptor);
+        params.accessRight = params.accessRight ?? defaultAccessRight;
+
+        const args = Reflect.getOwnMetadata("arguments", target, methodName);
+        const metadataStore = new MetadataStore();
+        metadataStore.setAction(target, String(methodName), { params, descriptor, args });
     };
 }
 
+/**
+ * Registers a parameter as a action parameter. The name of the parameter will be
+ * used as the name of the parameter on server / client and will also be sent in
+ * the payload / query parameters.
+ *
+ * @param params the parameters which control the behavior of the parameter
+ * @returns a decorator which registers the parameter as an action parameter
+ */
 export function Arg<T>(params: ArgParameters) {
     return (target: Partial<T>, methodName: string | symbol, index: number) => {
         const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};

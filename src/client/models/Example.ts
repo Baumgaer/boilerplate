@@ -16,7 +16,7 @@ export default class Example extends CommonExample {
 
     @Query({ name: "getName", accessRight: () => true })
     public static queryName(@Arg({ name: "id", isId: true }) id: string, @Arg({ name: "test" }) test: string = "testen") {
-        console.log(id, test);
+        console.log(this, id, test);
         return Promise.resolve();
     }
 
@@ -34,6 +34,7 @@ export default class Example extends CommonExample {
 
     @Query({ name: "queryDeletedNames", accessRight: () => /*some other magic here*/ true })
     public queryDeletedNames(@Arg({ name: "conditionalDate" }) conditionalDate: Date, @Arg({ name: "conditionalModifiedAt" }) conditionalModifiedAt: Date) {
+        console.log(this);
         return (this.constructor as typeof Example).find({ select: ["name"], where: { deletedAt: conditionalDate, modifiedAt: conditionalModifiedAt } });
     }
 }
