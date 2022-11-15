@@ -24,6 +24,10 @@ const lodash = addDeepdash(_);
 
 type eachDeepParams = Required<Parameters<typeof lodash.eachDeep>>;
 
+export function getEnvironment() {
+    return "common";
+}
+
 /**
  * Loads the corresponding model class by its name, even if it is not loaded yet.
  * To ensure the model class is loaded, this function checks if there is an

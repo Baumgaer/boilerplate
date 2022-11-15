@@ -166,17 +166,20 @@ export default class MetadataStore {
      * @param action the definition of the action
      */
     public setAction<T extends ModelLike>(target: InstanceType<T>, methodName: string, action: ActionDefinition) {
-        Reflect.defineMetadata(`action:${methodName}`, action, target);
+        Reflect.defineMetadata(`action:method:${methodName}`, action, target);
+        Reflect.defineMetadata(`action:action:${action.params.name}`, action, target);
     }
 
     /**
      * Searches for registered action by name and returns it
      *
      * @param target the model instance or class to get the attribute from
-     * @param methodName the name of the method
+     * @param methodOrActionName the name of the method OR of the action
      * @returns the registered action with corresponding name if exists
      */
-    public getAction<T extends ModelLike>(target: InstanceType<T>, methodName: string) {
-        return Reflect.getMetadata(`action:${methodName}`, target);
+    public getAction<T extends ModelLike>(target: InstanceType<T>, methodOrActionName: string): ActionDefinition | null {
+        const byMethodName = Reflect.getMetadata(`action:method:${methodOrActionName}`, target);
+        const byActionName = Reflect.getMetadata(`action:action:${methodOrActionName}`, target);
+        return byActionName || byMethodName || null;
     }
 }

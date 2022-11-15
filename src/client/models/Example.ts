@@ -16,7 +16,7 @@ export default class Example extends CommonExample {
 
     @Query({ name: "getName", accessRight: () => true })
     public static queryName(@Arg({ isId: true }) id: string, @Arg() test: string = "testen") {
-        console.log(this, id, test);
+        console.log("Example", this, id, test);
         return Promise.resolve();
     }
 

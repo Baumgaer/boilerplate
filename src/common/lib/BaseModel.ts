@@ -297,6 +297,13 @@ export default abstract class BaseModel extends BaseEntity {
         return Model({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
     }
 
+    public isAllowed(this: EnvBaseModel, actionName: string, user: EnvBaseModel) {
+        const metadataStore = new MetadataStore();
+        const action = metadataStore.getAction(this, actionName);
+        if (!action) return false;
+        return Boolean(action.params.accessRight?.(user, this));
+    }
+
     /**
      * A lifecycle hook that will be called before the passed properties
      * will be assigned to the instance. This has to return an object with

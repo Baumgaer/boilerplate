@@ -1,5 +1,5 @@
 import { AttributeError } from "~client/lib/Errors";
-import { Attr, AttrGetter, AttrSetter, AttrValidator, Model } from "~client/utils/decorators";
+import { Attr, AttrGetter, AttrSetter, AttrValidator, Model, Query, Arg } from "~client/utils/decorators";
 import AnotherCommonExample from "~common/models/AnotherExample";
 
 @Model()
@@ -16,6 +16,12 @@ export default class AnotherExample extends AnotherCommonExample {
 
     public constructor(params?: ConstructionParams<AnotherExample>) {
         super(params);
+    }
+
+    @Query({ name: "getName", accessRight: () => true })
+    public static override queryName(@Arg({ isId: true }) id: string, @Arg() test: string = "testen") {
+        console.log("AnotherExample", this, id, test);
+        return Promise.resolve();
     }
 
     @AttrValidator("name")

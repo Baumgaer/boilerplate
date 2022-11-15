@@ -72,7 +72,7 @@ export interface ActionParameters {
      * action or not.
      * Default: () => false
      */
-    accessRight: () => boolean;
+    accessRight?: (user: BaseModel, object: BaseModel) => boolean;
 }
 
 export interface ArgParameters {

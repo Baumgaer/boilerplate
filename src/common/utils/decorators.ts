@@ -149,7 +149,7 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
  * @param params the parameters which control the behavior of the action
  * @returns a decorator which registers the method as a mutation action
  */
-export function Mutation(params: ActionParameters) {
+export function Mutation(params: ActionParameters = {}) {
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
         const defaultAccessRight = () => false;
         params.httpMethod = params.httpMethod ?? "POST";
@@ -169,7 +169,7 @@ export function Mutation(params: ActionParameters) {
  * @param params the parameters which control the behavior of the action
  * @returns a decorator which registers the method as a query action
  */
-export function Query(params: ActionParameters) {
+export function Query(params: ActionParameters = {}) {
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
         const defaultAccessRight = () => false;
         params.httpMethod = params.httpMethod ?? "GET";

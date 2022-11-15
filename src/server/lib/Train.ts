@@ -77,7 +77,11 @@ export default class Train<T extends BaseModel> {
         return this.request.originalUrl;
     }
 
-    public setUser(user: any) {
+    public isAllowed(actionName: string) {
+        return Boolean(this.head?.isAllowed(actionName, this.user));
+    }
+
+    public setUser(user: BaseModel) {
         this._user = user;
     }
 
