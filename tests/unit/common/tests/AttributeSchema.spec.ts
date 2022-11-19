@@ -411,17 +411,52 @@ export default function (environment = "common") {
                 aTuple: {
                     valid: [[randGen.generateString(), randGen.generateNumber(), randGen.generateBoolean()], [randGen.generateString(), randGen.generateNumber()]],
                     invalid: [
-                        undefined,
-                        null,
-                        [randGen.generateString()],
-                        [randGen.generateString(), randGen.generateNumber(), null],
-                        [undefined, null, null],
-                        new Date(),
-                        randGen.generateString(),
-                        randGen.generateNumber(),
-                        randGen.generateBoolean(),
-                        randGen.generateObject(),
-                        randGen.generateArray() // Might be valid...
+                        undefined, // Wrong type
+                        null, // Wrong type
+                        [randGen.generateString(), randGen.generateNumber(), null], // Wrong item Type (null)
+                        [undefined, null, null], // Wrong item types
+                        new Date(), // Wrong type
+                        randGen.generateString(), // Wrong type
+                        randGen.generateNumber(), // Wrong type
+                        randGen.generateBoolean(), // Wrong type
+                        randGen.generateObject(), // Wrong type
+                        ["3xvp$*d", 6990, true, [ // Test for issue #40
+                            { "qlkd": 5258, "vqph": { "zxzs": 697 }, "ylmr": [5891, 6979, "Gz;S*NZ"], "kzkfl": "*hDj7`>M", "dvxeke": true },
+                            [{ "mfbzma": [1850, "EvLBoe0XZmp"], "qmzkfz": "<4/?/u*" }], "r**xV"]
+                        ],
+                        randGen.generateArray({ minLength: 4, templateArray: [randGen.generateString(), randGen.generateNumber(), randGen.generateBoolean()] }), // Too long
+                        randGen.generateArray({ maxLength: 1 }), // Too short
+                        ...(() => { // wrong item types with correct length
+                            const allowed2 = JSON.stringify(["generateString", "generateNumber"]);
+                            const allowed3 = JSON.stringify(["generateString", "generateNumber", "generateBoolean"]);
+                            const types = ["generateString", "generateNumber", "generateBoolean", "generateObject", "generateArray", "Date"];
+                            const failingResults: any[] = [];
+                            for (const len of [2, 3]) {
+                                for (const position1 of types) {
+                                    for (const position2 of types) {
+                                        if (len === 2) {
+                                            const failingSchema = [position1, position2];
+                                            if (JSON.stringify(failingSchema) === allowed2) continue;
+                                            failingResults.push([
+                                                position1.startsWith("generate") ? randGen[position1]() : new Date(),
+                                                position2.startsWith("generate") ? randGen[position2]() : new Date()
+                                            ]);
+                                        } else {
+                                            for (const position3 of types) {
+                                                const failingSchema = [position1, position2, position3];
+                                                if (JSON.stringify(failingSchema) === allowed3) continue;
+                                                failingResults.push([
+                                                    position1.startsWith("generate") ? randGen[position1]() : new Date(),
+                                                    position2.startsWith("generate") ? randGen[position2]() : new Date(),
+                                                    position3.startsWith("generate") ? randGen[position3]() : new Date()
+                                                ]);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                            return failingResults;
+                        })()
                     ]
                 },
                 anArray: {
@@ -434,7 +469,6 @@ export default function (environment = "common") {
                         randGen.generateNumber(),
                         randGen.generateBoolean(),
                         randGen.generateObject(),
-                        //["3xvp$*d", 6990, true, [{ "qlkd": 5258, "vqph": { "zxzs": 697 }, "ylmr": [5891, 6979, "Gz;S*NZ"], "kzkfl": "*hDj7`>M", "dvxeke": true }, [{ "mfbzma": [1850, "EvLBoe0XZmp"], "qmzkfz": "<4/?/u*" }], "r**xV"]],
                         randGen.generateArray({ valTypes: ["number", "boolean", "object", "array"], minLength: 1 })
                     ]
                 },

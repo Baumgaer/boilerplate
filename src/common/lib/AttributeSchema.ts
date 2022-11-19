@@ -300,6 +300,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             const length = rawType.subTypes.length;
             const min = rawType.subTypes.findIndex((subType) => this.isOptionalType(subType));
             if (value.length < min) return { success: false, errors: [new AttributeError(name, "rangeUnderflow", [], value)] };
+            if (value.length > length) return { success: false, errors: [new AttributeError(name, "rangeOverflow", [], value)] };
             value = value.slice();
             (value as any[]).length = length;
         }
