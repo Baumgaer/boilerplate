@@ -434,6 +434,7 @@ export default function (environment = "common") {
                         randGen.generateNumber(),
                         randGen.generateBoolean(),
                         randGen.generateObject(),
+                        //["3xvp$*d", 6990, true, [{ "qlkd": 5258, "vqph": { "zxzs": 697 }, "ylmr": [5891, 6979, "Gz;S*NZ"], "kzkfl": "*hDj7`>M", "dvxeke": true }, [{ "mfbzma": [1850, "EvLBoe0XZmp"], "qmzkfz": "<4/?/u*" }], "r**xV"]],
                         randGen.generateArray({ valTypes: ["number", "boolean", "object", "array"], minLength: 1 })
                     ]
                 },

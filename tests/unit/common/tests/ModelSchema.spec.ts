@@ -40,7 +40,7 @@ export default function (_environment = "common") {
 
         it('should reflect the passed options in the schema', () => {
             const schema = TestModel.getSchema();
-            expect(schema?.modelName).to.be.equal("TestModel");
+            expect(schema?.name).to.be.equal("TestModel");
             expect(schema?.collectionName).to.be.equal("testModels");
             expect(schema?.isAbstract).to.be.equal(false);
 

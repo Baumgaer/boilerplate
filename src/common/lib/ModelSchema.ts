@@ -35,7 +35,7 @@ export default class ModelSchema<T extends ModelLike> {
      * The name of the class in the schema. Corresponds to the model
      * name (maybe not in runtime)
      */
-    public readonly modelName: string;
+    public readonly name: string;
 
     /**
      * The name of the database table where all the models of this type are stored
@@ -70,7 +70,7 @@ export default class ModelSchema<T extends ModelLike> {
 
     public constructor(modelClass: T, name: string, schemas: AttributeSchema<T>[], options: ModelOptions<T>) {
         this.owner = modelClass;
-        this.modelName = name;
+        this.name = name;
         this.collectionName = options.collectionName as string;
         this.isAbstract = options.isAbstract as boolean;
         this.options = options;
@@ -129,7 +129,7 @@ export default class ModelSchema<T extends ModelLike> {
             return this.getAttributeSchema(name) as unknown as AttributeSchema<ModelLike>;
         };
 
-        return Model({ name: this.modelName, getAttribute }).validate(value);
+        return Model({ name: this.name, getAttribute }).validate(value);
     }
 
     /**
@@ -144,7 +144,7 @@ export default class ModelSchema<T extends ModelLike> {
         const options = Object.assign({}, this.options, { name: this.options.collectionName });
 
         if (proto?.getSchema?.()?.isAbstract) {
-            ChildEntity(this.modelName)(this.owner);
+            ChildEntity(this.name)(this.owner);
         } else if (this.isAbstract) {
             Entity(options.collectionName, options)(this.owner);
             TableInheritance({ column: { type: "varchar", name: "className" } })(this.owner);
