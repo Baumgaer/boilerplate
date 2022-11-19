@@ -90,6 +90,12 @@ export interface IInjectedOptions {
 export interface AttrOptions<T extends ModelLike> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, Partial<Omit<IAttrMetadata, "type", "name">>, ThisType<T> {
 
     /**
+     * An alternative name to the attribute. Useful in case of renaming the
+     * attribute but keeping the name in the database.
+     */
+    name?: keyof T;
+
+    /**
      * Defines the attribute as an index column which can be used additionally
      * with multi row index on model
      */

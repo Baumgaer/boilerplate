@@ -73,7 +73,7 @@ export default function (environment = "common") {
 
         it(`should have generated an optional string type`, () => {
             const schema = TestModel.getAttributeSchema("aString");
-            expect(Boolean(schema?.parameters.isRequired)).to.be.false;
+            expect(Boolean(schema?.options.isRequired)).to.be.false;
             expect(schema?.isRequired).to.be.false;
 
             const type = schema?.getSchemaType() as ZodOptional<ZodUnion<[ZodOptional<ZodUndefined>, ZodOptional<ZodString>]>>;
@@ -204,7 +204,7 @@ export default function (environment = "common") {
 
             for (const attributeName of objectLikeAttributes) {
                 const schema = TestModel.getAttributeSchema(attributeName);
-                const type = schema?.parameters.type;
+                const type = schema?.options.type;
                 expect(type).not.to.be.undefined;
                 expect(schema?.isObjectLikeType(type), `attribute: ${attributeName}, type: ${JSON.stringify(type)}`).to.be.true;
             }
@@ -259,7 +259,7 @@ export default function (environment = "common") {
 
         it(`should have updated the parameters`, () => {
             const schema = TestModel.getAttributeSchema("noRelation");
-            schema?.updateParameters({ isLazy: true });
+            schema?.updateOptions({ isLazy: true });
             expect(schema?.isLazy).to.be.true;
         });
 

@@ -92,7 +92,7 @@ export default class MetadataStore {
     public constructAttributeSchemaParams<T extends ModelLike>(attributeName: keyof T, params: AttrOptionsPartialMetadataJson<T>) {
         const newParams = {};
         this.attributeSchemas[attributeName.toString()]?.forEach((attributeSchema) => {
-            Object.assign(newParams, attributeSchema.parameters);
+            Object.assign(newParams, attributeSchema.options);
         });
         Object.assign(newParams, params);
         return <AttrOptionsPartialMetadataJson<T>>newParams;

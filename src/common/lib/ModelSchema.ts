@@ -113,7 +113,7 @@ export default class ModelSchema<T extends ModelLike> {
      * @returns true if it was set and false else
      */
     public setAttributeSchema(schema: AttributeSchema<T>) {
-        return Reflect.set(this.attributeSchemas, schema.attributeName, schema);
+        return Reflect.set(this.attributeSchemas, schema.name, schema);
     }
 
     /**
@@ -168,7 +168,7 @@ export default class ModelSchema<T extends ModelLike> {
         const attributeSchemas = Object.values(this.attributeSchemas);
         const members = {} as Record<keyof T, ZodType>;
         for (const attributeSchema of attributeSchemas) {
-            members[attributeSchema.attributeName] = attributeSchema.getSchemaType();
+            members[attributeSchema.name] = attributeSchema.getSchemaType();
         }
 
         return baseTypeFuncs.object(members);

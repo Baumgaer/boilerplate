@@ -83,12 +83,12 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * The name of the attribute in the schema. Corresponds to the attribute
      * name in the class (maybe not in runtime)
      */
-    public readonly attributeName: keyof T;
+    public readonly name: keyof T;
 
     /**
-     * The parameters which initializes the schema
+     * The options which initializes the schema
      */
-    public readonly parameters: Readonly<AttrOptionsPartialMetadataJson<T>> = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
+    public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>> = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
 
     /**
      * Indicates if an attribute should NOT be sent to another endpoint.
@@ -239,12 +239,12 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      */
     private embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
 
-    public constructor(ctor: T, attributeName: keyof T, parameters: AttrOptionsPartialMetadataJson<T>) {
+    public constructor(ctor: T, name: keyof T, options: AttrOptionsPartialMetadataJson<T>) {
         this._ctor = ctor;
-        this.attributeName = attributeName;
-        this.parameters = parameters;
-        this.setConstants(parameters);
-        this.buildSchema(parameters.type);
+        this.name = name;
+        this.options = options;
+        this.setConstants(options);
+        this.buildSchema(options.type);
     }
 
     /**
@@ -275,15 +275,15 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     }
 
     /**
-     * updates the parameters and rebuilds constraints and schema depending
-     * on new parameters
+     * updates the options and rebuilds constraints and schema depending
+     * on new options
      *
-     * @param parameters Parameters of this attribute
+     * @param options options of this attribute
      */
-    public updateParameters(parameters: Partial<AttrOptionsPartialMetadataJson<T>>) {
-        merge(this.parameters, parameters);
-        this.setConstants(this.parameters);
-        this.buildSchema(this.parameters.type);
+    public updateOptions(options: Partial<AttrOptionsPartialMetadataJson<T>>) {
+        merge(this.options, options);
+        this.setConstants(this.options);
+        this.buildSchema(this.options.type);
     }
 
     /**
@@ -293,9 +293,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
      * @returns true if valid and an error else
      */
     public validate(value: unknown): ValidationResult {
-        const name = this.attributeName.toString();
+        const name = this.name.toString();
 
-        const rawType = this.parameters.type;
+        const rawType = this.options.type;
         if (isArray(value) && this.isTupleType(rawType)) {
             const length = rawType.subTypes.length;
             const min = rawType.subTypes.findIndex((subType) => this.isOptionalType(subType));
@@ -583,7 +583,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             if (!otherAttributeSchema.isArrayType()) return "OneToMany"; // owner not needed
             return "ManyToMany"; // owner has to be specified
         }
-        console.warn(`Could not determine a relation type for ${this.owner?.className}:${String(this.attributeName)}`);
+        console.warn(`Could not determine a relation type for ${this.owner?.className}:${String(this.name)}`);
         return null;
     }
 
@@ -732,7 +732,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     private async buildSchema(type: IAttrMetadata["type"], altProto?: object, altAttrName?: string) {
         // This is the correction described in decorator @Attr()
         const proto = altProto || this._ctor.prototype;
-        const attrName = altAttrName || this.attributeName.toString();
+        const attrName = altAttrName || this.name.toString();
         const defaultOptions: AllColumnOptions = {
             lazy: this.isLazy,
             eager: this.isEager,
@@ -892,7 +892,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
             if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
         }
 
-        console.debug(`Created schema type ${this._ctor.name}#${String(this.attributeName)}: ${schemaType._def.typeName}`);
+        console.debug(`Created schema type ${this._ctor.name}#${String(this.name)}: ${schemaType._def.typeName}`);
         return schemaType;
     }
 }
