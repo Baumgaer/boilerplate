@@ -6,7 +6,7 @@ import type ts from "typescript";
 
 export const TypeIntersection = createRule({
     name: "Type-Intersection",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
 

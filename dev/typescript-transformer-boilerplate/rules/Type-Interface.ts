@@ -7,7 +7,7 @@ import type ts from "typescript";
 
 export const TypeInterface = createRule({
     name: "Type-Interface",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isParameter(node)) nodeToCheck = node.type;

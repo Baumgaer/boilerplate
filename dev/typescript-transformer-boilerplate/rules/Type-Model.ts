@@ -16,7 +16,7 @@ function getTypeContainingNode(node: ts.Node) {
 
 export const TypeModel = createRule({
     name: "Type-Model",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
 
         let nodeToCheck: ts.Identifier | ts.Node | ts.NewExpression | undefined = node;
@@ -25,17 +25,12 @@ export const TypeModel = createRule({
 
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, nodeToCheck);
-        if (!isObjectType(type) && !isAnyType(type) && !isClassType(type) || isInterfaceType(type)) return false;
+        if (!isObjectType(type) && !isAnyType(type) && !isClassType(type) || isInterfaceType(type) && !isClassType(type)) return false;
 
-        if (isPropertyDeclaration(nodeToCheck) || isPropertySignature(nodeToCheck) || isParameter(nodeToCheck)) {
-            if (isTypeReferenceNode(nodeToCheck.type)) {
-                nodeToCheck = nodeToCheck.type;
-            } else if (isNewExpression(nodeToCheck.initializer) || isIdentifierNode(nodeToCheck.initializer)) nodeToCheck = nodeToCheck.initializer;
-        }
-        nodeToCheck = getTypeContainingNode(nodeToCheck);
-        if (!nodeToCheck) return false;
+        const typeContainingNode = getTypeContainingNode(nodeToCheck);
+        if (!typeContainingNode) return false;
 
-        const resolvedNode = resolveTypeReferenceTo(program, nodeToCheck as ts.TypeReferenceNode | ts.NewExpression | ts.Identifier, "ClassDeclaration");
+        const resolvedNode = resolveTypeReferenceTo(program, typeContainingNode, "ClassDeclaration");
         if (!resolvedNode) return false;
 
         const filePath = (resolvedNode.getSourceFile()?.fileName || "").replaceAll("\\", "/");

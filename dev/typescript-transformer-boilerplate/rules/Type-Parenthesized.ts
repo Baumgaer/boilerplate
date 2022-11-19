@@ -4,7 +4,7 @@ import type ts from "typescript";
 
 export const TypeParenthesized = createRule({
     name: "Type-Parenthesized",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type;

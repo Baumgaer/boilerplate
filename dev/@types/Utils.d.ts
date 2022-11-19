@@ -5,15 +5,15 @@ export type TSNodeNames =
 
     "TypeNode" | "UnionTypeNode" | "IntersectionTypeNode" | "TypeReferenceNode" |
     "ArrayTypeNode" | "TupleTypeNode" | "ParenthesizedTypeNode" | "OptionalTypeNode" |
-    "LiteralTypeNode" |
+    "LiteralTypeNode" | "ThisTypeNode" |
 
     "ExpressionStatement" | "NewExpression" | "ArrayLiteralExpression" |
     "ObjectLiteralExpression" | "ParenthesizedExpression" |
 
     "PropertyDeclaration" | "ClassDeclaration" | "InterfaceDeclaration" |
     "ImportDeclaration" | "ExportDeclaration" | "TypeAliasDeclaration" |
-    "Parameter" |
+    "MethodDeclaration" |
 
-    "PropertySignature";
+    "PropertySignature" | "Parameter";
 
 export type TypeReturn = ts.Type | undefined;

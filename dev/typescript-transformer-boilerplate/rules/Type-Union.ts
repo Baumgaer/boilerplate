@@ -13,7 +13,7 @@ import type ts from "typescript";
 
 export const TypeUnion = createRule({
     name: "Type-Union",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
 

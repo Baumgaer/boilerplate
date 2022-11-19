@@ -14,26 +14,26 @@ export default class Example extends CommonExample {
     @Attr({ relationColumn: "oneToManyRelation" })
     public manyToOneRelation!: YetAnotherExample;
 
-    @Query({ name: "getName", accessRight: () => true })
+    @Query({ accessRight: () => true })
     public static queryName(@Arg({ isId: true }) id: string, @Arg() test: string = "testen") {
         console.log("Example", this, id, test);
         return Promise.resolve();
     }
 
-    @Query({ name: "getName", accessRight: () => true })
-    public static somethingElse(@Arg() test: string = "testen") {
+    @Query({ accessRight: () => true })
+    public static somethingElse(@Arg() test: string = "testen"): Promise<void> {
         console.log(test);
         return Promise.resolve();
     }
 
-    @Mutation({ name: "changeName", accessRight: () => true })
-    public changeName(@Arg() name: string) {
+    @Mutation({ accessRight: () => true })
+    public changeName(@Arg() name: string): Promise<this> {
         this.name = name;
         return this.save();
     }
 
-    @Query({ name: "queryDeletedNames", accessRight: () => /*some other magic here*/ true })
-    public queryDeletedNames(@Arg() conditionalDate: Date, @Arg() conditionalModifiedAt: Date) {
+    @Query({ accessRight: () => true })
+    public queryDeletedNames(@Arg() conditionalDate: Date, @Arg() conditionalModifiedAt: Date): Promise<Example[]> {
         console.log(this);
         return (this.constructor as typeof Example).find({ select: ["name"], where: { deletedAt: conditionalDate, modifiedAt: conditionalModifiedAt } });
     }

@@ -1,11 +1,11 @@
-import type { createRule } from "../lib/RuleContext";
+import type { createRule, typeEmittingDecorators, nonTypeEmittingDecorators } from "../lib/RuleContext";
 import type { MetadataType } from "./MetadataTypes";
 import type { IConfiguration } from "./Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 import type * as ts from "typescript";
 
-type TypeEmittingDecoratorNames = ("Attr" | "Arg")[];
-type NonTypeEmittingDecoratorNames = ("Model")[];
+type TypeEmittingDecoratorNames = (keyof typeof typeEmittingDecorators)[];
+type NonTypeEmittingDecoratorNames = (keyof typeof nonTypeEmittingDecorators)[];
 type DecoratorNames = NonTypeEmittingDecoratorNames | TypeEmittingDecoratorNames;
 type NextFunction = (node: ts.Node) => IAttrMetadata;
 

@@ -5,7 +5,7 @@ export type CombinedDataType<T> = T | IUnionOrIntersectionType<T>
 export type LiteralTypes = string | number | bigint | boolean | undefined | symbol | null;
 export type LiteralTypeNames = "String" | "Number" | "Bigint" | "Boolean" | "Undefined" | "Symbol" | "Null";
 
-export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType<string> | ICustomType | IPrimitiveType | ILiteralType | IObjectType | INamedObject | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType;
+export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType<string> | ICustomType | IPrimitiveType | ILiteralType | IObjectType | IThisType | INamedObject | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType;
 
 export interface IMixedType {
     isMixed: boolean;
@@ -39,6 +39,10 @@ export interface ILiteralType<T = LiteralTypes, N = LiteralTypeNames> extends IP
 
 export interface IObjectType {
     isObjectType: boolean;
+}
+
+export interface IThisType {
+    isThisType: boolean;
 }
 
 export interface INamedObject<T = string> extends IObjectType, IIdentifiedType<T> {

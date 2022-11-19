@@ -13,6 +13,10 @@ export function isTypeNode(node?: ts.Node): node is ts.TypeNode {
     return isNode("TypeNode", node);
 }
 
+export function isThisTypeNode(node?: ts.Node): node is ts.ThisTypeNode {
+    return isNode("ThisTypeNode", node);
+}
+
 export function isUnionTypeNode(node?: ts.Node): node is ts.UnionTypeNode {
     return isNode("UnionTypeNode", node);
 }
@@ -89,6 +93,10 @@ export function isClassDeclaration(node?: ts.Node): node is ts.ClassDeclaration 
     return isNode("ClassDeclaration", node);
 }
 
+export function isMethodDeclaration(node?: ts.Node): node is ts.MethodDeclaration {
+    return isNode("MethodDeclaration", node);
+}
+
 export function isInterfaceDeclaration(node?: ts.Node): node is ts.InterfaceDeclaration {
     return isNode("InterfaceDeclaration", node);
 }
@@ -131,6 +139,10 @@ export function isAbstractKeyword(node?: ts.Node): node is ts.AbstractKeyword {
 
 export function isReadonlyKeyword(node?: ts.Node): node is ts.ReadonlyKeyword {
     return Boolean(node && (node.kind & SyntaxKind.ReadonlyKeyword) === SyntaxKind.ReadonlyKeyword);
+}
+
+export function isVoidKeyword(node?: ts.Node): node is ts.VoidExpression {
+    return Boolean(node && (node.kind & SyntaxKind.VoidKeyword) === SyntaxKind.VoidKeyword);
 }
 
 export function isPromiseTypeNode(checker: ts.TypeChecker, node?: ts.Node) {

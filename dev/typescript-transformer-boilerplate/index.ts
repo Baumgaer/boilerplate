@@ -1,4 +1,5 @@
 import transformer from "./lib/Transformer";
+import { Action } from "./rules/Action";
 import { Model } from "./rules/Model";
 import { TypeAny } from "./rules/Type-Any";
 import { TypeArray } from "./rules/Type-Array";
@@ -13,7 +14,9 @@ import { TypeNull } from "./rules/Type-Null";
 import { TypeNumber } from "./rules/Type-Number";
 import { TypeOptional } from "./rules/Type-Optional";
 import { TypeParenthesized } from "./rules/Type-Parenthesized";
+import { TypePromise } from "./rules/Type-Promise";
 import { TypeString } from "./rules/Type-String";
+import { TypeThis } from "./rules/Type-This";
 import { TypeTuple } from "./rules/Type-Tuple";
 import { TypeUndefined } from "./rules/Type-Undefined";
 import { TypeUnion } from "./rules/Type-Union";
@@ -23,7 +26,10 @@ import type ts from "typescript";
 
 const rules = [
     TypeParenthesized,
+    TypePromise,
     Model,
+    Action,
+    TypeThis,
     TypeNull,
     TypeUndefined,
     TypeString,

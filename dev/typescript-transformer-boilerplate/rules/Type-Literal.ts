@@ -5,7 +5,7 @@ import type ts from "typescript";
 
 export const TypeLiteral = createRule({
     name: "Type-Literal",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);

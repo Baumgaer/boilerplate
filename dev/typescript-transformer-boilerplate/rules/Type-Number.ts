@@ -4,7 +4,7 @@ import { createRule } from "../lib/RuleContext";
 
 export const TypeNumber = createRule({
     name: "Type-Number",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         const checker = program.getTypeChecker();
         const type = getTypeFromNode(checker, node);

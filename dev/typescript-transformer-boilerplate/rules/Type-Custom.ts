@@ -43,7 +43,7 @@ function typeParameterToTypeArgumentValue(declaration: ts.TypeAliasDeclaration, 
 
 export const TypeCustom = createRule({
     name: "Type-Custom",
-    type: ["Attr", "Arg"],
+    type: ["Attr", "Arg", "Query", "Mutation"],
     detect(program, sourceFile, node) {
         let nodeToCheck: ts.Node | undefined = node;
         if (isPropertyDeclaration(node) || isPropertySignature(node) || isParameter(node)) nodeToCheck = node.type;

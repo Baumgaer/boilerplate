@@ -3,24 +3,12 @@ import * as path from "path";
 import { path as arPart } from "app-root-path";
 import { merge } from "lodash";
 import * as ts from "typescript";
-import {
-    isIdentifierNode,
-    isDecoratorNode,
-    isPropertyDeclaration,
-    isPropertySignature,
-    isClassDeclaration,
-    isParameter
-} from "../../utils/SyntaxKind";
+import { isIdentifierNode, isDecoratorNode } from "../../utils/SyntaxKind";
 import { programFromConfig } from "../../utils/utils";
+import { emittingDecorators } from "./RuleContext";
 import type { IConfiguration, ValidDeclarations } from "../@types/Transformer";
 import type { createRule } from "./RuleContext";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
-
-const checkers = {
-    Attr: isPropertyDeclaration,
-    Arg: isParameter,
-    Model: isClassDeclaration
-};
 
 let program: ts.Program | null = null;
 
@@ -48,11 +36,29 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
         }
 
         function isValidDeclaration(node: ts.Node): node is ValidDeclarations {
-            return Object.keys(checkers).some((checkerName) => {
-                return checkers[checkerName as keyof typeof checkers](node) && ts.canHaveDecorators(node) && ts.getDecorators(node)?.some((decorator) => {
-                    return decorator.expression.getText(decorator.getSourceFile()).includes(checkerName);
+            return Object.keys(emittingDecorators).some((decoratorName) => {
+                return emittingDecorators[decoratorName as keyof typeof emittingDecorators].some((checker: any) => {
+                    return checker.attachedNodeCheck(node) && ts.canHaveDecorators(node) && ts.getDecorators(node)?.some((decorator) => {
+                        return decorator.expression.getText(decorator.getSourceFile()).includes(decoratorName);
+                    });
                 });
             });
+        }
+
+        function getOutputParameters(usedNode: ts.Node) {
+            for (const decoratorName in emittingDecorators) {
+                if (Object.prototype.hasOwnProperty.call(emittingDecorators, decoratorName)) {
+                    const checkers = emittingDecorators[decoratorName as keyof typeof emittingDecorators];
+                    for (const checker of checkers) {
+                        if (checker.attachedNodeCheck(usedNode)) return { echoType: checker.echoType, resetsMetadata: checker.resetsMetadata, name: usedNode.name?.getText() || "unknown" };
+                    }
+                }
+            }
+            try {
+                return { echoType: "type", resetsMetadata: false, name: usedNode.getText(usedNode.getSourceFile()) };
+            } catch (error) {
+                return { echoType: "type", resetsMetadata: false, name: "<Constructed>" };
+            }
         }
 
         function buildMetadataJson(node: ts.CallExpression, metadata: Record<string, any>) {
@@ -80,20 +86,8 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
             if (!isDecoratorNode(node.parent) || !isValidDeclaration(node.parent?.parent)) return node;
 
             const next = (usedNode: ts.Node, dept = 0, metadata: Record<string, any> = {}) => {
-                let echoType = "type";
-                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode) || isParameter(usedNode)) {
-                    if (isPropertyDeclaration(usedNode)) {
-                        echoType = "attr";
-                    } else if (isParameter(usedNode)) {
-                        echoType = "arg";
-                    } else echoType = "prop";
-                    metadata = {};
-                } else if (isClassDeclaration(usedNode)) echoType = "model";
-
-                let name = "unknown";
-                if (isPropertyDeclaration(usedNode) || isPropertySignature(usedNode) || isParameter(usedNode) || isClassDeclaration(usedNode)) {
-                    name = usedNode.name?.getText() || "unknown";
-                } else name = usedNode.getText(usedNode.getSourceFile());
+                const { echoType, resetsMetadata, name } = getOutputParameters(usedNode);
+                if (resetsMetadata) metadata = {};
 
                 if (process.env.NODE_ENV !== "production") console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
 
@@ -109,7 +103,8 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                         if (process.env.NODE_ENV !== "production") console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
 
                         merge(metadata, rule.emitMetadata(usedNode, program, sourceFile, detectedNode) || {});
-                        const type = rule.emitType(program, sourceFile, detectedNode, (node: ts.Node) => next(node, dept + 2, metadata));
+                        let type = {};
+                        type = rule.emitType(usedNode, program, sourceFile, detectedNode, (node: ts.Node) => next(node, dept + 2, metadata));
                         if (echoType === "type") {
                             return type;
                         } else merge(metadata, { type });
