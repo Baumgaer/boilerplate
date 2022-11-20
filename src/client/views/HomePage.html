@@ -21,6 +21,34 @@
             <p>Start with Ionic <a target="_blank" rel="noopener noreferrer"
                     href="https://ionicframework.com/docs/components">UI Components</a></p>
             <div v-for="item of model.anotherExampleCommon">{{ item }}</div>
+
+            <br><br>
+
+            <div>
+                <strong>Button</strong>
+                <SimpleButton color="dark" icon="star">Button
+                </SimpleButton>
+
+                <br><br>
+
+                <strong>Icon</strong>
+                <SimpleIcon slot="end" name="star"></SimpleIcon>
+
+                <br><br>
+
+                <strong>Accordion</strong>
+                <SimpleAccordion></SimpleAccordion>
+
+                <br><br>
+
+                <strong>Item</strong>
+                <SimpleItem>
+                    <SimpleLabel>Test</SimpleLabel>
+                </SimpleItem>
+
+            </div>
         </div>
+
+
     </ion-content>
 </ion-page>

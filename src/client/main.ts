@@ -1,5 +1,6 @@
 import "reflect-metadata";
 import { IonicVue } from '@ionic/vue';
+import * as Icons from 'ionicons/icons';
 import { DataSource } from "typeorm";
 import { createApp } from 'vue';
 import App from '~client/App.vue';
@@ -51,5 +52,12 @@ await new DataSource(Object.assign(configurator.get("databases.web") as DataSour
 })).initialize();
 
 const app = createApp(App).use(IonicVue).use(router);
+for (const iconName in Icons) {
+    if (Object.prototype.hasOwnProperty.call(Icons, iconName)) {
+        // eslint-disable-next-line import/namespace
+        const icon = (Icons as any)[iconName];
+        app.component(icon);
+    }
+}
 await router.isReady();
 app.mount('#app');

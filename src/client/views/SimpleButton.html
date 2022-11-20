@@ -1,0 +1,7 @@
+<div>
+    <ion-button :disabled="disabled" :expand="expand" :shape="shape" :fill="fill" :class="class" :size="size"
+        :color="color">
+        <slot></slot>
+        <SimpleIcon slot="start" :name="icon"></SimpleIcon>
+    </ion-button>
+</div>
