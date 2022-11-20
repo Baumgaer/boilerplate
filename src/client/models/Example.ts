@@ -15,7 +15,7 @@ export default class Example extends CommonExample {
     public manyToOneRelation!: YetAnotherExample;
 
     @Query({ accessRight: () => true })
-    public static queryName(@Arg({ isId: true }) id: string, @Arg() test: string = "testen") {
+    public static queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
         console.log("Example", this, id, test);
         return Promise.resolve();
     }

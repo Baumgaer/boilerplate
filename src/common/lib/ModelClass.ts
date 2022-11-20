@@ -4,7 +4,8 @@ import ApiClient from "~env/lib/ApiClient";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import { hasOwnProperty, upperFirst, camelCase, isUndefined } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
-import type { ModelOptions, ActionParameters, ActionDefinition } from "~env/@types/ModelClass";
+import type { ActionOptions, ActionDefinition } from "~env/@types/ActionSchema";
+import type { ModelOptions } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
 // Here we are storing all attributes during construction time to have access
@@ -127,7 +128,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @param actionDefinition the defined action to call
          * @returns a function which invokes the the original action
          */
-        public static callAction(thisArg: ModelClass | typeof ModelClass, actionDefinition: ActionDefinition) {
+        public static callAction(thisArg: ModelClass | typeof ModelClass, actionDefinition: ActionDefinition<T>) {
             const { descriptor, params, args } = actionDefinition;
             const method = actionDefinition.descriptor.value;
 
@@ -138,23 +139,23 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
                 const entries = Object.entries(args);
 
                 const parameters = entries.filter((entry) => {
-                    return !entry[1].isId && !isUndefined(internalArgs[entry[1].index]);
-                }).map((entry) => [entry[0], internalArgs[entry[1].index]]) as [string, any][];
+                    return !entry[1].primary && !isUndefined(internalArgs[entry[1].index || 0]);
+                }).map((entry) => [entry[0], internalArgs[entry[1].index || 0]]) as [string, any][];
 
                 let id = "";
-                let idParameterIndex = entries.findIndex((entry) => entry[1].isId);
+                let idParameterIndex = entries.findIndex((entry) => entry[1].primary);
                 if ("isNew" in thisArg && !thisArg.isNew()) {
                     id = thisArg.getId();
                 } else if (idParameterIndex > -1) {
-                    idParameterIndex = entries[idParameterIndex][1].index;
+                    idParameterIndex = entries[idParameterIndex][1].index || 0;
                     if (isUndefined(internalArgs[idParameterIndex])) {
                         id = "";
                     } else id = internalArgs[idParameterIndex];
                 }
 
                 if (!params.local) {
-                    const httpMethod = (params.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionParameters["httpMethod"], undefined>>;
-                    ApiClient[httpMethod]({ collectionName: thisArg.collectionName, actionName: params.name || "", id, parameters });
+                    const httpMethod = (params.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionOptions<T>["httpMethod"], undefined>>;
+                    ApiClient[httpMethod]({ collectionName: thisArg.collectionName, actionName: String(params.name || ""), id, parameters });
                 }
 
                 return methodResult;

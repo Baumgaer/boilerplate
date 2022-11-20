@@ -3,9 +3,11 @@ import ModelClassFactory from "~common/lib/ModelClass";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import ModelSchema from "~env/lib/ModelSchema";
 import { mergeWith } from "~env/utils/utils";
-import type { AttrOptions, AttrOptionsWithMetadataJson, AttrOptionsPartialMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
+import type { ActionOptions } from "~env/@types/ActionSchema";
+import type { ArgOptions, ArgOptionsPartialMetadataJson, ArgOptionsWithMetadataJson } from "~env/@types/ArgumentSchema";
+import type { AttrOptions, AttrOptionsPartialMetadataJson, AttrOptionsWithMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
 import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
-import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson, ActionParameters, ArgParameters, ArgParametersWithMetadataJson, ArgParametersPartialMetadataJson } from "~env/@types/ModelClass";
+import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 import type { AttributeError } from "~env/lib/Errors";
 
@@ -146,18 +148,18 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
  * which also can be marked with @Arg(). The decorated method will always return
  * a promise event if there is no async code.
  *
- * @param params the parameters which control the behavior of the action
+ * @param options the parameters which control the behavior of the action
  * @returns a decorator which registers the method as a mutation action
  */
-export function Mutation(params: ActionParameters = {}) {
+export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
         const defaultAccessRight = () => false;
-        params.httpMethod = params.httpMethod ?? "POST";
-        params.accessRight = params.accessRight ?? defaultAccessRight;
+        options.httpMethod = options.httpMethod ?? "POST";
+        options.accessRight = options.accessRight ?? defaultAccessRight;
 
         const args = Reflect.getOwnMetadata("arguments", target, methodName);
         const metadataStore = new MetadataStore();
-        metadataStore.setAction(target, String(methodName), { params, descriptor, args });
+        metadataStore.setAction(target, String(methodName), { params: options, descriptor, args });
     };
 }
 
@@ -166,18 +168,18 @@ export function Mutation(params: ActionParameters = {}) {
  * which also can be marked with @Arg(). The decorated method will always return
  * a promise event if there is no async code.
  *
- * @param params the parameters which control the behavior of the action
+ * @param options the parameters which control the behavior of the action
  * @returns a decorator which registers the method as a query action
  */
-export function Query(params: ActionParameters = {}) {
+export function Query<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
         const defaultAccessRight = () => false;
-        params.httpMethod = params.httpMethod ?? "GET";
-        params.accessRight = params.accessRight ?? defaultAccessRight;
+        options.httpMethod = options.httpMethod ?? "GET";
+        options.accessRight = options.accessRight ?? defaultAccessRight;
 
         const args = Reflect.getOwnMetadata("arguments", target, methodName);
         const metadataStore = new MetadataStore();
-        metadataStore.setAction(target, String(methodName), { params, descriptor, args });
+        metadataStore.setAction(target, String(methodName), { params: options, descriptor, args });
     };
 }
 
@@ -186,17 +188,17 @@ export function Query(params: ActionParameters = {}) {
  * used as the name of the parameter on server / client and will also be sent in
  * the payload / query parameters.
  *
- * @param params the parameters which control the behavior of the parameter
+ * @param options the parameters which control the behavior of the parameter
  * @returns a decorator which registers the parameter as an action parameter
  */
-export function Arg<T>(params?: ArgParameters) {
-    const metadata: IAttrMetadata = JSON.parse((params as ArgParametersWithMetadataJson).metadataJson);
-    const metadataParams: ArgParametersPartialMetadataJson = mergeWith({}, metadata, params as ArgParametersWithMetadataJson);
-    delete metadataParams.metadataJson;
+export function Arg<T extends typeof BaseModel>(options?: ArgOptions<T>) {
+    const metadata: IAttrMetadata = JSON.parse((options as ArgOptionsWithMetadataJson<T>).metadataJson);
+    const metadataOptions: ArgOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ArgOptionsWithMetadataJson<T>);
+    delete metadataOptions.metadataJson;
 
     return (target: Partial<T>, methodName: string | symbol, index: number) => {
         const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};
-        args[metadataParams.name] = { index, isId: Boolean(metadataParams.isId) };
+        args[metadataOptions.name] = { index, primary: Boolean(metadataOptions.primary) };
         Reflect.defineMetadata(`arguments`, args, target, methodName);
     };
 }

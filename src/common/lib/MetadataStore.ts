@@ -1,5 +1,6 @@
+import type { ActionDefinition } from "~env/@types/ActionSchema";
 import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
-import type { ModelLike, ActionDefinition } from "~env/@types/ModelClass";
+import type { ModelLike } from "~env/@types/ModelClass";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type ModelSchema from "~env/lib/ModelSchema";
@@ -165,9 +166,9 @@ export default class MetadataStore {
      * @param methodName the name of the method
      * @param action the definition of the action
      */
-    public setAction<T extends ModelLike>(target: InstanceType<T>, methodName: string, action: ActionDefinition) {
+    public setAction<T extends ModelLike>(target: InstanceType<T>, methodName: string, action: ActionDefinition<T>) {
         Reflect.defineMetadata(`action:method:${methodName}`, action, target);
-        Reflect.defineMetadata(`action:action:${action.params.name}`, action, target);
+        Reflect.defineMetadata(`action:action:${String(action.params.name)}`, action, target);
     }
 
     /**
@@ -177,7 +178,7 @@ export default class MetadataStore {
      * @param methodOrActionName the name of the method OR of the action
      * @returns the registered action with corresponding name if exists
      */
-    public getAction<T extends ModelLike>(target: InstanceType<T>, methodOrActionName: string): ActionDefinition | null {
+    public getAction<T extends ModelLike>(target: InstanceType<T>, methodOrActionName: string): ActionDefinition<T> | null {
         const byMethodName = Reflect.getMetadata(`action:method:${methodOrActionName}`, target);
         const byActionName = Reflect.getMetadata(`action:action:${methodOrActionName}`, target);
         return byActionName || byMethodName || null;
