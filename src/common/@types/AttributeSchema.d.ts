@@ -11,7 +11,7 @@ import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IAttrMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
 
-export type { SchemaTypes } from "~env/@types/DeepTypedSchema";
+export type { SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
 
 /**
  * All attribute field names of typeorm which are allowed to use in column options

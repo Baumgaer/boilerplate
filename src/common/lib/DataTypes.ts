@@ -1,7 +1,7 @@
-import { baseTypeFuncs, toInternalValidationReturnType } from "~common/utils/schema";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import { TypeError, AttributeError, BaseError } from "~env/lib/Errors";
+import { baseTypeFuncs, toInternalValidationReturnType } from "~env/utils/schema";
 import { isObject, isPlainObject, hasOwnProperty } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { getAttributeForValidation } from "~env/@types/BaseModel";

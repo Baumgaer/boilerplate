@@ -1,6 +1,6 @@
-import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType } from "~common/utils/schema";
 import * as DataTypes from "~env/lib/DataTypes";
-import type { ObjectType } from "~common/utils/schema";
+import Schema from "~env/lib/Schema";
+import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType } from "~env/utils/schema";
 import type { DeepTypedOptions, DeepTypedOptionsPartialMetadataJson, SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
 import type {
     MetadataType,
@@ -22,8 +22,18 @@ import type {
     IObjectType
 } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type { ObjectType } from "~env/utils/schema";
 
-export default abstract class DeepTypedSchema<T extends ModelLike> implements DeepTypedOptions<T> {
+/**
+ * Provides basic functionality for schemas with nested Types and constraints
+ * like "isRequires", "min" or "max". Owner and raw type might be set after
+ * construction because usually this schemas belong to a model which might be
+ * still under construction after this schema is constructed. So make sure to
+ * call the methods "setOwner" and "awaitConstruction".
+ *
+ * @template T The model where the schema of the model belongs to
+ */
+export default abstract class DeepTypedSchema<T extends ModelLike> extends Schema<T> implements DeepTypedOptions<T> {
 
     /**
      * Holds the class object which created the schema. This is only a valid
@@ -32,15 +42,9 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
     public readonly owner?: T;
 
     /**
-     * The name of the attribute in the schema. Corresponds to the attribute
-     * name in the class (maybe not in runtime)
-     */
-    public readonly name: string | keyof T;
-
-    /**
     * The options which initializes the schema
     */
-    public readonly options: Readonly<DeepTypedOptionsPartialMetadataJson<T>> = {} as Readonly<DeepTypedOptionsPartialMetadataJson<T>>;
+    declare public readonly options: Readonly<DeepTypedOptionsPartialMetadataJson<T>>;
 
     /**
      * Indicates if an attribute has to be set manually (does not have a default)
@@ -85,7 +89,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
     protected rawType!: MetadataType;
 
     /**
-     * Holds the "ready to validate" schema of the type
+     * @inheritdoc
      */
     protected schemaType: SchemaTypes | null = null;
 
@@ -96,9 +100,19 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
     protected readonly _ctor: T;
 
     public constructor(ctor: T, name: string | keyof T, options: DeepTypedOptionsPartialMetadataJson<T>) {
+        super(ctor, name, options);
         this._ctor = ctor;
-        this.name = name;
-        this.options = options;
+    }
+
+    /**
+     * Sets the model class for later use to be able to navigate through the models
+     *
+     * @param owner the class of the model to set
+     */
+    public setOwner(owner: T) {
+        if ((this._ctor as InstanceType<T>).className !== (owner as InstanceType<T>).className) return;
+        // @ts-expect-error this is needed to be able to provide the ctor at runtime after construction
+        this.owner = owner;
     }
 
     /**
@@ -363,17 +377,11 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
     }
 
     /**
-     * Generates a schema which will be used to validate a value. This schema is
-     * a pure data schema and depends completely on the attributes type.
-     * This also takes isRequired and other constraints into account (see end of method).
-     *
      * NOTE: This assumes that all models are already loaded to have access
      * to the MODEL_NAME_TO_MODEL_MAP which allows to be sync which is needed
      * for circular schema definitions.
      *
-     * @param type type to build schema from
-     * @param [applySettings = true] wether to apply settings like min, max and so on
-     * @returns at least a "ZodAnyType"
+     * @inheritdoc
      */
     protected buildSchemaType(type: MetadataType, applySettings = true): SchemaTypes {
         let schemaType: SchemaTypes = baseTypeFuncs.never();
@@ -393,7 +401,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
             const typeIdentifier = this.getTypeIdentifier(type) || "";
             const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
             const modelSchema = modelClass?.getSchema();
-            schemaType = modelSchema?.getSchemaType().or(baseTypeFuncs.instanceof(modelClass as any)) || baseTypeFuncs.never();
+            schemaType = modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as any)) || baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
             schemaType = this.buildSchemaType(subTypes.shift() as MetadataType, false);

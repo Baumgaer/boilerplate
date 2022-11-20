@@ -14,12 +14,12 @@ import {
     VersionColumn,
     Index
 } from "typeorm";
-import { toInternalValidationReturnType, baseTypeFuncs } from "~common/utils/schema";
 import * as DataTypes from "~env/lib/DataTypes";
 import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 import { AttributeError } from "~env/lib/Errors";
-import { merge, getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
+import { toInternalValidationReturnType, baseTypeFuncs } from "~env/utils/schema";
+import { getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
 import type {
@@ -27,7 +27,8 @@ import type {
     AllColumnOptions,
     AttrOptionsPartialMetadataJson,
     IEmbeddedEntity,
-    SchemaNameByModelClass
+    SchemaNameByModelClass,
+    ObjectSchemaType
 } from "~env/@types/AttributeSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type {
@@ -64,7 +65,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     declare public readonly name: keyof T;
 
     /**
-     * The options which initializes the schema
+     * @inheritdoc
      */
     declare public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>>;
 
@@ -151,11 +152,12 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     public persistence!: Exclude<AttrOptions<T>["persistence"], undefined>;
 
     /**
-     * Internal state which determines if the schema is fully built or not.
+     * @inheritdoc
+     *
      * NOTE: This will be set to true if the schema is fully built
      * (including relation).
      */
-    private _constructed: boolean = false;
+    declare protected _constructed: boolean;
 
     /**
      * If the relation ends up in an embedded entity, it will be stored here to
@@ -171,49 +173,16 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     }
 
     /**
-     * Returns a promise which resolves when the schema was built the first time.
-     * Useful to ensure the correct order of decorator execution during setup.
-     *
-     * @returns a resolving promise
+     * @inheritdoc
      */
-    public awaitConstruction() {
-        return new Promise((resolve) => {
-            const interval = setInterval(() => {
-                if (!this._constructed) return;
-                clearInterval(interval);
-                resolve(true);
-            });
-        });
-    }
-
-    /**
-     * Sets the model class for later use to be able to navigate through the models
-     *
-     * @param owner the class of the model to set
-     */
-    public setOwner(owner: T) {
-        if ((this._ctor as InstanceType<T>).className !== (owner as InstanceType<T>).className) return;
-        // @ts-expect-error this is needed to be able to provide the ctor at runtime after construction
-        this.owner = owner;
-    }
-
-    /**
-     * updates the options and rebuilds constraints and schema depending
-     * on new options
-     *
-     * @param options options of this attribute
-     */
-    public updateOptions(options: Partial<AttrOptionsPartialMetadataJson<T>>) {
-        merge(this.options, options);
+    public override updateOptions(options: Partial<AttrOptionsPartialMetadataJson<T>>) {
+        super.updateOptions(options);
         this.setConstants(this.options);
         this.buildSchema(this.options.type);
     }
 
     /**
-     * Checks if the given value is valid like defined by the schema type
-     *
-     * @param value the value to check
-     * @returns true if valid and an error else
+     * @inheritdoc
      */
     public validate(value: unknown): ValidationResult {
         const name = this.name.toString();
@@ -295,7 +264,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      *
      * @returns at least a ZodAnyType
      */
-    public getSchemaType() {
+    public override getSchemaType() {
         if (!this.schemaType) this.schemaType = this.buildSchemaType(this.rawType);
         return this.schemaType;
     }
@@ -405,8 +374,11 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      *
      * @returns The schema type of the embedded entity if exists and a never type else
      */
-    protected buildPlainObjectSchemaType() {
-        if (this.embeddedEntity) return this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
+    protected buildPlainObjectSchemaType(): ObjectSchemaType {
+        if (this.embeddedEntity) {
+            const result = this.embeddedEntity.getSchema()?.getSchemaType() as ObjectSchemaType;
+            return result || baseTypeFuncs.never();
+        }
         return baseTypeFuncs.never();
     }
 

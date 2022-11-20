@@ -1,11 +1,12 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
-import { baseTypeFuncs } from "~common/utils/schema";
 import { Model } from "~env/lib/DataTypes";
-import type { LazyType, ObjectType, Type } from "~common/utils/schema";
+import Schema from "~env/lib/Schema";
+import { baseTypeFuncs } from "~env/utils/schema";
 import type { AttributeSchemaName } from "~env/@types/BaseModel";
 import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseModel from "~env/lib/BaseModel";
+import type { LazyType, ObjectType, Type } from "~env/utils/schema";
 
 /**
  * defines the schema for any Model by defining:
@@ -23,7 +24,7 @@ import type BaseModel from "~env/lib/BaseModel";
  *
  * @template T The model where the schema of the model belongs to
  */
-export default class ModelSchema<T extends ModelLike> {
+export default class ModelSchema<T extends ModelLike> extends Schema<T> {
 
     /**
      * Holds the class object which created the schema. This is only a valid
@@ -35,7 +36,7 @@ export default class ModelSchema<T extends ModelLike> {
      * The name of the class in the schema. Corresponds to the model
      * name (maybe not in runtime)
      */
-    public readonly name: string;
+    declare public readonly name: string;
 
     /**
      * The name of the database table where all the models of this type are stored
@@ -54,45 +55,32 @@ export default class ModelSchema<T extends ModelLike> {
     public readonly attributeSchemas: Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>>;
 
     /**
-     * Holds the options of the entity (model) which were used to construct the schema
+     * @inheritdoc
      */
-    public readonly options: ModelOptions<T>;
+    declare public readonly options: ModelOptions<T>;
 
     /**
-     * Holds the "ready to validate" schema of the type
+     * @inheritdoc
      */
-    private schemaType: LazyType<ObjectType<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
+    protected override schemaType: LazyType<ObjectType<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
-    /**
-     * Internal state which determines if the schema is fully built or not
-     */
-    private _constructed: boolean = false;
-
-    public constructor(modelClass: T, name: string, schemas: AttributeSchema<T>[], options: ModelOptions<T>) {
-        this.owner = modelClass;
-        this.name = name;
+    public constructor(ctor: T, name: string, schemas: AttributeSchema<T>[], options: ModelOptions<T>) {
+        super(ctor, name, options);
+        this.owner = ctor;
         this.collectionName = options.collectionName as string;
         this.isAbstract = options.isAbstract as boolean;
-        this.options = options;
 
         for (const schema of schemas) this.setAttributeSchema(schema);
         this.applyEntity();
     }
 
     /**
-     * Returns a promise which resolves when the schema was built the first time.
-     * Useful to ensure the correct order of decorator execution during setup.
+     * @inheritdoc
      *
-     * @returns a resolving promise
+     * @returns The generated schema type
      */
-    public awaitConstruction() {
-        return new Promise((resolve) => {
-            const interval = setInterval(() => {
-                if (!this._constructed) return;
-                clearInterval(interval);
-                resolve(true);
-            });
-        });
+    public getSchemaType() {
+        return this.schemaType;
     }
 
     /**
@@ -117,19 +105,37 @@ export default class ModelSchema<T extends ModelLike> {
     }
 
     /**
-     * @returns the schema type which will be used by the attribute schemas to
-     * provide a type based schema type them self.
+     * @inheritdoc
      */
-    public getSchemaType() {
-        return this.schemaType;
-    }
-
     public validate(value: unknown) {
         const getAttribute = (name: AttributeSchemaName<ModelLike>) => {
             return this.getAttributeSchema(name) as unknown as AttributeSchema<ModelLike>;
         };
 
         return Model({ name: this.name, getAttribute }).validate(value);
+    }
+
+    /**
+     * This will be called by the ZodLazyType which is already applied
+     * to the schemaType. This will build the schema on-the-fly to be able to
+     * create recursive and circular schema types for this model schema.
+     *
+     * NOTE: This assumes that all models are already be loaded because the
+     * attribute schemas have the same assumption. This allows the lazy type to
+     * be built which then allows circular schemas.
+     *
+     * @inheritdoc
+     *
+     * @returns at least an empty ZodObjectType
+     */
+    protected buildSchemaType() {
+        const attributeSchemas = Object.values(this.attributeSchemas);
+        const members = {} as Record<keyof T, Type>;
+        for (const attributeSchema of attributeSchemas) {
+            members[attributeSchema.name] = attributeSchema.getSchemaType();
+        }
+
+        return baseTypeFuncs.object(members);
     }
 
     /**
@@ -151,26 +157,5 @@ export default class ModelSchema<T extends ModelLike> {
         } else Entity(options.collectionName, options)(this.owner);
         if (options.indexes) for (const index of options.indexes) Index(index.columns, index.options)(proto);
         this._constructed = true;
-    }
-
-    /**
-     * This will be called by the ZodLazyType which is already applied
-     * to the schemaType. This will build the schema on-the-fly to be able to
-     * create recursive and circular schema types for this model schema.
-     *
-     * NOTE: This assumes that all models are already be loaded because the
-     * attribute schemas have the same assumption. This allows the lazy type to
-     * be built which then allows circular schemas.
-     *
-     * @returns at least an empty ZodObjectType
-     */
-    private buildSchemaType() {
-        const attributeSchemas = Object.values(this.attributeSchemas);
-        const members = {} as Record<keyof T, Type>;
-        for (const attributeSchema of attributeSchemas) {
-            members[attributeSchema.name] = attributeSchema.getSchemaType();
-        }
-
-        return baseTypeFuncs.object(members);
     }
 }
