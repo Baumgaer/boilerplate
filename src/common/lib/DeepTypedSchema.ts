@@ -246,7 +246,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
 
     /**
      * Determines if the type of the attribute is an identifies type (means a
-     * type with an explizite name).
+     * type with an explicit name).
      *
      * @param [altType] A type which should be checked if not given the internal type is used
      * @returns true if it is an identified type else false
@@ -372,9 +372,10 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
      * for circular schema definitions.
      *
      * @param type type to build schema from
+     * @param [applySettings = true] wether to apply settings like min, max and so on
      * @returns at least a "ZodAnyType"
      */
-    protected buildSchemaType(type: MetadataType, applyAttributeSettings = true): SchemaTypes {
+    protected buildSchemaType(type: MetadataType, applySettings = true): SchemaTypes {
         let schemaType: SchemaTypes = baseTypeFuncs.never();
 
         // eslint-disable-next-line import/namespace
@@ -410,7 +411,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
         } else if (this.isDateType()) {
             schemaType = baseTypeFuncs.date();
         } else if (this.isPlainObjectType(type)) {
-            schemaType = this.buildPlainObjectSchemaType(type, applyAttributeSettings);
+            schemaType = this.buildPlainObjectSchemaType(type, applySettings);
         } else if (this.isNullType(type)) {
             schemaType = baseTypeFuncs.null();
         } else if (this.isUndefinedType(type)) {
@@ -426,7 +427,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
             schemaType = baseTypeFuncs.boolean();
         }
 
-        if (applyAttributeSettings) {
+        if (applySettings) {
             let min = -Infinity;
             if (this.isStringType(type)) min = 0;
             if (this.min !== undefined) min = this.min;
@@ -448,5 +449,11 @@ export default abstract class DeepTypedSchema<T extends ModelLike> implements De
         return schemaType;
     }
 
-    protected abstract buildPlainObjectSchemaType(type: MetadataType, applyAttributeSettings: boolean): ObjectSchemaType;
+    /**
+     * Creates a schema for a plain object or never based on the given raw type
+     *
+     * @param type The raw type of the current schema or current deep type
+     * @param applySettings wether to apply settings like min, max and so on
+     */
+    protected abstract buildPlainObjectSchemaType(type: MetadataType, applySettings: boolean): ObjectSchemaType;
 }

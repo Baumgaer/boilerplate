@@ -400,6 +400,11 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         } else this.indexOptions = {};
     }
 
+    /**
+     * @inheritdoc
+     *
+     * @returns The schema type of the embedded entity if exists and a never type else
+     */
     protected buildPlainObjectSchemaType() {
         if (this.embeddedEntity) return this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
         return baseTypeFuncs.never();
