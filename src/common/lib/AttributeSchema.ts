@@ -14,8 +14,7 @@ import {
     VersionColumn,
     Index
 } from "typeorm";
-import { ZodLazy, ZodNumber, ZodString, ZodUnion } from "zod";
-import { baseTypeFuncs, toInternalValidationReturnType } from "~common/utils/schema";
+import { toInternalValidationReturnType, baseTypeFuncs } from "~common/utils/schema";
 import * as DataTypes from "~env/lib/DataTypes";
 import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
@@ -23,35 +22,19 @@ import { AttributeError } from "~env/lib/Errors";
 import { merge, getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
-import type { ZodObject } from "zod";
 import type {
     AttrOptions,
     AllColumnOptions,
     AttrOptionsPartialMetadataJson,
     IEmbeddedEntity,
-    SchemaNameByModelClass,
-    SchemaTypes
+    SchemaNameByModelClass
 } from "~env/@types/AttributeSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type {
-    CombinedDataType,
-    IPrimitiveType,
-    IMixedType,
     IArrayType,
     IAttrMetadata,
-    ICustomType,
-    IIdentifiedType,
     IInterfaceType,
-    IIntersectionType,
-    ILiteralType,
-    IModelType,
-    IOptionalType,
-    ITupleType,
-    IUnionType,
-    IUnresolvedType,
-    MetadataType,
-    INamedObject,
-    IObjectType
+    MetadataType
 } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
 
@@ -168,11 +151,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     public persistence!: Exclude<AttrOptions<T>["persistence"], undefined>;
 
     /**
-     * Holds the "ready to validate" schema of the type
-     */
-    private schemaType: SchemaTypes | null = null;
-
-    /**
      * Internal state which determines if the schema is fully built or not.
      * NOTE: This will be set to true if the schema is fully built
      * (including relation).
@@ -261,219 +239,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     }
 
     /**
-     * Determines if this attribute is somehow a union type.
-     * This does **NOT** include arrays of unions!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a union type else false
-     */
-    public isUnionType(altType?: IAttrMetadata["type"]): altType is IUnionType {
-        const type = altType || this.rawType;
-        return Boolean("isObjectType" in type && "isUnion" in type && type.isUnion);
-    }
-
-    /**
-     * Determines if this attribute is somehow a intersection type.
-     * This does **NOT** include arrays of intersections!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a intersection type else false
-     */
-    public isIntersectionType(altType?: IAttrMetadata["type"]): altType is IIntersectionType {
-        const type = altType || this.rawType;
-        return Boolean("isObjectType" in type && "isIntersection" in type && type.isIntersection);
-    }
-
-    /**
-     * Determines if this attribute is somehow a literal type.
-     * This includes unions of literals!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a literal type else false
-     */
-    public isLiteralType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<ILiteralType> {
-        const type = altType || this.rawType;
-        return "isPrimitive" in type && "isLiteral" in type && type.isLiteral || this.checkSubTypes(type, this.isLiteralType.bind(this));
-    }
-
-    /**
-     * Determines if this attribute is somehow a string type.
-     * This includes unions of strings!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a string type else false
-     */
-    public isStringType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IPrimitiveType<"String"> | ILiteralType<string, "String">> {
-        const type = altType || this.rawType;
-        return "isPrimitive" in type && type.isPrimitive && type.identifier === "String" || this.checkSubTypes(type, this.isStringType.bind(this));
-    }
-
-    /**
-     * Determines if this attribute is somehow a number type.
-     * This includes unions of numbers!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a number type else false
-     */
-    public isNumberType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IPrimitiveType<"Number"> | ILiteralType<number, "Number">> {
-        const type = altType || this.rawType;
-        return "isPrimitive" in type && type.identifier === "Number" || this.checkSubTypes(type, this.isNumberType.bind(this));
-    }
-
-    /**
-     * Determines if this attribute is somehow a boolean type.
-     * This includes unions of booleans!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a boolean type else false
-     */
-    public isBooleanType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IPrimitiveType<"Boolean"> | ILiteralType<boolean, "Boolean">> {
-        const type = altType || this.rawType;
-        return "isPrimitive" in type && type.identifier === "Boolean" || this.checkSubTypes(type, this.isBooleanType.bind(this));
-    }
-
-    /**
-     * Determines if this attribute is somehow a date type.
-     * This includes unions of dates!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a date type else false
-     */
-    public isDateType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<INamedObject<"Date">> {
-        const type = altType || this.rawType;
-        return "isObjectType" in type && "isNamedObject" in type && type.identifier === "Date" || this.checkSubTypes(type, this.isDateType.bind(this));
-    }
-
-    /**
-     * Determines if this attribute is somehow a model type.
-     * This includes unions of models!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a model type else false
-     */
-    public isModelType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IModelType> {
-        const type = altType || this.rawType;
-        return Boolean("isObjectType" in type && "isModel" in type && type.isModel || this.checkSubTypes(type, this.isModelType.bind(this)));
-    }
-
-    /**
-     * Determines if this attribute is an array type. This does NOT include tuples
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is an array type else false
-     */
-    public isArrayType(altType?: IAttrMetadata["type"]): altType is IArrayType | ITupleType {
-        const type = altType || this.rawType;
-        return "isObjectType" in type && "isArray" in type && type.isArray;
-    }
-
-    /**
-     * Determines if this attribute is a tuple type. This does NOT include
-     * regular arrays.
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a tuple type else false
-     */
-    public isTupleType(altType?: IAttrMetadata["type"]): altType is ITupleType {
-        const type = altType || this.rawType;
-        return "isObjectType" in type && "isTuple" in type && type.isTuple;
-    }
-
-    /**
-     * Determines if this attribute has an optional type
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is an optional type else false
-     */
-    public isOptionalType(altType?: IAttrMetadata["type"]): altType is IOptionalType {
-        const type = altType || this.rawType;
-        return "isOptional" in type && type.isOptional;
-    }
-
-    /**
-     * Determines if the type of the attribute is an identifies type (means a
-     * type with an explizite name).
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is an identified type else false
-     */
-    public hasIdentifier(altType?: IAttrMetadata["type"]): altType is IIdentifiedType<string> {
-        const type = altType || this.rawType;
-        return Boolean("identifier" in type && type.identifier);
-    }
-
-    /**
-     * Determines if this attribute is somehow an object type.
-     * This includes unions of objects and arrays itself as well as models!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a model type else false
-     */
-    public isObjectLikeType(altType?: IAttrMetadata["type"]): altType is IObjectType {
-        const type = altType || this.rawType;
-        return "isObjectType" in type && type.isObjectType || this.checkSubTypes(type, this.isObjectLikeType.bind(this), true);
-    }
-
-    /**
-     * Determines if this attribute is somehow a plain object type.
-     * This does **NOT** include arrays or models!
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a model type else false
-     */
-    public isPlainObjectType(altType?: IAttrMetadata["type"]): altType is IInterfaceType {
-        const type = altType || this.rawType;
-        return Boolean("isObjectType" in type && ("isInterface" in type && type.isInterface || "isIntersection" in type && type.isIntersection) || this.checkSubTypes(type, this.isPlainObjectType.bind(this), true));
-    }
-
-    /**
-     * Determines if this attribute contains somehow an unresolved type.
-     * This includes unions of unresolved types too.
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a model type else false
-     */
-    public isUnresolvedType(altType?: IAttrMetadata["type"]): altType is CombinedDataType<IMixedType | IUnresolvedType> {
-        const type = altType || this.rawType;
-        return "isMixed" in type && type.isMixed || "isUnresolved" in type && type.isUnresolved || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
-    }
-
-    /**
-     * Determines if the type of this attribute is undefined
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is an undefined type else false
-     */
-    public isUndefinedType(altType?: IAttrMetadata["type"]): altType is IPrimitiveType<"Undefined"> {
-        const type = altType || this.rawType;
-        return "isPrimitive" in type && type.identifier === "Undefined";
-    }
-
-    /**
-     * Determines if the type of this attribute is null
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a null type else false
-     */
-    public isNullType(altType?: IAttrMetadata["type"]): altType is IPrimitiveType<"Null"> {
-        const type = altType || this.rawType;
-        return "isPrimitive" in type && type.identifier === "Null";
-    }
-
-    /**
-     * Determines if the type of this attribute is a custom defined type.
-     * This type looks like an identified type but behaves different in
-     * determination of database type name and schema type generation.
-     *
-     * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a custom type else false
-     */
-    public isCustomType(altType?: IAttrMetadata["type"]): altType is ICustomType {
-        const type = altType || this.rawType;
-        return "isCustomType" in type && type.isCustomType;
-    }
-
-    /**
      * Returns the values of an union type when the type is a fully literal type
      *
      * @param [altType] A type which should be checked if not given the internal type is used
@@ -493,19 +258,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         }
 
         return values;
-    }
-
-    /**
-     * Determines a flat version of the type identifier. The max depth is 1
-     *
-     * @param [altType] alternative type to get identifier from
-     * @returns the name of the identifier if exists
-     */
-    public getTypeIdentifier(altType?: IAttrMetadata["type"]): string | undefined {
-        const type = altType || this.rawType;
-        if (this.isTupleType(type)) return type.subTypes.find(this.hasIdentifier.bind(this))?.identifier;
-        if (this.isArrayType(type) && !this.isTupleType(type) && this.hasIdentifier(type.subType)) return type.subType.identifier;
-        if (this.hasIdentifier(type)) return type.identifier;
     }
 
     /**
@@ -648,19 +400,9 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         } else this.indexOptions = {};
     }
 
-    /**
-     * Checks if sub type containing types are all of same type checked by the checkFunc
-     *
-     * @param arrayLikeType type to check for same type sub types
-     * @param checkFunc function that will be called to check the sub types
-     * @returns true if all types are of type checked by checkFunc and false else
-     */
-    private checkSubTypes(arrayLikeType: IAttrMetadata["type"], checkFunc: ((type?: IAttrMetadata["type"]) => boolean), includeIntersections: boolean = false): boolean {
-        let intersectionResult = false;
-        let unionResult = false;
-        if (includeIntersections && this.isIntersectionType(arrayLikeType)) intersectionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
-        if (this.isUnionType(arrayLikeType)) unionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
-        return unionResult || intersectionResult;
+    protected buildPlainObjectSchemaType() {
+        if (this.embeddedEntity) return this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
+        return baseTypeFuncs.never();
     }
 
     /**
@@ -751,89 +493,4 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         return true;
     }
 
-    /**
-     * Generates a schema which will be used to validate a value. This schema is
-     * a pure data schema and depends completely on the attributes type.
-     * This also takes isRequired and other constraints into account (see end of method).
-     *
-     * NOTE: This assumes that all models are already loaded to have access
-     * to the MODEL_NAME_TO_MODEL_MAP which allows to be sync which is needed
-     * for circular schema definitions.
-     *
-     * @param type type to build schema from
-     * @returns at least a "ZodAnyType"
-     */
-    private buildSchemaType(type: IAttrMetadata["type"], applyAttributeSettings = true): SchemaTypes {
-        let schemaType: SchemaTypes = baseTypeFuncs.never();
-
-        // eslint-disable-next-line import/namespace
-        if (this.validator && DataTypes[this.validator]) {
-            // eslint-disable-next-line import/namespace
-            schemaType = DataTypes[this.validator]({ min: this.min, max: this.max }).schemaType;
-        } else if (this.isTupleType(type)) {
-            const tupleTypes = type.subTypes.map((subType) => this.buildSchemaType(subType, false));
-            schemaType = baseTypeFuncs.tuple(tupleTypes as [SchemaTypes, ...SchemaTypes[]]);
-        } else if (this.isArrayType(type) && !this.isTupleType(type)) {
-            schemaType = baseTypeFuncs.array(this.buildSchemaType(type.subType, false));
-        } else if (this.isOptionalType(type)) {
-            schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType, false));
-        } else if (this.isModelType(type)) {
-            const typeIdentifier = this.getTypeIdentifier(type) || "";
-            const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
-            const modelSchema = modelClass?.getSchema();
-            schemaType = modelSchema?.getSchemaType().or(baseTypeFuncs.instanceof(modelClass as any)) || baseTypeFuncs.never();
-        } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
-            const subTypes = type.subTypes.slice();
-            schemaType = this.buildSchemaType(subTypes.shift() as MetadataType, false);
-            for (const subType of subTypes) {
-                let subSchemaType = this.buildSchemaType(subType, false) as ZodObject<any>;
-                if (this.isIntersectionType(type)) {
-                    if (subSchemaType instanceof ZodUnion) subSchemaType = subSchemaType.options[0];
-                    if (subSchemaType instanceof ZodLazy) subSchemaType = subSchemaType.schema;
-                    if (schemaType instanceof ZodUnion) schemaType = schemaType.options[0];
-                    if (schemaType instanceof ZodLazy) {
-                        schemaType = baseTypeFuncs.object(Object.assign({}, schemaType.schema.shape, subSchemaType.shape));
-                    } else schemaType = Object.assign({}, (schemaType as ZodObject<any>).shape, subSchemaType.shape);
-                } else schemaType = schemaType.or(subSchemaType);
-            }
-        } else if (this.isDateType()) {
-            schemaType = baseTypeFuncs.date();
-        } else if (this.isPlainObjectType(type)) {
-            if (this.embeddedEntity) schemaType = this.embeddedEntity.getSchema()?.getSchemaType() || baseTypeFuncs.never();
-        } else if (this.isNullType(type)) {
-            schemaType = baseTypeFuncs.null();
-        } else if (this.isUndefinedType(type)) {
-            schemaType = baseTypeFuncs.undefined();
-        } else if (this.isLiteralType(type) && "value" in type && typeof type.value !== "symbol") {
-            // "Value" has to be in type because a literal can obviously be an union type
-            schemaType = baseTypeFuncs.literal(type.value);
-        } else if (this.isStringType(type)) {
-            schemaType = baseTypeFuncs.string();
-        } else if (this.isNumberType(type)) {
-            schemaType = baseTypeFuncs.number();
-        } else if (this.isBooleanType(type)) {
-            schemaType = baseTypeFuncs.boolean();
-        }
-
-        if (applyAttributeSettings) {
-            let min = -Infinity;
-            if (this.isStringType(type)) min = 0;
-            if (this.min !== undefined) min = this.min;
-            if (schemaType instanceof ZodNumber) {
-                schemaType.gte(min);
-            } else if (schemaType instanceof ZodString) schemaType.min(min);
-
-            let max = Infinity;
-            if (this.max !== undefined) max = this.max;
-            if (schemaType instanceof ZodNumber) {
-                schemaType.lte(max);
-            } else if (schemaType instanceof ZodString) schemaType.max(max);
-
-            if (!this.isRequired) schemaType = baseTypeFuncs.optional(schemaType);
-            if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
-        }
-
-        console.debug(`Created schema type ${this._ctor.name}#${String(this.name)}: ${schemaType._def.typeName}`);
-        return schemaType;
-    }
 }

@@ -1,4 +1,5 @@
 import type { SetOptional } from "type-fest";
+import type { ZodTypeAny, ZodLazy, ZodObject, ZodNever, ZodRawShape } from "zod";
 import type { IDeepTypedMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type * as DataTypes from "~env/lib/DataTypes";
@@ -41,3 +42,5 @@ export interface DeepTypedOptions<T extends ModelLike> extends IInjectedOptions,
 
 export type DeepTypedOptionsWithMetadataJson<T extends ModelLike> = DeepTypedOptions<T> & { metadataJson: string }
 export type DeepTypedOptionsPartialMetadataJson<T extends ModelLike> = IDeepTypedMetadata & SetOptional<DeepTypedOptionsWithMetadataJson<T>, "metadataJson">;
+export type ObjectSchemaType = ZodLazy<ZodObject<ZodRawShape>> | ZodObject<ZodRawShape> | ZodNever
+export type SchemaTypes = ZodTypeAny;

@@ -7,10 +7,11 @@ import type { ColumnNumericOptions } from "typeorm/decorator/options/ColumnNumer
 import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWithLengthOptions";
 import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
-import type { ZodTypeAny } from "zod";
 import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IAttrMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+
+export type { SchemaTypes } from "~env/@types/DeepTypedSchema";
 
 /**
  * All attribute field names of typeorm which are allowed to use in column options
@@ -91,5 +92,3 @@ export type AttrOptionsPartialMetadataJson<T extends ModelLike> = IAttrMetadata 
 export type AttrObserverTypes = "add" | "remove" | "change"
 
 export type ChangeMethodsArgs<V> = [(string | symbol)[], V, V]
-
-export type SchemaTypes = ZodTypeAny;

@@ -3,6 +3,41 @@ import { TypeError } from "~env/lib/Errors";
 import type { SafeParseReturnType } from "zod";
 import type { ValidationResult, AttributeKinds } from "~env/@types/Errors";
 
+export {
+    ZodType as Type,
+    ZodAny as AnyType,
+    ZodArray as ArrayType,
+    ZodBigInt as BigIntType,
+    ZodBoolean as BooleanType,
+    ZodBranded as BrandedType,
+    ZodDate as DateType,
+    ZodDefault as DefaultType,
+    ZodDiscriminatedUnion as DiscriminatedUnionType,
+    ZodEffects as EffectsType,
+    ZodEnum as EnumType,
+    ZodIntersection as IntersectionType,
+    ZodLazy as LazyType,
+    ZodLiteral as LiteralType,
+    ZodMap as MapType,
+    ZodNaN as NaNType,
+    ZodNativeEnum as NativeEnumType,
+    ZodNever as NeverType,
+    ZodNull as NullType,
+    ZodNullable as NullableType,
+    ZodNumber as NumberType,
+    ZodObject as ObjectType,
+    ZodOptional as OptionalType,
+    ZodPromise as PromiseType,
+    ZodRecord as RecordType,
+    ZodSet as SetType,
+    ZodString as StringType,
+    ZodTuple as TupleType,
+    ZodUndefined as UndefinedType,
+    ZodUnion as UnionType,
+    ZodUnknown as UnknownType,
+    ZodVoid as VoidType
+} from "zod";
+
 export const baseTypeFuncs = {
     any: z.any.bind(z),
     array: z.array.bind(z),

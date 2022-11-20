@@ -1,7 +1,7 @@
 import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
 import { baseTypeFuncs } from "~common/utils/schema";
 import { Model } from "~env/lib/DataTypes";
-import type { ZodLazy, ZodObject, ZodType } from "zod";
+import type { LazyType, ObjectType, Type } from "~common/utils/schema";
 import type { AttributeSchemaName } from "~env/@types/BaseModel";
 import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
 import type AttributeSchema from "~env/lib/AttributeSchema";
@@ -61,7 +61,7 @@ export default class ModelSchema<T extends ModelLike> {
     /**
      * Holds the "ready to validate" schema of the type
      */
-    private schemaType: ZodLazy<ZodObject<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
+    private schemaType: LazyType<ObjectType<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
     /**
      * Internal state which determines if the schema is fully built or not
@@ -166,7 +166,7 @@ export default class ModelSchema<T extends ModelLike> {
      */
     private buildSchemaType() {
         const attributeSchemas = Object.values(this.attributeSchemas);
-        const members = {} as Record<keyof T, ZodType>;
+        const members = {} as Record<keyof T, Type>;
         for (const attributeSchema of attributeSchemas) {
             members[attributeSchema.name] = attributeSchema.getSchemaType();
         }
