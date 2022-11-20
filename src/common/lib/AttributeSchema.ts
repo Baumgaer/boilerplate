@@ -17,6 +17,7 @@ import {
 import { ZodLazy, ZodNumber, ZodString, ZodUnion } from "zod";
 import { baseTypeFuncs, toInternalValidationReturnType } from "~common/utils/schema";
 import * as DataTypes from "~env/lib/DataTypes";
+import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 import { AttributeError } from "~env/lib/Errors";
 import { merge, getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
@@ -71,92 +72,54 @@ import type { ModelLike } from "~env/@types/ModelClass";
  *
  * @template T The model where the schema of the attribute belongs to
  */
-export default class AttributeSchema<T extends ModelLike> implements AttrOptions<T> {
-
-    /**
-     * Holds the class object which created the schema. This is only a valid
-     * value after processing the schema of the class!
-     */
-    public readonly owner?: T;
+export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchema<T> implements AttrOptions<T> {
 
     /**
      * The name of the attribute in the schema. Corresponds to the attribute
      * name in the class (maybe not in runtime)
      */
-    public readonly name: keyof T;
+    declare public readonly name: keyof T;
 
     /**
      * The options which initializes the schema
      */
-    public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>> = {} as Readonly<AttrOptionsPartialMetadataJson<T>>;
+    declare public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>>;
 
     /**
      * Indicates if an attribute should NOT be sent to another endpoint.
      * Very important for privacy!
      */
-    public isInternal: boolean = false;
-
-    /**
-     * Indicates if an attribute has to be set manually (does not have a default)
-     */
-    public isRequired: boolean = false;
+    public isInternal!: boolean;
 
     /**
      * Indicates if an attribute is readonly / not writable / only writable once
      */
-    public isImmutable: boolean = false;
-
-    /**
-     * @inheritdoc
-     */
-    public min?: number;
-
-    /**
-     * @inheritdoc
-     */
-    public max?: number;
-
-    /**
-     * @inheritdoc
-     */
-    public multipleOf?: number;
-
-    /**
-     * @inheritdoc
-     */
-    public validator?: keyof typeof DataTypes;
-
-    /**
-     * Indicates if an attribute should only be loaded from database when it
-     * is explicitly used. This is always the case when the type of the
-     * attribute is a Promise
-     */
-    public isLazy: boolean = false;
+    public isImmutable!: boolean;
 
     /**
      * @see AllColumnOptions["eager"]
      */
-    public isEager: boolean = false;
+    public isEager!: boolean;
 
     /**
      * @inheritdoc
      */
-    public isCreationDate: boolean = false;
+    public isCreationDate!: boolean;
 
     /**
      * @inheritdoc
      */
-    public isModifiedDate: boolean = false;
+    public isModifiedDate!: boolean;
 
     /**
      * @inheritdoc
      */
-    public isDeletedDate: boolean = false;
+    public isDeletedDate!: boolean;
 
     /**
      * @inheritdoc
      */
-    public isVersion: boolean = false;
+    public isVersion!: boolean;
 
     /**
      * @inheritdoc
@@ -197,7 +160,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     /**
      * @see IndexOptions
      */
-    public indexOptions: IndexOptions = {};
+    public indexOptions!: IndexOptions;
 
     /**
      * @inheritdoc
@@ -205,25 +168,9 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     public persistence!: Exclude<AttrOptions<T>["persistence"], undefined>;
 
     /**
-     * @inheritdoc
-     */
-    public primary?: AttrOptions<T>["primary"];
-
-    /**
      * Holds the "ready to validate" schema of the type
      */
     private schemaType: SchemaTypes | null = null;
-
-    /**
-     * The type which was determined during compile time
-     */
-    private rawType!: IAttrMetadata["type"];
-
-    /**
-     * This is the original class type which is used while construction.
-     * Use this.ctor during runtime, which is the evaluated version of this one
-     */
-    private readonly _ctor: T;
 
     /**
      * Internal state which determines if the schema is fully built or not.
@@ -240,9 +187,7 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     private embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
 
     public constructor(ctor: T, name: keyof T, options: AttrOptionsPartialMetadataJson<T>) {
-        this._ctor = ctor;
-        this.name = name;
-        this.options = options;
+        super(ctor, name, options);
         this.setConstants(options);
         this.buildSchema(options.type);
     }
@@ -670,6 +615,40 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
     }
 
     /**
+     * Sets all given constraints on thi schema and decides which behavior
+     * (lazy or eager) will be applied and wether this attribute will cascade
+     * or not.
+     *
+     * @param params an object with constraints to set on this attribute schema
+     */
+    protected override setConstants(params: AttrOptionsPartialMetadataJson<T>) {
+        super.setConstants(params);
+
+        this.isImmutable = Boolean(params.isReadOnly);
+        this.isInternal = Boolean(params.isInternal);
+        this.isCreationDate = Boolean(params.isCreationDate);
+        this.isModifiedDate = Boolean(params.isModifiedDate);
+        this.isDeletedDate = Boolean(params.isDeletedDate);
+        this.isVersion = Boolean(params.isVersion);
+        this.isIndex = Boolean(params.index);
+        this.persistence = params.persistence ?? true;
+
+        this.isGenerated = params.isGenerated;
+        this.orphanedRowAction = params.orphanedRowAction ?? "delete";
+        this.isRelationOwner = Boolean(params.isRelationOwner);
+        this.relationColumn = params.relationColumn;
+
+        if (!this.isRelationOwner) {
+            this.isEager = !this.isLazy;
+            this.cascade = params.cascade ?? true;
+        } else this.cascade = params.cascade ?? false;
+
+        if (params.index && typeof params.index !== "boolean") {
+            this.indexOptions = params.index;
+        } else this.indexOptions = {};
+    }
+
+    /**
      * Checks if sub type containing types are all of same type checked by the checkFunc
      *
      * @param arrayLikeType type to check for same type sub types
@@ -682,45 +661,6 @@ export default class AttributeSchema<T extends ModelLike> implements AttrOptions
         if (includeIntersections && this.isIntersectionType(arrayLikeType)) intersectionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
         if (this.isUnionType(arrayLikeType)) unionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
         return unionResult || intersectionResult;
-    }
-
-    /**
-     * Sets all given constraints on thi schema and decides which behavior
-     * (lazy or eager) will be applied and wether this attribute will cascade
-     * or not.
-     *
-     * @param params an object with constraints to set on this attribute schema
-     */
-    private setConstants(params: AttrOptionsPartialMetadataJson<T>) {
-        this.isRequired = Boolean(params.isRequired);
-        this.isImmutable = Boolean(params.isReadOnly);
-        this.isInternal = Boolean(params.isInternal);
-        this.isLazy = Boolean(params.isLazy);
-        this.primary = Boolean(params.primary);
-        this.isCreationDate = Boolean(params.isCreationDate);
-        this.isModifiedDate = Boolean(params.isModifiedDate);
-        this.isDeletedDate = Boolean(params.isDeletedDate);
-        this.isVersion = Boolean(params.isVersion);
-        this.isIndex = Boolean(params.index);
-        this.persistence = params.persistence ?? true;
-
-        this.isGenerated = params.isGenerated;
-        this.orphanedRowAction = params.orphanedRowAction ?? "delete";
-        this.rawType = params.type;
-        this.isRelationOwner = Boolean(params.isRelationOwner);
-        this.relationColumn = params.relationColumn;
-
-        this.min = params.min;
-        this.max = params.max;
-        this.multipleOf = params.multipleOf;
-        this.validator = params.validator;
-
-        if (!this.isRelationOwner) {
-            this.isEager = !this.isLazy;
-            this.cascade = params.cascade ?? true;
-        } else this.cascade = params.cascade ?? false;
-
-        if (params.index && typeof params.index !== "boolean") this.indexOptions = params.index;
     }
 
     /**

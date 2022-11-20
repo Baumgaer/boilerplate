@@ -87,11 +87,15 @@ export interface IModelMetadata {
     isAbstract: boolean;
 }
 
-export interface IAttrMetadata {
+export interface IDeepTypedMetadata {
+    type: MetadataType;
+
     name: string;
-    isInternal: boolean;
-    isReadOnly: boolean;
     isRequired: boolean;
     isLazy: boolean;
-    type: MetadataType;
+}
+
+export interface IAttrMetadata extends IDeepTypedMetadata {
+    isInternal: boolean;
+    isReadOnly: boolean;
 }

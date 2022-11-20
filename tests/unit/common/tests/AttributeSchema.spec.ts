@@ -179,7 +179,10 @@ export default function (environment = "common") {
             const schema = TestModel.getAttributeSchema("anInterface");
             // @ts-expect-error 002
             const embeddedEntityClass = schema?.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
-            const commonEmbeddedEntityClass = embeddedEntityFactory(className, { prop1: { isRequired: true }, prop2: { isRequired: false } }, true);
+            const commonEmbeddedEntityClass = embeddedEntityFactory(className, {
+                prop1: { name: "prop1", isRequired: true, isLazy: false, type: { identifier: "String", isPrimitive: true } },
+                prop2: { name: "prop2", isRequired: false, isLazy: false, type: { identifier: "Number", isPrimitive: true } }
+            }, true);
             const instance = new commonEmbeddedEntityClass({ prop1: "test" });
 
             expect(embeddedEntityClass).to.be.an.instanceOf(commonEmbeddedEntityClass);

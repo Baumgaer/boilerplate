@@ -8,9 +8,9 @@ import type { ColumnWithLengthOptions } from "typeorm/decorator/options/ColumnWi
 import type { ColumnWithWidthOptions } from "typeorm/decorator/options/ColumnWithWidthOptions";
 import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColumnOptions";
 import type { ZodTypeAny } from "zod";
+import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IAttrMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
-import type * as DataTypes from "~env/lib/DataTypes";
 
 /**
  * All attribute field names of typeorm which are allowed to use in column options
@@ -65,46 +65,13 @@ export interface ISpecialColumns {
     isGenerated?: Parameters<typeof Generated>["0"]
 }
 
-export interface IInjectedOptions {
-    /**
-     * The minimum of a number or of the length of a string
-     */
-    min?: number;
-
-    /**
-     * The maximum of a number or of the length of a string
-     */
-    max?: number;
-
-    /**
-     * A number or the length of a string have to be multiple of this value
-     */
-    multipleOf?: number;
-
-    /**
-     * The name of the datatype which holds the schema and corresponding validation function
-     */
-    validator?: keyof typeof DataTypes;
-}
-
-export interface AttrOptions<T extends ModelLike> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, Partial<Omit<IAttrMetadata, "type", "name">>, ThisType<T> {
-
-    /**
-     * An alternative name to the attribute. Useful in case of renaming the
-     * attribute but keeping the name in the database.
-     */
-    name?: keyof T;
+export interface AttrOptions<T extends ModelLike> extends Pick<RelationOptions, allowedAttrFields>, IRelations, ISpecialColumns, IInjectedOptions, Partial<Omit<IAttrMetadata, "type", "name">>, DeepTypedOptions<T> {
 
     /**
      * Defines the attribute as an index column which can be used additionally
      * with multi row index on model
      */
     index?: true | IndexOptions;
-
-    /**
-     * Defines an attribute as primary column in the database
-     */
-    primary?: boolean;
 }
 
 export interface IAttributeChange {
