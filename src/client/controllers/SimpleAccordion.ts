@@ -1,10 +1,16 @@
+import { IonAccordion } from "@ionic/vue";
+import { defineComponent } from "vue";
 import BaseController from "~client/lib/BaseController";
-import { Controller, Prop } from "~client/utils/decorators";
+import type { PropType } from "vue";
 
-@Controller({ name: "Simple-accordion" })
-export default class SimpleAccordion extends BaseController {
 
-    @Prop({ default: "false" })
-    public disabled!: string;
+export default defineComponent({
+    name: "simple-accordion",
+    components: { IonAccordion },
+    extends: BaseController,
 
-}
+    props: {
+        disabled: { type: String as PropType<"true" | "false">, default: "false" }
+    }
+});
+

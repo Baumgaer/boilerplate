@@ -1,12 +1,14 @@
+import { IonLabel } from "@ionic/vue";
+import { defineComponent } from "vue";
 import BaseController from "~client/lib/BaseController";
-import { Controller, Prop } from "~client/utils/decorators";
 
-@Controller({ name: "Simple-label" })
-export default class SimpleLabel extends BaseController {
+export default defineComponent({
+    name: "simple-label",
+    components: { IonLabel },
+    extends: BaseController,
 
-    @Prop()
-    public slot!: string;
-
-    @Prop()
-    public name!: string;
-}
+    props: {
+        slot: { type: String },
+        name: { type: String }
+    }
+});
