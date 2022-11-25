@@ -143,6 +143,17 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
     };
 }
 
+
+function action<T extends typeof BaseModel>(options: ActionOptions<T>, target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>, defaultMethod: ActionOptions<T>["httpMethod"]) {
+    const defaultAccessRight = () => false;
+    options.httpMethod = options.httpMethod ?? defaultMethod;
+    options.accessRight = options.accessRight ?? defaultAccessRight;
+
+    const args = Reflect.getOwnMetadata("arguments", target, methodName);
+    const metadataStore = new MetadataStore();
+    metadataStore.setAction(target, String(methodName), { params: options, descriptor, args });
+}
+
 /**
  * Registers a method as a mutation action. This method can have any parameters
  * which also can be marked with @Arg(). The decorated method will always return
@@ -153,13 +164,7 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
  */
 export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
-        const defaultAccessRight = () => false;
-        options.httpMethod = options.httpMethod ?? "POST";
-        options.accessRight = options.accessRight ?? defaultAccessRight;
-
-        const args = Reflect.getOwnMetadata("arguments", target, methodName);
-        const metadataStore = new MetadataStore();
-        metadataStore.setAction(target, String(methodName), { params: options, descriptor, args });
+        action(options, target, methodName, descriptor, "POST");
     };
 }
 
@@ -173,13 +178,7 @@ export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> =
  */
 export function Query<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
-        const defaultAccessRight = () => false;
-        options.httpMethod = options.httpMethod ?? "GET";
-        options.accessRight = options.accessRight ?? defaultAccessRight;
-
-        const args = Reflect.getOwnMetadata("arguments", target, methodName);
-        const metadataStore = new MetadataStore();
-        metadataStore.setAction(target, String(methodName), { params: options, descriptor, args });
+        action(options, target, methodName, descriptor, "GET");
     };
 }
 

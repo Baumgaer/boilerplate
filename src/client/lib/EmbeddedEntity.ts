@@ -2,6 +2,9 @@ import { embeddedEntityFactory as commonEmbeddedEntityFactory, proxyfy, getClass
 import type { EmbeddedEntityType, members } from "~client/@types/EmbeddedEntity";
 import type { ModelLike } from "~client/@types/ModelClass";
 
+/**
+ * @see commonEmbeddedEntityFactory
+ */
 export function embeddedEntityFactory<T extends Record<string, any>>(className: string, members: members<T>) {
 
     className = getClassName(className, "client");

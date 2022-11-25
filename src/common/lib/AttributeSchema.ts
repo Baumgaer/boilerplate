@@ -164,6 +164,8 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * have access to its schema and to be able to generate the schema type of
      * this attribute schema.
      */
+    // eslint-disable-next-line @typescript-eslint/ban-ts-comment
+    // @ts-ignore this is necessary because TypeScript seems to have problems with recursive definitions
     private embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
 
     public constructor(ctor: T, name: keyof T, options: AttrOptionsPartialMetadataJson<T>) {
@@ -340,32 +342,32 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * (lazy or eager) will be applied and wether this attribute will cascade
      * or not.
      *
-     * @param params an object with constraints to set on this attribute schema
+     * @param options an object with constraints to set on this attribute schema
      */
-    protected override setConstants(params: AttrOptionsPartialMetadataJson<T>) {
-        super.setConstants(params);
+    protected override setConstants(options: AttrOptionsPartialMetadataJson<T>) {
+        super.setConstants(options);
 
-        this.isImmutable = Boolean(params.isReadOnly);
-        this.isInternal = Boolean(params.isInternal);
-        this.isCreationDate = Boolean(params.isCreationDate);
-        this.isModifiedDate = Boolean(params.isModifiedDate);
-        this.isDeletedDate = Boolean(params.isDeletedDate);
-        this.isVersion = Boolean(params.isVersion);
-        this.isIndex = Boolean(params.index);
-        this.persistence = params.persistence ?? true;
+        this.isImmutable = Boolean(options.isReadOnly);
+        this.isInternal = Boolean(options.isInternal);
+        this.isCreationDate = Boolean(options.isCreationDate);
+        this.isModifiedDate = Boolean(options.isModifiedDate);
+        this.isDeletedDate = Boolean(options.isDeletedDate);
+        this.isVersion = Boolean(options.isVersion);
+        this.isIndex = Boolean(options.index);
+        this.persistence = options.persistence ?? true;
 
-        this.isGenerated = params.isGenerated;
-        this.orphanedRowAction = params.orphanedRowAction ?? "delete";
-        this.isRelationOwner = Boolean(params.isRelationOwner);
-        this.relationColumn = params.relationColumn;
+        this.isGenerated = options.isGenerated;
+        this.orphanedRowAction = options.orphanedRowAction ?? "delete";
+        this.isRelationOwner = Boolean(options.isRelationOwner);
+        this.relationColumn = options.relationColumn;
 
         if (!this.isRelationOwner) {
             this.isEager = !this.isLazy;
-            this.cascade = params.cascade ?? true;
-        } else this.cascade = params.cascade ?? false;
+            this.cascade = options.cascade ?? true;
+        } else this.cascade = options.cascade ?? false;
 
-        if (params.index && typeof params.index !== "boolean") {
-            this.indexOptions = params.index;
+        if (options.index && typeof options.index !== "boolean") {
+            this.indexOptions = options.index;
         } else this.indexOptions = {};
     }
 

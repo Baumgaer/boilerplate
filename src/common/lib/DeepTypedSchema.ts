@@ -361,19 +361,19 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
      * (lazy or eager) will be applied and wether this attribute will cascade
      * or not.
      *
-     * @param params an object with constraints to set on this attribute schema
+     * @param options an object with constraints to set on this attribute schema
      */
-    protected setConstants(params: DeepTypedOptionsPartialMetadataJson<T>) {
-        this.rawType = params.type;
+    protected setConstants(options: DeepTypedOptionsPartialMetadataJson<T>) {
+        this.rawType = options.type;
 
-        this.isRequired = Boolean(params.isRequired);
-        this.isLazy = Boolean(params.isLazy);
-        this.primary = Boolean(params.primary);
+        this.isRequired = Boolean(options.isRequired);
+        this.isLazy = Boolean(options.isLazy);
+        this.primary = Boolean(options.primary);
 
-        this.min = params.min;
-        this.max = params.max;
-        this.multipleOf = params.multipleOf;
-        this.validator = params.validator;
+        this.min = options.min;
+        this.max = options.max;
+        this.multipleOf = options.multipleOf;
+        this.validator = options.validator;
     }
 
     /**
