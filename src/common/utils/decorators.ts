@@ -1,15 +1,18 @@
 import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
+import ArgumentSchema from "~env/lib/ArgumentSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import ModelSchema from "~env/lib/ModelSchema";
 import { mergeWith } from "~env/utils/utils";
-import type { ActionOptions } from "~env/@types/ActionSchema";
+import type { ActionOptions, ActionOptionsPartialMetadataJson, ActionOptionsWithMetadataJson } from "~env/@types/ActionSchema";
 import type { ArgOptions, ArgOptionsPartialMetadataJson, ArgOptionsWithMetadataJson } from "~env/@types/ArgumentSchema";
 import type { AttrOptions, AttrOptionsPartialMetadataJson, AttrOptionsWithMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
-import type { IAttrMetadata, IModelMetadata } from "~env/@types/MetadataTypes";
+import type { IAttrMetadata, IModelMetadata, IDeepTypedMetadata } from "~env/@types/MetadataTypes";
 import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 import type { AttributeError } from "~env/lib/Errors";
+
+const metadataStore = new MetadataStore();
 
 /**
  * Defines a BaseModel inherited class as a real model which will be stored in
@@ -22,7 +25,6 @@ import type { AttributeError } from "~env/lib/Errors";
  * @returns a ClassDecorator which invokes the ModelClass which extends the given model and adds basic functions
  */
 export function Model<T extends typeof BaseModel>(options?: ModelOptions<T>): ClassDecorator {
-    const metadataStore = new MetadataStore();
     const metadata: IModelMetadata = JSON.parse((<ModelOptionsWithMetadataJson<T>>options).metadataJson);
     const metadataOptions: ModelOptionsPartialMetadataJson<T> = mergeWith({}, metadata, <ModelOptionsWithMetadataJson<T>>options);
     delete metadataOptions.metadataJson;
@@ -60,7 +62,6 @@ export function Model<T extends typeof BaseModel>(options?: ModelOptions<T>): Cl
  * @returns a PropertyDecorator which invokes the attribute
  */
 export function Attr<T extends typeof BaseModel>(options?: AttrOptions<T>): PropertyDecorator {
-    const metadataStore = new MetadataStore();
     const metadata: IAttrMetadata = JSON.parse((options as AttrOptionsWithMetadataJson<T>).metadataJson);
     const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as AttrOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
@@ -149,8 +150,7 @@ function action<T extends typeof BaseModel>(options: ActionOptions<T>, target: a
     options.httpMethod = options.httpMethod ?? defaultMethod;
     options.accessRight = options.accessRight ?? defaultAccessRight;
 
-    const args = Reflect.getOwnMetadata("arguments", target, methodName);
-    const metadataStore = new MetadataStore();
+    const args = Reflect.getOwnMetadata("arguments", target.constructor, methodName);
     metadataStore.setAction(target, String(methodName), { params: options, descriptor, args });
 }
 
@@ -163,6 +163,10 @@ function action<T extends typeof BaseModel>(options: ActionOptions<T>, target: a
  * @returns a decorator which registers the method as a mutation action
  */
 export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
+    const metadata: IDeepTypedMetadata = JSON.parse((options as ActionOptionsWithMetadataJson<T>).metadataJson);
+    const metadataOptions: ActionOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ActionOptionsWithMetadataJson<T>);
+    delete metadataOptions.metadataJson;
+
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
         action(options, target, methodName, descriptor, "POST");
     };
@@ -177,6 +181,10 @@ export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> =
  * @returns a decorator which registers the method as a query action
  */
 export function Query<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
+    const metadata: IDeepTypedMetadata = JSON.parse((options as ActionOptionsWithMetadataJson<T>).metadataJson);
+    const metadataOptions: ActionOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ActionOptionsWithMetadataJson<T>);
+    delete metadataOptions.metadataJson;
+
     return (target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>) => {
         action(options, target, methodName, descriptor, "GET");
     };
@@ -191,13 +199,15 @@ export function Query<T extends typeof BaseModel>(options: ActionOptions<T> = {}
  * @returns a decorator which registers the parameter as an action parameter
  */
 export function Arg<T extends typeof BaseModel>(options?: ArgOptions<T>) {
-    const metadata: IAttrMetadata = JSON.parse((options as ArgOptionsWithMetadataJson<T>).metadataJson);
+    const metadata: IDeepTypedMetadata = JSON.parse((options as ArgOptionsWithMetadataJson<T>).metadataJson);
     const metadataOptions: ArgOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ArgOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
 
-    return (target: Partial<T>, methodName: string | symbol, index: number) => {
-        const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};
-        args[metadataOptions.name] = { index, primary: Boolean(metadataOptions.primary) };
-        Reflect.defineMetadata(`arguments`, args, target, methodName);
+    return (target: T, methodName: string | symbol, index: number) => {
+        metadataOptions.index = metadataOptions.index ?? index;
+
+        const theTarget = target.constructor as T;
+        const schema = new ArgumentSchema<T>(theTarget, metadataOptions.name, metadataOptions);
+        metadataStore.setArgumentSchema<T>(theTarget, String(methodName), schema);
     };
 }

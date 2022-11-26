@@ -14,11 +14,10 @@ import {
     VersionColumn,
     Index
 } from "typeorm";
-import * as DataTypes from "~env/lib/DataTypes";
 import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 import { AttributeError } from "~env/lib/Errors";
-import { toInternalValidationReturnType, baseTypeFuncs } from "~env/utils/schema";
+import { baseTypeFuncs } from "~env/utils/schema";
 import { getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
 import type { ColumnType } from 'typeorm/driver/types/ColumnTypes';
@@ -68,6 +67,8 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * @inheritdoc
      */
     declare public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>>;
+
+    public readonly isAttributeSchema: boolean = true;
 
     /**
      * Indicates if an attribute should NOT be sent to another endpoint.
@@ -187,26 +188,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * @inheritdoc
      */
     public validate(value: unknown): ValidationResult {
-        const name = this.name.toString();
-
-        const rawType = this.options.type;
-        if (isArray(value) && this.isTupleType(rawType)) {
-            const length = rawType.subTypes.length;
-            const min = rawType.subTypes.findIndex((subType) => this.isOptionalType(subType));
-            if (value.length < min) return { success: false, errors: [new AttributeError(name, "rangeUnderflow", [], value)] };
-            if (value.length > length) return { success: false, errors: [new AttributeError(name, "rangeOverflow", [], value)] };
-            value = value.slice();
-            (value as any[]).length = length;
-        }
-
-        let result: ValidationResult;
-        // eslint-disable-next-line import/namespace
-        const DataType = this.validator && DataTypes[this.validator];
-        if (DataType) {
-            result = DataType({ min: this.min, max: this.max, name: this.getTypeIdentifier(), getAttribute: () => this as any }).validate(value);
-        } else result = toInternalValidationReturnType(this.getSchemaType().safeParse(value));
-
-        return result;
+        return this.internalValidation(value, AttributeError);
     }
 
     /**

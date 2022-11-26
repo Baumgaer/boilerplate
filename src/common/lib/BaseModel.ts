@@ -74,6 +74,8 @@ export default abstract class BaseModel extends BaseEntity {
     @Attr()
     public name!: string;
 
+    public readonly isBaseModel: boolean = true;
+
     /**
      * @see BaseModel.className
      */

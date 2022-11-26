@@ -18,6 +18,8 @@ import type AttributeSchema from "~env/lib/AttributeSchema";
  */
 export default abstract class BaseAttribute<T extends ModelLike> {
 
+    public readonly isBaseAttribute: boolean = true;
+
     /**
      * Gives ability to check identity when no class is given
      */

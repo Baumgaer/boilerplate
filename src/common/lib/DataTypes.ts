@@ -1,5 +1,3 @@
-import AttributeSchema from "~env/lib/AttributeSchema";
-import BaseAttribute from "~env/lib/BaseAttribute";
 import { TypeError, AttributeError, BaseError } from "~env/lib/Errors";
 import { baseTypeFuncs, toInternalValidationReturnType } from "~env/utils/schema";
 import { isObject, isPlainObject, hasOwnProperty } from "~env/utils/utils";
@@ -106,9 +104,9 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
                     const attribute = getAttribute(key);
                     if (!attribute) {
                         errors.push(new AttributeError(key, "inexistent", [key], value[key]));
-                    } else if (attribute instanceof AttributeSchema && attribute.isInternal) {
+                    } else if ("isAttributeSchema" in attribute && attribute.isInternal) {
                         errors.push(new AttributeError(key, "forbidden", [key], value[key]));
-                    } else if (attribute instanceof BaseAttribute && attribute.schema.isInternal) {
+                    } else if ("isBaseAttribute" in attribute && attribute.schema.isInternal) {
                         errors.push(new AttributeError(key, "forbidden", [key], value[key]));
                     } else {
                         const validationResult = attribute.validate(value[key]);

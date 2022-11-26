@@ -1,7 +1,9 @@
 import * as DataTypes from "~env/lib/DataTypes";
 import Schema from "~env/lib/Schema";
-import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType } from "~env/utils/schema";
+import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType, toInternalValidationReturnType } from "~env/utils/schema";
+import { isArray } from "~env/utils/utils";
 import type { DeepTypedOptions, DeepTypedOptionsPartialMetadataJson, SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
+import type { ValidationResult } from "~env/@types/Errors";
 import type {
     MetadataType,
     CombinedDataType,
@@ -22,6 +24,7 @@ import type {
     IObjectType
 } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type { TypeError } from "~env/lib/Errors";
 import type { ObjectType } from "~env/utils/schema";
 
 /**
@@ -377,6 +380,32 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
     }
 
     /**
+     * @see Schema.validate
+     */
+    protected internalValidation(value: unknown, errorClass: typeof TypeError): ValidationResult {
+        const name = this.name.toString();
+
+        const rawType = this.options.type;
+        if (isArray(value) && this.isTupleType(rawType)) {
+            const length = rawType.subTypes.length;
+            const min = rawType.subTypes.findIndex((subType) => this.isOptionalType(subType));
+            if (value.length < min) return { success: false, errors: [new errorClass(name, "rangeUnderflow", [], value)] };
+            if (value.length > length) return { success: false, errors: [new errorClass(name, "rangeOverflow", [], value)] };
+            value = value.slice();
+            (value as any[]).length = length;
+        }
+
+        let result: ValidationResult;
+        // eslint-disable-next-line import/namespace
+        const DataType = this.validator && DataTypes[this.validator];
+        if (DataType) {
+            result = DataType({ min: this.min, max: this.max, name: this.getTypeIdentifier(), getAttribute: () => this as any }).validate(value);
+        } else result = toInternalValidationReturnType(this.getSchemaType().safeParse(value));
+
+        return result;
+    }
+
+    /**
      * NOTE: This assumes that all models are already loaded to have access
      * to the MODEL_NAME_TO_MODEL_MAP which allows to be sync which is needed
      * for circular schema definitions.
@@ -463,5 +492,5 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
      * @param type The raw type of the current schema or current deep type
      * @param applySettings wether to apply settings like min, max and so on
      */
-    protected abstract buildPlainObjectSchemaType(type: MetadataType, applySettings: boolean): ObjectSchemaType;
+    protected abstract buildPlainObjectSchemaType(type: IInterfaceType, applySettings: boolean): ObjectSchemaType;
 }

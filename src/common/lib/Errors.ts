@@ -1,7 +1,7 @@
 import { Forbidden as HttpForbidden, InternalServerError as HttpInternalServerError, NotAcceptable as HttpNotAcceptable, NotFound as HttpNotFound } from "http-errors";
 import { upperFirst } from "~env/utils/utils";
 import type { PascalCase } from "type-fest";
-import type { AttributeKinds } from "~env/@types/Errors";
+import type { TypedKinds } from "~env/@types/Errors";
 
 export class BaseError extends Error {
 
@@ -30,31 +30,42 @@ export class TypeError extends BaseError {
 
     public readonly path: (string | number)[];
 
-    public constructor(message: string, kind: AttributeKinds, path: (string | number)[]) {
+    public readonly value?: unknown;
+
+    public constructor(message: string, kind: TypedKinds, path: (string | number)[], value?: unknown) {
         super(message);
         this.kind = kind;
         this.path = path;
+        this.value = value;
     }
 
 }
 
-export class AttributeError extends BaseError {
+export class AttributeError extends TypeError {
 
-    public override readonly name: `${Capitalize<AttributeKinds>}Error`;
+    public override readonly name: `${Capitalize<TypedKinds>}Error`;
 
     public readonly attribute: string;
 
-    public readonly path: (string | number)[];
-
-    public readonly value: unknown;
-
-    public constructor(attributeName: string, kind: AttributeKinds, path: (string | number)[], value: unknown) {
-        const errorName = <PascalCase<AttributeKinds>>upperFirst(kind);
-        super(`attribute "${attributeName}" is invalid: ${errorName}`);
+    public constructor(attributeName: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
+        const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
+        super(`attribute "${attributeName}" is invalid: ${errorName}`, kind, path, value);
         this.attribute = attributeName;
         this.name = `${errorName}Error`;
-        this.path = path;
-        this.value = value;
+    }
+}
+
+export class ParameterError extends TypeError {
+
+    public override readonly name: `${Capitalize<TypedKinds>}Error`;
+
+    public readonly parameter: string;
+
+    public constructor(attributeName: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
+        const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
+        super(`parameter "${attributeName}" is invalid: ${errorName}`, kind, path, value);
+        this.parameter = attributeName;
+        this.name = `${errorName}Error`;
     }
 }
 

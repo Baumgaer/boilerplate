@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TypeError } from "~env/lib/Errors";
 import type { SafeParseReturnType } from "zod";
-import type { ValidationResult, AttributeKinds } from "~env/@types/Errors";
+import type { ValidationResult, TypedKinds } from "~env/@types/Errors";
 
 export {
     ZodType as Type,
@@ -83,7 +83,7 @@ export function toInternalValidationReturnType(result: SafeParseReturnType<any, 
 
     const errors = [];
     for (const issue of result.error.issues) {
-        let kind: AttributeKinds = "unknown";
+        let kind: TypedKinds = "unknown";
         if (issue.message === "Required") {
             kind = "required";
         } else if (issue.code === "too_big") {

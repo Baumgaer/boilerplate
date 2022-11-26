@@ -1,6 +1,7 @@
 import type { ActionDefinition } from "~env/@types/ActionSchema";
 import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type ArgumentSchema from "~env/lib/ArgumentSchema";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type ModelSchema from "~env/lib/ModelSchema";
@@ -182,5 +183,11 @@ export default class MetadataStore {
         const byMethodName = Reflect.getMetadata(`action:method:${methodOrActionName}`, target);
         const byActionName = Reflect.getMetadata(`action:action:${methodOrActionName}`, target);
         return byActionName || byMethodName || null;
+    }
+
+    public setArgumentSchema<T extends ModelLike>(target: T, methodName: string, schema: ArgumentSchema<T>) {
+        const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};
+        args[schema.name] = schema;
+        Reflect.defineMetadata(`arguments`, args, target, methodName);
     }
 }
