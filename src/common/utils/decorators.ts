@@ -21,7 +21,7 @@ const metadataStore = new MetadataStore();
  * class.
  *
  * @template T the model class the future model belongs to (detected automatically)
- * @param [options={}] Options based on TypeORM and some additional options
+ * @param options Options based on TypeORM and some additional options
  * @returns a ClassDecorator which invokes the ModelClass which extends the given model and adds basic functions
  */
 export function Model<T extends typeof BaseModel>(options?: ModelOptions<T>): ClassDecorator {
@@ -58,7 +58,7 @@ export function Model<T extends typeof BaseModel>(options?: ModelOptions<T>): Cl
  * options based on TypeORM and some additional options.
  *
  * @template T the model class the attribute belongs to (automatically detected)
- * @param [options={}] Options based on TypeORM and some additional options
+ * @param options Options based on TypeORM and some additional options
  * @returns a PropertyDecorator which invokes the attribute
  */
 export function Attr<T extends typeof BaseModel>(options?: AttrOptions<T>): PropertyDecorator {

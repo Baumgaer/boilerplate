@@ -6,7 +6,7 @@ import type { ModelLike } from "~env/@types/ModelClass";
 export interface ArgOptions<T extends ModelLike> extends DeepTypedOptions<T> {
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     name?: string;
 

@@ -62,27 +62,27 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
     public isLazy: boolean = false;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public primary?: DeepTypedOptions<T>["primary"];
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public min?: number;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public max?: number;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public multipleOf?: number;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public validator?: keyof typeof DataTypes;
 
@@ -92,7 +92,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
     protected rawType!: MetadataType;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected schemaType: SchemaTypes | null = null;
 
@@ -410,7 +410,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
      * to the MODEL_NAME_TO_MODEL_MAP which allows to be sync which is needed
      * for circular schema definitions.
      *
-     * @inheritdoc
+     * @InheritDoc
      */
     protected buildSchemaType(type: MetadataType, applySettings = true): SchemaTypes {
         let schemaType: SchemaTypes = baseTypeFuncs.never();

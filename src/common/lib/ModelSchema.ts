@@ -55,12 +55,12 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
     public readonly attributeSchemas: Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>>;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     declare public readonly options: ModelOptions<T>;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected override schemaType: LazyType<ObjectType<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
@@ -75,7 +75,7 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      *
      * @returns The generated schema type
      */
@@ -105,7 +105,7 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public validate(value: unknown) {
         const getAttribute = (name: AttributeSchemaName<ModelLike>) => {
@@ -124,7 +124,7 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
      * attribute schemas have the same assumption. This allows the lazy type to
      * be built which then allows circular schemas.
      *
-     * @inheritdoc
+     * @InheritDoc
      *
      * @returns at least an empty ZodObjectType
      */

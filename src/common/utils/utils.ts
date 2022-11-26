@@ -62,7 +62,7 @@ export function getModelClassByName(name: string) {
  *
  * @param obj the object to iterate
  * @param callback a function which will be called for each path
- * @param [options={}] additional options controlling the behavior
+ * @param options additional options controlling the behavior
  * @returns false to break the iteration and nothing else
  */
 export function eachDeep(obj: object, callback: eachDeepParams["1"], options: eachDeepParams["2"] = {}): ReturnType<typeof lodash.eachDeep> {

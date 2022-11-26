@@ -7,7 +7,7 @@ import type BaseModel from "~server/lib/BaseModel";
 export default class BaseAttribute<T extends typeof BaseModel> extends CommonBaseAttribute<T> {
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected override addReactivity(value: InstanceType<T>[this["name"]]) {
         return value;

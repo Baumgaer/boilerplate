@@ -10,7 +10,7 @@ export default abstract class BaseModel extends CommonBaseModel {
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected override addReactivity(value: this): this {
         return value;

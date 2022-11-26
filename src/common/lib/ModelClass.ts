@@ -58,12 +58,12 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         public static override isModelClass: boolean = true;
 
         /**
-         * @inheritdoc
+         * @InheritDoc
          */
         public static override readonly className: string = options.className as string;
 
         /**
-         * @inheritdoc
+         * @InheritDoc
          */
         public static override readonly collectionName: string = options.collectionName as string;
 
@@ -73,12 +73,12 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         public isModelClass: boolean = true;
 
         /**
-         * @inheritdoc
+         * @InheritDoc
          */
         public override readonly className: string = options.className as string;
 
         /**
-         * @inheritdoc
+         * @InheritDoc
          */
         public override readonly collectionName: string = options.collectionName as string;
 
@@ -163,7 +163,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         }
 
         /**
-         * @inheritdoc
+         * @InheritDoc
          */
         protected mergeProperties(proxy: this, properties: Record<string, any> = {}) {
             const defaults: Record<string, unknown> = {};

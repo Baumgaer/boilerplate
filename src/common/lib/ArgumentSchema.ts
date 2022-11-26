@@ -18,14 +18,14 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     declare public readonly name: string;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     declare public readonly options: Readonly<ArgOptionsPartialMetadataJson<T>>;
 
     public readonly isArgumentSchema: boolean = true;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public index?: number;
 
@@ -41,7 +41,7 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public override updateOptions(options: Partial<ArgOptionsPartialMetadataJson<T>>) {
         super.updateOptions(options);
@@ -49,7 +49,7 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public getSchemaType(): Type {
         if (!this.schemaType) this.schemaType = this.buildSchemaType(this.rawType);
@@ -57,14 +57,14 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public validate(value: unknown): ValidationResult {
         return this.internalValidation(value, ParameterError);
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected buildPlainObjectSchemaType(type: IInterfaceType, _applySettings: boolean): ObjectSchemaType {
         const members: Record<string, Type> = {};
@@ -78,7 +78,7 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected override setConstants(options: ArgOptionsPartialMetadataJson<T>) {
         super.setConstants(options);

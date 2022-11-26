@@ -64,7 +64,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     declare public readonly name: keyof T;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     declare public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>>;
 
@@ -87,27 +87,27 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     public isEager!: boolean;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public isCreationDate!: boolean;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public isModifiedDate!: boolean;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public isDeletedDate!: boolean;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public isVersion!: boolean;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public isGenerated?: 'increment' | 'uuid' | 'rowid' | undefined;
 
@@ -123,17 +123,17 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     public isRelationOwner!: boolean;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public cascade: AttrOptions<T>["cascade"];
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public createForeignKeyConstraints!: Exclude<AttrOptions<T>["createForeignKeyConstraints"], undefined>;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public orphanedRowAction: AttrOptions<T>["orphanedRowAction"];
 
@@ -148,12 +148,12 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     public indexOptions!: IndexOptions;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public persistence!: Exclude<AttrOptions<T>["persistence"], undefined>;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      *
      * NOTE: This will be set to true if the schema is fully built
      * (including relation).
@@ -176,7 +176,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public override updateOptions(options: Partial<AttrOptionsPartialMetadataJson<T>>) {
         super.updateOptions(options);
@@ -185,7 +185,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     public validate(value: unknown): ValidationResult {
         return this.internalValidation(value, AttributeError);
@@ -354,7 +354,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      *
      * @returns The schema type of the embedded entity if exists and a never type else
      */

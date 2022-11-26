@@ -12,7 +12,7 @@ export default class BaseAttribute<T extends ModelLike> extends CommonBaseAttrib
     private isChangeTrigger: boolean = false;
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      *
      * This traps the "refresh-set" of observed objects to avoid calling all
      * the setter hooks just for refreshing the UI.
@@ -26,14 +26,14 @@ export default class BaseAttribute<T extends ModelLike> extends CommonBaseAttrib
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      */
     protected override addReactivity(value: unknown) {
         return reactive(value as any);
     }
 
     /**
-     * @inheritdoc
+     * @InheritDoc
      *
      * This performs a "refresh-set" to refresh the UI after changing an
      * observed object. Necessary because the observed object will be cloned

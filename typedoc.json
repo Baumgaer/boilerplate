@@ -1,0 +1,14 @@
+{
+    "basePath": "src",
+    "entryPoints": [
+        "src/client/",
+        "src/common/"
+    ],
+    "entryPointStrategy": "expand",
+    "tsconfig": "src/client/tsconfig.json",
+    "out": "docs/",
+    "theme": "hierarchy",
+    "exclude": [
+        "./node_modules/typeorm/repository/BaseEntity.d.ts"
+    ]
+}
