@@ -158,6 +158,7 @@
         "typedoc": "^0.23.21",
         "typedoc-plugin-rename-defaults": "^0.6.4",
         "typedoc-theme-hierarchy": "^3.0.0",
+        "typedoc-umlclass": "^0.7.0",
         "typescript": "^4.8.4",
         "typescript-coverage-report": "^0.6.4",
         "webpack": "^5.75.0",

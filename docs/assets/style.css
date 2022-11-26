@@ -1255,3 +1255,12 @@ img {
     border-radius: 999rem;
     border: 0.25rem solid var(--color-icon-background);
 }
+
+.tsd-hierarchy-diagram .diagram { max-width: 100%; display: block; margin: 0 auto; text-align: center; }
+.tsd-hierarchy-diagram h5 { margin: 10px 0 5px 0; padding: 10px 0; }
+.tsd-hierarchy-diagram .legend { display: flex; flex-flow: row wrap; align-items: center; font-size: 10px; }
+.tsd-hierarchy-diagram .legend div { width: 185px; display: flex; flex-flow: row nowrap; align-items: center; height: 34px; }
+.tsd-hierarchy-diagram .legend div span.dt { display: block; width: 55px; text-align: center; margin-right: 5px; }
+.tsd-hierarchy-diagram .legend div span.dd { display: block; }
+.tsd-hierarchy-diagram .legend div span.dt.underlined { text-decoration: underline; }
+.tsd-hierarchy-diagram .legend div span.dt.italic { font-style: italic; }`
