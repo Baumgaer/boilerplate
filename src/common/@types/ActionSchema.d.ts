@@ -5,6 +5,9 @@ import type { IDeepTypedMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
+export type AccessRightFunc = (user: BaseModel, object: BaseModel) => boolean;
+export type HttpMethods = "GET" | "POST" | "PUT" | "PATCH" | "OPTIONS" | "DELETE";
+
 export interface ActionOptions<T extends ModelLike> extends DeepTypedOptions<T> {
 
     /**
@@ -17,14 +20,14 @@ export interface ActionOptions<T extends ModelLike> extends DeepTypedOptions<T> 
      * Determines the HTTP method of the action when not a local action.
      * Default: POST for mutation, GET for Query
      */
-    httpMethod?: "GET" | "POST" | "PUT" | "PATCH" | "OPTIONS" | "DELETE"
+    httpMethod?: HttpMethods
 
     /**
      * A function which determines wether the user is allowed to execute this
      * action or not.
      * Default: () => false
      */
-    accessRight?: (user: BaseModel, object: BaseModel) => boolean;
+    accessRight?: AccessRightFunc
 }
 
 export interface ActionDefinition<T extends ModelLike> {

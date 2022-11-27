@@ -1,21 +1,98 @@
-import DeepTypedSchema from "~env/lib/DeepTypedSchema";
-import type { ZodType, ZodTypeDef } from "zod";
-import type { ActionOptions } from "~env/@types/ActionSchema";
-import type { ObjectSchemaType } from "~env/@types/AttributeSchema";
+import { ActionError } from "~env/lib/Errors";
+import PlainObjectSchema from "~env/lib/PlainObjectSchema";
+import type { AccessRightFunc, ActionOptions, ActionOptionsPartialMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
 import type { ValidationResult } from "~env/@types/Errors";
-import type { IInterfaceType } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type ArgumentSchema from "~env/lib/ArgumentSchema";
 
-export default class ActionSchema<T extends ModelLike> extends DeepTypedSchema<T> implements ActionOptions<T> {
+export default class ActionSchema<T extends ModelLike> extends PlainObjectSchema<T> implements ActionOptions<T> {
 
-    public getSchemaType(): ZodType<any, ZodTypeDef, any> {
-        throw new Error("Method not implemented.");
+    /**
+     * @InheritDoc
+     */
+    declare public readonly name: string;
+
+    /**
+     * @InheritDoc
+     */
+    declare public readonly options: Readonly<ActionOptionsPartialMetadataJson<T>>;
+
+    public readonly isActionSchema: boolean = true;
+
+    /**
+     * @InheritDoc
+     */
+    public accessRight!: AccessRightFunc;
+
+    /**
+     * @InheritDoc
+     */
+    public local!: boolean;
+
+    /**
+     * @InheritDoc
+     */
+    public httpMethod!: HttpMethods;
+
+    /**
+     * Holds a list of all argument schemas related to the action schema
+     */
+    public readonly argumentSchemas: Readonly<Record<keyof InstanceType<T>, ArgumentSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, ArgumentSchema<T>>>;
+
+    /**
+     * This is the internal state for indicating the finished construction,
+     * which is always the case for arguments.
+     */
+    protected override _constructed: boolean = true;
+
+    public constructor(ctor: T, name: string, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[]) {
+        super(ctor, name, options);
+        for (const schema of schemas) this.setArgumentSchema(schema);
+        this.setConstants(options);
     }
-    public validate(_value: unknown): ValidationResult {
-        throw new Error("Method not implemented.");
+
+    public override setOwner(owner: T): void {
+        super.setOwner(owner);
+
+        for (const key in this.argumentSchemas) {
+            if (Object.prototype.hasOwnProperty.call(this.argumentSchemas, key)) {
+                const argumentSchema = this.argumentSchemas[key];
+                argumentSchema.setOwner(owner);
+            }
+        }
     }
 
-    protected buildPlainObjectSchemaType(_type: IInterfaceType, _applySettings: boolean): ObjectSchemaType {
-        throw new Error("Method not implemented.");
+    public getArgumentSchema(name: string): ArgumentSchema<T> {
+        return Reflect.get(this.argumentSchemas, name);
+    }
+
+    public setArgumentSchema(schema: ArgumentSchema<T>) {
+        return Reflect.set(this.argumentSchemas, schema.name, schema);
+    }
+
+    /**
+     * @InheritDoc
+     */
+    public override updateOptions(options: Partial<ActionOptionsPartialMetadataJson<T>>) {
+        super.updateOptions(options);
+        this.setConstants(this.options);
+    }
+
+    /**
+     * @InheritDoc
+     */
+    public validate(value: unknown): ValidationResult {
+        return this.internalValidation(value, ActionError);
+    }
+
+    /**
+     * @InheritDoc
+     */
+    protected override setConstants(options: ActionOptionsPartialMetadataJson<T>) {
+        super.setConstants(options);
+
+        this.accessRight = options.accessRight ?? (() => false);
+        this.local = Boolean(options.local);
+        this.httpMethod = options.httpMethod ?? "GET";
     }
 }

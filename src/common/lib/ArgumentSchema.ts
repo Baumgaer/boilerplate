@@ -1,15 +1,10 @@
-import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { ParameterError } from "~env/lib/Errors";
-import { baseTypeFuncs } from "~env/utils/schema";
-import { hasOwnProperty } from "~env/utils/utils";
+import PlainObjectSchema from "~env/lib/PlainObjectSchema";
 import type { ArgOptionsPartialMetadataJson, ArgOptions } from "~env/@types/ArgumentSchema";
-import type { ObjectSchemaType } from "~env/@types/AttributeSchema";
 import type { ValidationResult } from "~env/@types/Errors";
-import type { IInterfaceType } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
-import type { Type } from "~env/utils/schema";
 
-export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema<T> implements ArgOptions<T> {
+export default class ArgumentSchema<T extends ModelLike> extends PlainObjectSchema<T> implements ArgOptions<T> {
 
     /**
      * The name of the argument in the schema. Corresponds to the argument
@@ -51,14 +46,6 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     /**
      * @InheritDoc
      */
-    public getSchemaType(): Type {
-        if (!this.schemaType) this.schemaType = this.buildSchemaType(this.rawType);
-        return this.schemaType;
-    }
-
-    /**
-     * @InheritDoc
-     */
     public validate(value: unknown): ValidationResult {
         return this.internalValidation(value, ParameterError);
     }
@@ -66,22 +53,9 @@ export default class ArgumentSchema<T extends ModelLike> extends DeepTypedSchema
     /**
      * @InheritDoc
      */
-    protected buildPlainObjectSchemaType(type: IInterfaceType, _applySettings: boolean): ObjectSchemaType {
-        const members: Record<string, Type> = {};
-        for (const key in type.members) {
-            if (hasOwnProperty(type.members, key)) {
-                const member = type.members[key];
-                members[member.name] = this.buildSchemaType(member.type);
-            }
-        }
-        return baseTypeFuncs.object(members);
-    }
-
-    /**
-     * @InheritDoc
-     */
     protected override setConstants(options: ArgOptionsPartialMetadataJson<T>) {
         super.setConstants(options);
+
         this.index = options.index;
     }
 

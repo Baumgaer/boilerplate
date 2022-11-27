@@ -47,10 +47,10 @@ export class AttributeError extends TypeError {
 
     public readonly attribute: string;
 
-    public constructor(attributeName: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
+    public constructor(name: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
         const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
-        super(`attribute "${attributeName}" is invalid: ${errorName}`, kind, path, value);
-        this.attribute = attributeName;
+        super(`attribute "${name}" is invalid: ${errorName}`, kind, path, value);
+        this.attribute = name;
         this.name = `${errorName}Error`;
     }
 }
@@ -61,10 +61,24 @@ export class ParameterError extends TypeError {
 
     public readonly parameter: string;
 
-    public constructor(attributeName: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
+    public constructor(name: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
         const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
-        super(`parameter "${attributeName}" is invalid: ${errorName}`, kind, path, value);
-        this.parameter = attributeName;
+        super(`parameter "${name}" is invalid: ${errorName}`, kind, path, value);
+        this.parameter = name;
+        this.name = `${errorName}Error`;
+    }
+}
+
+export class ActionError extends TypeError {
+
+    public override readonly name: `${Capitalize<TypedKinds>}Error`;
+
+    public readonly parameter: string;
+
+    public constructor(name: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
+        const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
+        super(`action "${name}" is invalid: ${errorName}`, kind, path, value);
+        this.parameter = name;
         this.name = `${errorName}Error`;
     }
 }

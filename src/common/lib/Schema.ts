@@ -75,6 +75,9 @@ export default abstract class Schema<T extends ModelLike> {
     }
 
     /**
+     * This maybe creates the schema type and caches it or just returns an already
+     * created schema type.
+     *
      * @returns the schema type which will be used by the attribute schemas to
      * provide a type based schema type them self.
      */

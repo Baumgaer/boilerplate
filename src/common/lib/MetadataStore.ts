@@ -40,6 +40,18 @@ export default class MetadataStore {
         return this;
     }
 
+    // public setSchema<T extends ModelLike>(type: "model" | "attr" | "action" | "arg", target: T, name: keyof T, schema: any) {
+    //     const schemaName = name.toString();
+    //     if (!this[`${type}Schemas`][schemaName]) {
+    //         this[`${type}Schemas`][schemaName] = [];
+    //     } else this[`${type}Schemas`][schemaName].push(schema);
+    //     Reflect.defineMetadata(`${type}:${target.name}:${schemaName}:definition`, schema, target);
+    // }
+
+    // public getSchema<T extends ModelLike>(type: target: T, attributeName: keyof T) {
+    //     return Reflect.getMetadata(`${target.name}:${String(attributeName)}:definition`, target) || null;
+    // }
+
     /**
      * Stores the given attribute schema with corresponding name on the given target
      *
