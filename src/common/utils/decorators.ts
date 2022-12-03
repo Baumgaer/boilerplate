@@ -44,10 +44,10 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {})
         proto.collectionName = options.collectionName;
 
         const modelClass = ModelClassFactory(target, options);
-        const attributeDefinitions = metadataStore.getAttributeSchemas(target);
+        const attributeDefinitions = metadataStore.getSchemas("Attribute", target);
         for (const attributeDefinition of attributeDefinitions) attributeDefinition.setOwner(modelClass);
         const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions, options);
-        metadataStore.setModelSchema(target, target.className, modelSchema);
+        metadataStore.setSchema("Model", target, target.className, modelSchema);
         return modelClass;
     };
 }
@@ -75,9 +75,9 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
         // of this constructor
         const theTarget = <T>target.constructor;
         const attrName = <keyof T>metadataOptions.name.toString();
-        const options = metadataStore.constructAttributeSchemaParams<T>(attrName, metadataOptions);
+        const options = metadataStore.constructSchemaParams("Attribute", attrName, metadataOptions);
         const attributeDefinition = new AttributeSchema<T>(theTarget, attrName, options);
-        metadataStore.setAttributeSchema(theTarget, attrName, attributeDefinition);
+        metadataStore.setSchema("Attribute", theTarget, attrName, attributeDefinition);
     };
 }
 

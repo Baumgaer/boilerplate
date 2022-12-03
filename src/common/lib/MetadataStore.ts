@@ -1,10 +1,36 @@
-import type { ActionDefinition } from "~env/@types/ActionSchema";
+import type { StringKeyOf, ValueOf } from "type-fest";
+import type { ActionDefinition, ActionOptionsPartialMetadataJson } from "~env/@types/ActionSchema";
+import type { ArgOptionsPartialMetadataJson } from "~env/@types/ArgumentSchema";
 import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
-import type { ModelLike } from "~env/@types/ModelClass";
+import type { ModelLike, ModelOptionsPartialMetadataJson } from "~env/@types/ModelClass";
+import type ActionSchema from "~env/lib/ActionSchema";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type ModelSchema from "~env/lib/ModelSchema";
+
+interface TypeNameTypeMap<T extends ModelLike> {
+    Model: {
+        schema: ModelSchema<T>
+        options: ModelOptionsPartialMetadataJson<T>
+    }
+    Attribute: {
+        schema: AttributeSchema<T>
+        options: AttrOptionsPartialMetadataJson<T>
+    }
+    Argument: {
+        schema: ArgumentSchema<T>
+        options: ArgOptionsPartialMetadataJson<T>
+    }
+    Action: {
+        schema: ActionSchema<T>
+        options: ActionOptionsPartialMetadataJson<T>
+    }
+}
+
+type SchemaTypeNames<T extends ModelLike> = StringKeyOf<TypeNameTypeMap<T>>;
+type SchemaTypes<T extends ModelLike> = ValueOf<TypeNameTypeMap<T>>["schema"];
+type SchemasType<T extends ModelLike> = Record<SchemaTypeNames<T>, Record<string, any[]>>;
 
 /**
  * This is a singleton store which hold all reflect-metadata data to be type
@@ -19,122 +45,53 @@ export default class MetadataStore {
     private static instance: MetadataStore;
 
     /**
-     * Holds all attribute schemas which were created on construction time
-     */
-    private attributeSchemas: Record<string, AttributeSchema<any>[]> = {};
-
-    /**
-     * Hold all model schemas which were creates on construction time
-     */
-    private modelSchemas: Record<string, ModelSchema<any>> = {};
-
-    /**
      * Holds for each model the corresponding attribute schemas.
      * This has to be a WeakMap to avoid memory leaks when a model is destroyed.
      */
     private attributes: WeakMap<InstanceType<ModelLike>, Record<string, BaseAttribute<any>>> = new WeakMap();
 
+    private schemas?: SchemasType<ModelLike>;
+
     public constructor() {
         if (MetadataStore.instance) return MetadataStore.instance;
+        // @ts-expect-error test
+        window.metadataStore = this;
         MetadataStore.instance = this;
         return this;
     }
 
-    // public setSchema<T extends ModelLike>(type: "model" | "attr" | "action" | "arg", target: T, name: keyof T, schema: any) {
-    //     const schemaName = name.toString();
-    //     if (!this[`${type}Schemas`][schemaName]) {
-    //         this[`${type}Schemas`][schemaName] = [];
-    //     } else this[`${type}Schemas`][schemaName].push(schema);
-    //     Reflect.defineMetadata(`${type}:${target.name}:${schemaName}:definition`, schema, target);
-    // }
+    public setSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: keyof T, schema: SchemaTypes<T>) {
+        const schemaName = name.toString();
 
-    // public getSchema<T extends ModelLike>(type: target: T, attributeName: keyof T) {
-    //     return Reflect.getMetadata(`${target.name}:${String(attributeName)}:definition`, target) || null;
-    // }
+        if (!this.schemas) this.schemas = {} as SchemasType<T>;
+        if (!this.schemas[type]) Reflect.set(this.schemas, type, {});
+        if (!this.schemas[type][schemaName]) Reflect.set(this.schemas[type], schemaName, []);
 
-    /**
-     * Stores the given attribute schema with corresponding name on the given target
-     *
-     * @param target the static class where the schema has to be saved on
-     * @param attributeName the name of the schema
-     * @param schema the schema itself
-     */
-    public setAttributeSchema<T extends ModelLike>(target: T, attributeName: keyof T, schema: AttributeSchema<T>) {
-        const attrStr = attributeName.toString();
-        if (!this.attributeSchemas[attrStr]) {
-            this.attributeSchemas[attrStr] = [schema];
-        } else this.attributeSchemas[attrStr].push(schema);
-        Reflect.defineMetadata(`${target.name}:${String(attributeName)}:definition`, schema, target);
+        this.schemas[type]?.[schemaName].push(schema);
+        Reflect.defineMetadata(`${target.name}:${schemaName}:${type}Definition`, schema, target);
     }
 
-    /**
-     * Searches for the given attribute schema by its name on the given static class
-     *
-     * @param target the static class to get the schema from
-     * @param attributeName the name of the schema
-     * @returns the attribute schema if found and null else
-     */
-    public getAttributeSchema<T extends ModelLike>(target: T, attributeName: keyof T): AttributeSchema<T> | null {
-        return Reflect.getMetadata(`${target.name}:${String(attributeName)}:definition`, target) || null;
+    public getSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: keyof T): TypeNameTypeMap<T>[N]["schema"] | null {
+        if (this.schemas?.[type]?.[String(name)]?.at(-1)) return this.schemas?.[type]?.[String(name)].at(-1);
+        return Reflect.getMetadata(`${target.name}:${String(name)}:${type}Definition`, target);
     }
 
-    /**
-     * Searches for all attribute schemas on the given target and returns them as a plain object
-     *
-     * @param target the static class to get schemas from
-     * @returns a plain object with attribute schemas names as key and the schemas as values
-     */
-    public getAttributeSchemas<T extends ModelLike>(target: T): AttributeSchema<T>[] {
-        const attributeSchemas: Record<string, AttributeSchema<T>> = {};
+    public getSchemas<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T): TypeNameTypeMap<T>[N]["schema"][] {
+        const schemas: Record<string, any> = {};
         const metadataKeys: string[] = Reflect.getMetadataKeys(target).slice().reverse();
         for (const key of metadataKeys) {
-            const attributeName = key.split(":")[1];
-            if (key.endsWith("definition")) attributeSchemas[attributeName] = Reflect.getMetadata(key, target);
+            const [_targetName, schemaName, typeDefinitionName] = key.split(":");
+            if (typeDefinitionName === `${type}Definition`) schemas[schemaName] = Reflect.getMetadata(key, target);
         }
-        return Object.values(attributeSchemas);
+        return Object.values(schemas);
     }
 
-    /**
-     * Searches for corresponding attribute schema, collects its parameters and
-     * merges them into new parameters object which then will be extended by
-     * the new parameters.
-     *
-     * @param attributeName name of the attribute schema
-     * @param params params to merge into
-     * @returns new attribute parameters
-     */
-    public constructAttributeSchemaParams<T extends ModelLike>(attributeName: keyof T, params: AttrOptionsPartialMetadataJson<T>) {
-        const newParams = {};
-        this.attributeSchemas[attributeName.toString()]?.forEach((attributeSchema) => {
-            Object.assign(newParams, attributeSchema.options);
-        });
-        Object.assign(newParams, params);
-        return <AttrOptionsPartialMetadataJson<T>>newParams;
-    }
-
-    /**
-     * Stores the given model schema on the given static model class with the given name
-     *
-     * @param target the static model class to store the schema on
-     * @param schemaName the name of the schema
-     * @param schema the schema itself
-     */
-    public setModelSchema<T extends ModelLike>(target: T, schemaName: string, schema: ModelSchema<T>) {
-        this.modelSchemas[schemaName] = schema;
-        Reflect.defineMetadata(`${target.constructor.name}:schema`, schema, target);
-    }
-
-    /**
-     * Searches for the model schema by its name on the given static model class
-     *
-     * @param target the static model class to get the schema from
-     * @param schemaName the name of the schema
-     * @returns the schema of the model if found and null else
-     */
-    public getModelSchema<T extends ModelLike>(target?: T, schemaName?: string): ModelSchema<T> | null {
-        if (schemaName && this.modelSchemas[schemaName]) return this.modelSchemas[schemaName];
-        if (target) return Reflect.getMetadata(`${target.constructor.name}:schema`, target) || null;
-        return null;
+    public constructSchemaParams<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, name: keyof T, options: TypeNameTypeMap<T>[N]["options"]) {
+        const newParams = {} as TypeNameTypeMap<T>[N]["options"];
+        const schemaName = name.toString();
+        this.schemas?.[type][schemaName]?.forEach((schema) => Object.assign(newParams, schema.options));
+        Object.assign(newParams, options);
+        return newParams;
     }
 
     /**

@@ -109,7 +109,7 @@ export default abstract class BaseModel extends BaseEntity {
      */
     public static getSchema() {
         const metadataStore = new MetadataStore();
-        return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
+        return metadataStore.getSchema("Model", Object.getPrototypeOf(this), this.className);
     }
 
     /**

@@ -28,12 +28,12 @@ export function applyMembers<T extends ModelLike>(classType: T, members: members
             const memberType = members[memberKey];
             const attr = new AttributeSchema(classType, memberKey as any, memberType);
             attributeSchemas.push(attr);
-            metadataStore.setAttributeSchema(classType, memberKey as any, attr);
+            metadataStore.setSchema("Attribute", classType, memberKey as any, attr);
         }
     }
 
     const modelSchema = new ModelSchema(classType, classType.className, attributeSchemas, {});
-    metadataStore.setModelSchema(classType, classType.className, modelSchema);
+    metadataStore.setSchema("Model", classType, classType.className as keyof typeof classType, modelSchema);
 }
 
 export function embeddedEntityFactory<T extends Record<string, any>>(className: string, members: members<T>, withProxy: boolean = true) {
@@ -63,7 +63,7 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
          */
         public static getSchema(): ModelSchema<typeof EmbeddedEntity> | null {
             const metadataStore = new MetadataStore();
-            return metadataStore.getModelSchema(Object.getPrototypeOf(this), this.className);
+            return metadataStore.getSchema("Model", Object.getPrototypeOf(this), this.className);
         }
 
         protected static isInstance(instance: unknown): boolean {
