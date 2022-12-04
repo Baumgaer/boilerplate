@@ -1,43 +1,8 @@
-import type { StringKeyOf, ValueOf } from "type-fest";
-import type { ActionDefinition, ActionOptionsPartialMetadataJson } from "~env/@types/ActionSchema";
-import type { ArgOptionsPartialMetadataJson } from "~env/@types/ArgumentSchema";
-import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
-import type { ModelLike, ModelOptionsPartialMetadataJson } from "~env/@types/ModelClass";
-import type ActionSchema from "~env/lib/ActionSchema";
+import type { ActionDefinition } from "~env/@types/ActionSchema";
+import type { InstancesType, SchemasType } from "~env/@types/MetadataStore";
+import type { ModelLike } from "~env/@types/ModelClass";
+import type { TypeNameTypeMap, SchemaTypeNames, SchemaTypes } from "~env/@types/Schema";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
-import type AttributeSchema from "~env/lib/AttributeSchema";
-import type BaseAttribute from "~env/lib/BaseAttribute";
-import type ModelSchema from "~env/lib/ModelSchema";
-
-interface TypeNameTypeMap<T extends ModelLike> {
-    Model: {
-        schema: ModelSchema<T>;
-        usingInstance: InstanceType<ModelLike>;
-        options: ModelOptionsPartialMetadataJson<T>;
-    }
-    Attribute: {
-        schema: AttributeSchema<T>;
-        usingInstance: BaseAttribute<T>;
-        options: AttrOptionsPartialMetadataJson<T>;
-    }
-    Argument: {
-        schema: ArgumentSchema<T>;
-        usingInstance: never;
-        options: ArgOptionsPartialMetadataJson<T>;
-    }
-    Action: {
-        schema: ActionSchema<T>;
-        usingInstance: never;
-        options: ActionOptionsPartialMetadataJson<T>;
-    }
-}
-
-type SchemaTypeNames<T extends ModelLike> = StringKeyOf<TypeNameTypeMap<T>>;
-type SchemaTypes<T extends ModelLike> = ValueOf<TypeNameTypeMap<T>>["schema"];
-type InstanceTypes<T extends ModelLike> = ValueOf<TypeNameTypeMap<T>>["usingInstance"];
-
-type SchemasType<T extends ModelLike> = Record<SchemaTypeNames<T>, Record<string, any[]>>;
-type InstancesType<T extends ModelLike> = Record<SchemaTypeNames<T>, WeakMap<InstanceType<T>, Record<string, InstanceTypes<T>>>>
 
 /**
  * This is a singleton store which hold all reflect-metadata data to be type
