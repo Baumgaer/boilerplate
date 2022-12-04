@@ -187,7 +187,7 @@ export default abstract class BaseModel extends BaseEntity {
         const obj: RawObject<this> = {};
         eachDeep(this, (value: unknown, key, parentValue: unknown, context) => {
             if (parentValue instanceof BaseModel) {
-                const attribute = parentValue.getAttribute(key as keyof ModelLike);
+                const attribute = parentValue.getAttribute(key as keyof typeof parentValue);
                 if (!attribute || attribute.schema.isInternal) return false;
             }
 
@@ -214,9 +214,9 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the unique initialized attribute owned by this model instance and identified by the given name
      */
-    public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: keyof T): BaseAttribute<T> | null {
+    public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: keyof this): BaseAttribute<T> | null {
         const metadataStore = new MetadataStore();
-        return metadataStore.getInstance("Attribute", this, name) || null;
+        return metadataStore.getInstance("Attribute", this, name as keyof T) || null;
     }
 
     /**

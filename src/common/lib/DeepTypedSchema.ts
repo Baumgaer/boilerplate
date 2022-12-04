@@ -113,7 +113,7 @@ export default abstract class DeepTypedSchema<T extends ModelLike> extends Schem
      * @param owner the class of the model to set
      */
     public setOwner(owner: T) {
-        if ((this._ctor as InstanceType<T>).className !== (owner as InstanceType<T>).className) return;
+        if (this.owner) return;
         // @ts-expect-error this is needed to be able to provide the ctor at runtime after construction
         this.owner = owner;
     }

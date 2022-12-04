@@ -48,7 +48,7 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {})
         const attributeSchemas = metadataStore.getSchemas("Attribute", target);
         for (const attributeSchema of attributeSchemas) attributeSchema.setOwner(modelClass);
 
-        const actionSchemas = metadataStore.getSchemas("Action", target);
+        const actionSchemas = [...metadataStore.getSchemas("Action", target), ...metadataStore.getSchemas("Action", target.constructor)];
         for (const actionSchema of actionSchemas) actionSchema.setOwner(modelClass);
 
         const modelSchema = new ModelSchema(modelClass, target.className, attributeSchemas, actionSchemas, options);
@@ -79,8 +79,8 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
         // decorators of third party tools are used later on. In this case we
         // need the prototype property (not the prototype of the chain)
         // of this constructor
-        const theTarget = <T>target.constructor;
-        const attrName = <keyof T>metadataOptions.name.toString();
+        const theTarget = target.constructor as T;
+        const attrName = metadataOptions.name as keyof T;
         const options = metadataStore.constructSchemaParams<T, "Attribute">("Attribute", attrName, metadataOptions);
         const schema = new AttributeSchema<T>(theTarget, attrName, options);
 
@@ -157,11 +157,12 @@ function action<T extends typeof BaseModel>(metadataOptions: ActionOptionsPartia
     metadataOptions.httpMethod = metadataOptions.httpMethod ?? defaultMethod;
     metadataOptions.accessRight = metadataOptions.accessRight ?? defaultAccessRight;
 
-    const theTarget = target.constructor;
-    const argumentSchemas = metadataStore.getSchemas("Argument", target.constructor); Reflect.getOwnMetadata("arguments", target.constructor, methodName);
-    const schema = new ActionSchema(theTarget, metadataOptions.name, metadataOptions, argumentSchemas);
+    const theTarget = target.constructor as T;
+    const options = metadataStore.constructSchemaParams<T, "Action">("Action", methodName as keyof T, metadataOptions);
+    const argumentSchemas = metadataStore.getSchemas("Argument", target.constructor);
+    const schema = new ActionSchema(theTarget, options.name, options, argumentSchemas);
 
-    metadataStore.setSchema("Action", theTarget, methodName, schema);
+    metadataStore.setSchema("Action", theTarget, options.name as keyof T, schema);
 }
 
 /**
@@ -217,10 +218,10 @@ export function Arg<T extends typeof BaseModel>(options: ArgOptions<T> = {}) {
         metadataOptions.index = metadataOptions.index ?? index;
 
         const theTarget = target.constructor as T;
-        const argumentName = metadataOptions.name;
-        const options = metadataStore.constructSchemaParams("Argument", String(methodName), metadataOptions, argumentName);
-        const schema = new ArgumentSchema<T>(theTarget, argumentName, options);
+        const options = metadataStore.constructSchemaParams("Argument", String(methodName), metadataOptions, metadataOptions.name);
+        const argumentName = options.name;
+        const schema = new ArgumentSchema(theTarget, argumentName, options);
 
-        metadataStore.setSchema("Argument", theTarget, String(methodName), schema);
+        metadataStore.setSchema("Argument", theTarget, argumentName, schema);
     };
 }
