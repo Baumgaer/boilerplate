@@ -13,21 +13,25 @@ export interface TypeNameTypeMap<T extends ModelLike> {
         schema: ModelSchema<T>;
         usingInstance: InstanceType<ModelLike>;
         options: ModelOptionsPartialMetadataJson<T>;
+        nameType: string
     }
     Attribute: {
         schema: AttributeSchema<T>;
         usingInstance: BaseAttribute<T>;
         options: AttrOptionsPartialMetadataJson<T>;
+        nameType: keyof T
     }
     Argument: {
         schema: ArgumentSchema<T>;
         usingInstance: never;
         options: ArgOptionsPartialMetadataJson<T>;
+        nameType: string
     }
     Action: {
         schema: ActionSchema<T>;
         usingInstance: never;
         options: ActionOptionsPartialMetadataJson<T>;
+        nameType: keyof T
     }
 }
 

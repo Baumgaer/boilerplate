@@ -32,8 +32,8 @@ export function applyMembers<T extends ModelLike>(classType: T, members: members
         }
     }
 
-    const modelSchema = new ModelSchema(classType, classType.className, attributeSchemas, {});
-    metadataStore.setSchema("Model", classType, classType.className as keyof typeof classType, modelSchema);
+    const modelSchema = new ModelSchema(classType, classType.className, attributeSchemas, [], {});
+    metadataStore.setSchema("Model", classType, classType.className, modelSchema);
 }
 
 export function embeddedEntityFactory<T extends Record<string, any>>(className: string, members: members<T>, withProxy: boolean = true) {

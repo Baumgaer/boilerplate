@@ -28,7 +28,7 @@ export default class MetadataStore {
         return this;
     }
 
-    public setSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: keyof T, schema: SchemaTypes<T>) {
+    public setSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], schema: SchemaTypes<T>) {
         const schemaName = `${String(name)}:${String(schema.name)}`;
 
         if (!this.schemas) this.schemas = {} as SchemasType<T>;
@@ -39,7 +39,7 @@ export default class MetadataStore {
         Reflect.defineMetadata(`${target.name}:${schemaName}:${type}Definition`, schema, target);
     }
 
-    public getSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: keyof T, subSchemaName?: keyof T): TypeNameTypeMap<T>[N]["schema"] | null {
+    public getSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["schema"] | null {
         if (!subSchemaName) subSchemaName = name;
 
         const schemaName = `${String(name)}:${String(subSchemaName)}`;
@@ -60,18 +60,18 @@ export default class MetadataStore {
         return Object.values(schemas);
     }
 
-    public constructSchemaParams<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, name: keyof T, options: TypeNameTypeMap<T>[N]["options"], subSchemaName?: keyof T) {
+    public constructSchemaParams<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, name: TypeNameTypeMap<T>[N]["nameType"], options: TypeNameTypeMap<T>[N]["options"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]) {
         if (!subSchemaName) subSchemaName = name;
 
         const newParams = {} as TypeNameTypeMap<T>[N]["options"];
         const schemaName = `${String(name)}:${String(subSchemaName)}`;
-        this.schemas?.[type][schemaName]?.forEach((schema) => Object.assign(newParams, schema.options));
+        this.schemas?.[type]?.[schemaName]?.forEach((schema) => Object.assign(newParams, schema.options));
         Object.assign(newParams, options);
 
         return newParams;
     }
 
-    public setInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>, name: string, instance: TypeNameTypeMap<T>[N]["usingInstance"]) {
+    public setInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"], instance: TypeNameTypeMap<T>[N]["usingInstance"]) {
 
         if (!this.instances) this.instances = {} as InstancesType<ModelLike>;
         if (!this.instances[type]) this.instances[type] = new WeakMap();
@@ -81,7 +81,7 @@ export default class MetadataStore {
         if (instances) Reflect.set(instances, name, instance);
     }
 
-    public getInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>, name: string): TypeNameTypeMap<T>[N]["usingInstance"] | null {
+    public getInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["usingInstance"] | null {
         return this.instances?.[type]?.get(target)?.[String(name)] as any || null;
     }
 

@@ -1,6 +1,6 @@
 import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
-// import ActionSchema from "~env/lib/ActionSchema";
+import ActionSchema from "~env/lib/ActionSchema";
 import ArgumentSchema from "~env/lib/ArgumentSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
 import ModelSchema from "~env/lib/ModelSchema";
@@ -44,9 +44,15 @@ export function Model<T extends typeof BaseModel>(options: ModelOptions<T> = {})
         proto.collectionName = options.collectionName;
 
         const modelClass = ModelClassFactory(target, options);
-        const attributeDefinitions = metadataStore.getSchemas("Attribute", target);
-        for (const attributeDefinition of attributeDefinitions) attributeDefinition.setOwner(modelClass);
-        const modelSchema = new ModelSchema(modelClass, target.className, attributeDefinitions, options);
+
+        const attributeSchemas = metadataStore.getSchemas("Attribute", target);
+        for (const attributeSchema of attributeSchemas) attributeSchema.setOwner(modelClass);
+
+        const actionSchemas = metadataStore.getSchemas("Action", target);
+        for (const actionSchema of actionSchemas) actionSchema.setOwner(modelClass);
+
+        const modelSchema = new ModelSchema(modelClass, target.className, attributeSchemas, actionSchemas, options);
+
         metadataStore.setSchema("Model", target, target.className, modelSchema);
         return modelClass;
     };
@@ -75,9 +81,10 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
         // of this constructor
         const theTarget = <T>target.constructor;
         const attrName = <keyof T>metadataOptions.name.toString();
-        const options = metadataStore.constructSchemaParams("Attribute", attrName, metadataOptions);
-        const attributeDefinition = new AttributeSchema<T>(theTarget, attrName, options);
-        metadataStore.setSchema("Attribute", theTarget, attrName, attributeDefinition);
+        const options = metadataStore.constructSchemaParams<T, "Attribute">("Attribute", attrName, metadataOptions);
+        const schema = new AttributeSchema<T>(theTarget, attrName, options);
+
+        metadataStore.setSchema("Attribute", theTarget, attrName, schema);
     };
 }
 
@@ -145,17 +152,16 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
     };
 }
 
-
 function action<T extends typeof BaseModel>(metadataOptions: ActionOptionsPartialMetadataJson<T>, target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>, defaultMethod: ActionOptions<T>["httpMethod"]) {
     const defaultAccessRight = () => false;
     metadataOptions.httpMethod = metadataOptions.httpMethod ?? defaultMethod;
     metadataOptions.accessRight = metadataOptions.accessRight ?? defaultAccessRight;
 
-    const args = Reflect.getOwnMetadata("arguments", target.constructor, methodName);
-    // const theTarget = target.constructor;
-    // const schema = new ActionSchema(theTarget, metadataOptions.name, metadataOptions, args);
+    const theTarget = target.constructor;
+    const argumentSchemas = metadataStore.getSchemas("Argument", target.constructor); Reflect.getOwnMetadata("arguments", target.constructor, methodName);
+    const schema = new ActionSchema(theTarget, metadataOptions.name, metadataOptions, argumentSchemas);
 
-    metadataStore.setAction(target, String(methodName), { params: metadataOptions, descriptor, args });
+    metadataStore.setSchema("Action", theTarget, methodName, schema);
 }
 
 /**
@@ -211,7 +217,10 @@ export function Arg<T extends typeof BaseModel>(options: ArgOptions<T> = {}) {
         metadataOptions.index = metadataOptions.index ?? index;
 
         const theTarget = target.constructor as T;
-        const schema = new ArgumentSchema<T>(theTarget, metadataOptions.name, metadataOptions);
-        metadataStore.setArgumentSchema<T>(theTarget, String(methodName), schema);
+        const argumentName = metadataOptions.name;
+        const options = metadataStore.constructSchemaParams("Argument", String(methodName), metadataOptions, argumentName);
+        const schema = new ArgumentSchema<T>(theTarget, argumentName, options);
+
+        metadataStore.setSchema("Argument", theTarget, String(methodName), schema);
     };
 }

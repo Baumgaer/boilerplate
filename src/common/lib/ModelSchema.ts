@@ -4,6 +4,7 @@ import Schema from "~env/lib/Schema";
 import { baseTypeFuncs } from "~env/utils/schema";
 import type { AttributeSchemaName } from "~env/@types/BaseModel";
 import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
+import type ActionSchema from "~env/lib/ActionSchema";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseModel from "~env/lib/BaseModel";
 import type { LazyType, ObjectType, Type } from "~env/utils/schema";
@@ -55,6 +56,11 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
     public readonly attributeSchemas: Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, AttributeSchema<T>>>;
 
     /**
+     * Holds a list of all attribute schemas related to the model schema
+     */
+    public readonly actionSchemas: Readonly<Record<keyof InstanceType<T>, ActionSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, ActionSchema<T>>>;
+
+    /**
      * @InheritDoc
      */
     declare public readonly options: ModelOptions<T>;
@@ -64,13 +70,14 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
      */
     protected override schemaType: LazyType<ObjectType<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
-    public constructor(ctor: T, name: string, schemas: AttributeSchema<T>[], options: ModelOptions<T>) {
+    public constructor(ctor: T, name: string, attributeSchemas: AttributeSchema<T>[], actionSchemas: ActionSchema<T>[], options: ModelOptions<T>) {
         super(ctor, name, options);
         this.owner = ctor;
         this.collectionName = options.collectionName as string;
         this.isAbstract = options.isAbstract as boolean;
 
-        for (const schema of schemas) this.setAttributeSchema(schema);
+        for (const actionSchema of actionSchemas) this.setActionSchema(actionSchema);
+        for (const attributeSchema of attributeSchemas) this.setAttributeSchema(attributeSchema);
         this.applyEntity();
     }
 
@@ -81,6 +88,14 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
      */
     public getSchemaType() {
         return this.schemaType;
+    }
+
+    public getActionSchema(name: keyof InstanceType<T>): ActionSchema<T> {
+        return Reflect.get(this.actionSchemas, name);
+    }
+
+    public setActionSchema(schema: ActionSchema<T>) {
+        return Reflect.set(this.actionSchemas, schema.name, schema);
     }
 
     /**
