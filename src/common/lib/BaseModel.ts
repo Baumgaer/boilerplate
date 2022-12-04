@@ -120,7 +120,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @returns the schema of the attribute given by name
      */
     public static getAttributeSchema<T extends typeof EnvBaseModel>(this: T, name: AttributeSchemaName<T>) {
-        return this.getSchema()?.getAttributeSchema(name);
+        return this.getSchema()?.getAttributeSchema(name) || null;
     }
 
     /**
@@ -214,9 +214,9 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the unique initialized attribute owned by this model instance and identified by the given name
      */
-    public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: string): BaseAttribute<T> | undefined {
+    public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: string): BaseAttribute<T> | null {
         const metadataStore = new MetadataStore();
-        return metadataStore.getAttribute(this, name);
+        return metadataStore.getInstance("Attribute", this, name) || null;
     }
 
     /**
@@ -227,7 +227,7 @@ export default abstract class BaseModel extends BaseEntity {
      */
     public getAttributes<T extends ModelLike>(this: InstanceType<T>) {
         const metadataStore = new MetadataStore();
-        return metadataStore.getAttributes(this);
+        return metadataStore.getInstances("Attribute", this);
     }
 
     /**

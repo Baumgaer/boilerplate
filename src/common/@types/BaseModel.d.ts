@@ -8,4 +8,4 @@ export type RawObject<T> = Partial<ConstructionParams<T>>;
 
 export type AttributeSchemaName<T> = keyof ConstructionParams<InstanceType<T>>
 
-export type getAttributeForValidation<T> = (name: AttributeSchemaName<T>) => BaseAttribute<T> | AttributeSchema<T> | undefined
+export type getAttributeForValidation<T> = (name: AttributeSchemaName<T>) => BaseAttribute<T> | AttributeSchema<T> | null

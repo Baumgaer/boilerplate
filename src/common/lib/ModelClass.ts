@@ -5,16 +5,16 @@ import BaseAttribute from "~env/lib/BaseAttribute";
 import { hasOwnProperty, upperFirst, camelCase, isUndefined } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { ActionOptions, ActionDefinition } from "~env/@types/ActionSchema";
-import type { ModelOptions } from "~env/@types/ModelClass";
+import type { ModelOptions, ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
 // Here we are storing all attributes during construction time to have access
 // to them when creating an attribute. This is possible with some webpack magic.
 // see https://webpack.js.org/guides/dependency-management/#requirecontext
-const attributes: Record<string, Constructor<BaseAttribute<typeof BaseModel>>> = {};
+const attributes: Record<string, Constructor<BaseAttribute<ModelLike>>> = {};
 const context = require.context("~env/attributes/", true, /.+\.ts/, "sync");
 context.keys().forEach((key) => {
-    attributes[upperFirst(camelCase(key.substring(2, key.length - 3)))] = (<ModuleLike<Constructor<BaseAttribute<typeof BaseModel>>>>context(key)).default;
+    attributes[upperFirst(camelCase(key.substring(2, key.length - 3)))] = (<ModuleLike<Constructor<BaseAttribute<ModelLike>>>>context(key)).default;
 });
 
 /**
@@ -192,7 +192,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             for (const key in attributeSchemas) {
                 if (hasOwnProperty(attributeSchemas, key)) {
                     const attribute = new (attributes[upperFirst(key)] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
-                    metadataStore.setAttribute(proxy, key, attribute);
+                    metadataStore.setInstance("Attribute", proxy, key, attribute);
                 }
             }
         }
@@ -232,7 +232,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedModel
-            return metadataStore.getAttribute(receiver, stringProperty)?.get();
+            return metadataStore.getInstance("Attribute", receiver, stringProperty)?.get();
         }
 
         /**
@@ -255,7 +255,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedModel
-            return metadataStore.getAttribute(receiver, stringProperty)?.set(value) ?? false;
+            return metadataStore.getInstance("Attribute", receiver, stringProperty)?.set(value) ?? false;
         }
 
     }
