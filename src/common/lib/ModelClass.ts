@@ -1,10 +1,9 @@
 import { v4 as uuid } from "uuid";
 import MetadataStore from "~common/lib/MetadataStore";
-import ApiClient from "~env/lib/ApiClient";
+import BaseAction from "~env/lib/BaseAction";
 import BaseAttribute from "~env/lib/BaseAttribute";
-import { hasOwnProperty, upperFirst, camelCase, isUndefined } from "~env/utils/utils";
+import { hasOwnProperty, upperFirst, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
-import type { ActionOptions, ActionDefinition } from "~env/@types/ActionSchema";
 import type { ModelOptions, ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
@@ -90,6 +89,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             let proxy = new Proxy(this, this.proxyHandler);
             proxy = this.addReactivity(proxy);
             this.createAttributes(proxy);
+            this.createActions(proxy);
             Object.assign(proxy, this.mergeProperties(proxy, args?.[0]));
             // If this is an initialization of an existing model, we don't
             // want to have the changes
@@ -117,48 +117,6 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
                 isExtensible: (target) => Reflect.isExtensible(target),
                 preventExtensions: (target) => Reflect.preventExtensions(target),
                 construct: (target, argArray) => Reflect.construct(<any>target, argArray)
-            };
-        }
-
-        /**
-         * Wraps the given action and calls it with the given this arg and passes
-         * all collected parameters. It also calls the server if not a local action.
-         *
-         * @param thisArg model instance or class to use as this type
-         * @param actionDefinition the defined action to call
-         * @returns a function which invokes the the original action
-         */
-        public static callAction(thisArg: ModelClass | typeof ModelClass, actionDefinition: ActionDefinition<T>) {
-            const { descriptor, params, args } = actionDefinition;
-            const method = actionDefinition.descriptor.value;
-
-            return (...internalArgs: any[]) => {
-                if (!method) throw new Error(`This is not a standard method: ${descriptor}`);
-
-                const methodResult = method.call(thisArg, ...internalArgs);
-                const entries = Object.entries(args);
-
-                const parameters = entries.filter((entry) => {
-                    return !entry[1].primary && !isUndefined(internalArgs[entry[1].index || 0]);
-                }).map((entry) => [entry[0], internalArgs[entry[1].index || 0]]) as [string, any][];
-
-                let id = "";
-                let idParameterIndex = entries.findIndex((entry) => entry[1].primary);
-                if ("isNew" in thisArg && !thisArg.isNew()) {
-                    id = thisArg.getId();
-                } else if (idParameterIndex > -1) {
-                    idParameterIndex = entries[idParameterIndex][1].index || 0;
-                    if (isUndefined(internalArgs[idParameterIndex])) {
-                        id = "";
-                    } else id = internalArgs[idParameterIndex];
-                }
-
-                if (!params.local) {
-                    const httpMethod = (params.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionOptions<T>["httpMethod"], undefined>>;
-                    ApiClient[httpMethod]({ collectionName: thisArg.collectionName, actionName: String(params.name || ""), id, parameters });
-                }
-
-                return methodResult;
             };
         }
 
@@ -198,6 +156,22 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         }
 
         /**
+         * Creates actions corresponding to their names.
+         *
+         * @param proxy the proxy on which the action should bew invoked
+         */
+        private createActions(proxy: this) {
+            const metadataStore = new MetadataStore();
+            const actionSchemas = this.getSchema()?.actionSchemas || {};
+            for (const key in actionSchemas) {
+                if (hasOwnProperty(actionSchemas, key)) {
+                    const action = new BaseAction(proxy, key, Reflect.get(actionSchemas, key));
+                    metadataStore.setInstance("Action", proxy, key, action);
+                }
+            }
+        }
+
+        /**
          * This is the "ownKeys" trap of the instance proxy
          *
          * @returns array of attribute names
@@ -225,8 +199,8 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
 
-            const action = metadataStore.getAction(target as unknown as BaseModel, stringProperty);
-            if (action) return ModelClass.callAction(receiver, action);
+            const action = metadataStore.getInstance("Action", receiver, stringProperty)?.get();
+            if (action) return action;
 
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
             // Because the attribute is stored on the model instance and not on
@@ -267,10 +241,10 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     constructorProxy = new Proxy(ModelClass, {
         get(target, property) {
             const metadataStore = new MetadataStore();
-            const action = metadataStore.getAction(target as unknown as BaseModel, String(property));
+            const actionSchema = metadataStore.getSchema("Action", target, String(property));
 
             if (property === "name") return options.className;
-            if (action) return ModelClass.callAction(constructorProxy, action);
+            if (actionSchema) return actionSchema.get();
             return Reflect.get(target, property);
         }
     });

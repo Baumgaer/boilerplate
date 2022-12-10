@@ -44,9 +44,13 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
 
         public static readonly className: string = constructedClassName;
 
+        public static readonly collectionName: string = "";
+
         public readonly className: string = constructedClassName;
 
         public readonly unProxyfiedModel: typeof this = this;
+
+        public readonly collectionName: string = "";
 
         public constructor(params: RealConstructionParams<T>) {
             Object.assign(this, params);
@@ -80,6 +84,10 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
 
         public isNew() {
             return true;
+        }
+
+        public getId() {
+            return "";
         }
 
         /**

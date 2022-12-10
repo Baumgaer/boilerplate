@@ -158,11 +158,11 @@ function action<T extends typeof BaseModel>(metadataOptions: ActionOptionsPartia
     metadataOptions.accessRight = metadataOptions.accessRight ?? defaultAccessRight;
 
     const theTarget = target.constructor as T;
-    const options = metadataStore.constructSchemaParams<T, "Action">("Action", methodName as keyof T, metadataOptions);
+    const options = metadataStore.constructSchemaParams<T, "Action">("Action", String(methodName), metadataOptions);
     const argumentSchemas = metadataStore.getSchemas("Argument", target.constructor);
-    const schema = new ActionSchema(theTarget, options.name, options, argumentSchemas);
+    const schema = new ActionSchema(theTarget, options.name, options, argumentSchemas, descriptor);
 
-    metadataStore.setSchema("Action", theTarget, options.name as keyof T, schema);
+    metadataStore.setSchema("Action", theTarget, options.name, schema);
 }
 
 /**

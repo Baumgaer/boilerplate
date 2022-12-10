@@ -5,6 +5,7 @@ import { Attr, AttrObserver } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
 
@@ -124,6 +125,17 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     /**
+     * Looks for the attribute given by the name and returns its schema
+     *
+     * @param this current this context
+     * @param name the name of the attribute
+     * @returns the schema of the attribute given by name
+     */
+    public static getActionSchema<T extends typeof EnvBaseModel>(this: T, name: keyof T) {
+        return this.getSchema()?.getActionSchema(name) || null;
+    }
+
+    /**
      * Removes the dummy id when the model is saved and got a real id
      *
      * @param value the given id
@@ -154,7 +166,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @returns true if the model is still new and false else
      */
     public isNew(): boolean {
-        return Boolean(!this.id && this.dummyId);
+        return Boolean(!this.hasId() && this.dummyId);
     }
 
     /**
@@ -202,8 +214,22 @@ export default abstract class BaseModel extends BaseEntity {
     /**
      * @see BaseModel.getSchema
      */
-    public getSchema() {
+    public getSchema<T extends EnvBaseModel>(this: T) {
         return (<typeof BaseModel>this.constructor).getSchema();
+    }
+
+    /**
+     * @see BaseModel.getAttributeSchema
+     */
+    public getAttributeSchema<T extends typeof EnvBaseModel>(this: InstanceType<T>, name: AttributeSchemaName<T>) {
+        return this.getSchema()?.getAttributeSchema(name) || null;
+    }
+
+    /**
+     * @see BaseModel.getAttributeSchema
+     */
+    public getActionSchema<T extends typeof EnvBaseModel>(this: InstanceType<T>, name: keyof T) {
+        return this.getSchema()?.getActionSchema(name) || null;
     }
 
     /**
@@ -217,6 +243,19 @@ export default abstract class BaseModel extends BaseEntity {
     public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: keyof this): BaseAttribute<T> | null {
         const metadataStore = new MetadataStore();
         return metadataStore.getInstance("Attribute", this, name as keyof T) || null;
+    }
+
+    /**
+     * returns the actin instance identified by the current model instance
+     * and the given name
+     *
+     * @param this current this context
+     * @param name the name of the action
+     * @returns the unique initialized action owned by this model instance and identified by the given name
+     */
+    public getAction<T extends ModelLike>(this: InstanceType<T>, name: keyof this): BaseAction<T> | null {
+        const metadataStore = new MetadataStore();
+        return metadataStore.getInstance("Action", this, String(name)) || null;
     }
 
     /**
@@ -299,11 +338,10 @@ export default abstract class BaseModel extends BaseEntity {
         return Model({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
     }
 
-    public isAllowed(this: EnvBaseModel, actionName: string, user: EnvBaseModel) {
-        const metadataStore = new MetadataStore();
-        const action = metadataStore.getAction(this, actionName);
+    public isAllowed<T extends typeof EnvBaseModel>(this: InstanceType<T>, actionName: keyof T, user: EnvBaseModel) {
+        const action = this.getActionSchema(actionName);
         if (!action) return false;
-        return Boolean(action.params.accessRight?.(user, this));
+        return Boolean(action.accessRight?.(user, this));
     }
 
     /**

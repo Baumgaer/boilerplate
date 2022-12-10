@@ -73,12 +73,12 @@ export class ActionError extends TypeError {
 
     public override readonly name: `${Capitalize<TypedKinds>}Error`;
 
-    public readonly parameter: string;
+    public readonly action: string;
 
     public constructor(name: string, kind: TypedKinds, path: (string | number)[], value: unknown) {
         const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
         super(`action "${name}" is invalid: ${errorName}`, kind, path, value);
-        this.parameter = name;
+        this.action = name;
         this.name = `${errorName}Error`;
     }
 }

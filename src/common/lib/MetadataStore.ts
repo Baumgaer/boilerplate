@@ -1,8 +1,6 @@
-import type { ActionDefinition } from "~env/@types/ActionSchema";
 import type { InstancesType, SchemasType } from "~env/@types/MetadataStore";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type { TypeNameTypeMap, SchemaTypeNames, SchemaTypes } from "~env/@types/Schema";
-import type ArgumentSchema from "~env/lib/ArgumentSchema";
 
 /**
  * This is a singleton store which hold all reflect-metadata data to be type
@@ -87,36 +85,5 @@ export default class MetadataStore {
 
     public getInstances<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {
         return Object.values(this.instances?.[type]?.get(target) ?? {}) as TypeNameTypeMap<T>[N]["usingInstance"][];
-    }
-
-    /**
-     * Registers an action on the target which will also be accessible for sub classed.
-     *
-     * @param target the model instance or class to get the attribute from
-     * @param methodName the name of the method
-     * @param action the definition of the action
-     */
-    public setAction<T extends ModelLike>(target: InstanceType<T>, methodName: string, action: ActionDefinition<T>) {
-        Reflect.defineMetadata(`action:method:${methodName}`, action, target);
-        Reflect.defineMetadata(`action:action:${String(action.params.name)}`, action, target);
-    }
-
-    /**
-     * Searches for registered action by name and returns it
-     *
-     * @param target the model instance or class to get the attribute from
-     * @param methodOrActionName the name of the method OR of the action
-     * @returns the registered action with corresponding name if exists
-     */
-    public getAction<T extends ModelLike>(target: InstanceType<T>, methodOrActionName: string): ActionDefinition<T> | null {
-        const byMethodName = Reflect.getMetadata(`action:method:${methodOrActionName}`, target);
-        const byActionName = Reflect.getMetadata(`action:action:${methodOrActionName}`, target);
-        return byActionName || byMethodName || null;
-    }
-
-    public setArgumentSchema<T extends ModelLike>(target: T, methodName: string, schema: ArgumentSchema<T>) {
-        const args = Reflect.getOwnMetadata("arguments", target, methodName) || {};
-        args[schema.name] = schema;
-        Reflect.defineMetadata(`arguments`, args, target, methodName);
     }
 }
