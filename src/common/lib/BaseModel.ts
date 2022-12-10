@@ -166,7 +166,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @returns true if the model is still new and false else
      */
     public isNew(): boolean {
-        return Boolean(!this.hasId() && this.dummyId);
+        return Boolean(!this.id && this.dummyId);
     }
 
     /**
