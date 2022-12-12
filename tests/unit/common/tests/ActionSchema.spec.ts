@@ -18,6 +18,22 @@ export default function (_environment = "common") {
             expect(actionSchema?.httpMethod).to.be.equal("GET");
         });
 
+        it("should create a mutation action schema", () => {
+            const actionSchema = testModel.getActionSchema("testMutationAction");
+            expect(actionSchema).to.be.an.instanceOf(ActionSchema);
+            expect(actionSchema?.owner).to.be.equal(TestModel);
+            expect(actionSchema?.name).to.be.equal("testMutationAction");
+            expect(actionSchema?.local).to.be.false;
+            expect(actionSchema?.isLazy).to.be.true;
+            expect(actionSchema?.httpMethod).to.be.equal("POST");
+        });
+
+        it("should have overwritten the options", () => {
+            const actionSchema = testModel.getActionSchema("testQueryAction");
+            actionSchema?.accessRight(null, testModel);
+            expect(testModel.queryResult).to.be.equal("TestModel");
+        });
+
         it("should have necessary argument schemas", async () => {
             const actionSchema = testModel.getActionSchema("testQueryAction");
             expect(actionSchema?.getArgumentSchema("id")).to.be.an.instanceOf(ArgumentSchema);

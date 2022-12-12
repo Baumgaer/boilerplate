@@ -222,6 +222,8 @@ export function Arg<T extends typeof BaseModel>(options: ArgOptions<T> = {}) {
         const argumentName = options.name;
         const schema = new ArgumentSchema(theTarget, argumentName, options);
 
-        metadataStore.setSchema("Argument", theTarget, argumentName, schema);
+        // Use method name for argument name in metadata store to distinguish between
+        // arguments with same name in different methods
+        metadataStore.setSchema("Argument", theTarget, String(methodName), schema);
     };
 }

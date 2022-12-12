@@ -6,7 +6,6 @@ import type BaseModel from "~env/lib/BaseModel";
 import type TestMyTestModel from "~env/models/TestMyTestModel";
 import type TestMyTesterModel from "~env/models/TestMyTesterModel";
 
-
 function queryAccessRight(user: BaseModel, object: TestModel) {
     object.queryResult = "TestModel";
     return true;
@@ -129,10 +128,10 @@ export default class TestModel extends TestAbstractModel {
     }
 
     @Query({ accessRight: queryAccessRight })
-    public override testQueryAction(@Arg() id: UUID, @Arg({ max: 20 }) param1: string) {
-        console.log(this);
+    public override testQueryAction(@Arg() id: UUID, @Arg({ max: 20 }) param1: string, @Arg() param2: ITestMyInterface) {
         this.actionParameters.id = id;
         this.actionParameters.param1 = param1;
+        this.actionParameters.param2 = param2;
         return Promise.resolve(true);
     }
 

@@ -1,4 +1,5 @@
 import ActionSchemaSpec from "~common/tests/ActionSchema.spec";
+import ArgumentSchemaSpec from "~common/tests/ArgumentSchema.spec";
 import AttributeSchemaSpec from "~common/tests/AttributeSchema.spec";
 import BaseAttributeSpec from "~common/tests/BaseAttribute.spec";
 import ConfiguratorSpec from "~common/tests/Configurator.spec";
@@ -15,5 +16,6 @@ export default function (environment = "common") {
         BaseAttributeSpec(environment);
         ModelInstance(environment);
         ActionSchemaSpec(environment);
+        ArgumentSchemaSpec(environment);
     });
 }
