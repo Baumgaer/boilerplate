@@ -69,7 +69,7 @@ export default class MetadataStore {
         return newParams;
     }
 
-    public setInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"], instance: TypeNameTypeMap<T>[N]["usingInstance"]) {
+    public setInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"], instance: TypeNameTypeMap<T>[N]["usingInstance"]) {
 
         if (!this.instances) this.instances = {} as InstancesType<ModelLike>;
         if (!this.instances[type]) this.instances[type] = new WeakMap();
@@ -79,11 +79,11 @@ export default class MetadataStore {
         if (instances) Reflect.set(instances, name, instance);
     }
 
-    public getInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["usingInstance"] | null {
+    public getInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["usingInstance"] | null {
         return this.instances?.[type]?.get(target)?.[String(name)] as any || null;
     }
 
-    public getInstances<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {
+    public getInstances<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {
         return Object.values(this.instances?.[type]?.get(target) ?? {}) as TypeNameTypeMap<T>[N]["usingInstance"][];
     }
 }

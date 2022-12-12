@@ -243,8 +243,18 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const metadataStore = new MetadataStore();
             const actionSchema = metadataStore.getSchema("Action", target, String(property));
 
+            let action = null;
+            if (actionSchema) {
+                action = metadataStore.getInstance("Action", target, actionSchema.name);
+                if (!action) {
+                    const theTarget = target;
+                    action = new BaseAction(theTarget, actionSchema.name as any, actionSchema);
+                    metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
+                }
+            }
+
             if (property === "name") return options.className;
-            if (actionSchema) return actionSchema.get();
+            if (action) return action.get();
             return Reflect.get(target, property);
         }
     });

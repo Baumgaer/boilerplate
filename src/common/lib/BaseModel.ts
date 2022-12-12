@@ -34,6 +34,13 @@ export default abstract class BaseModel extends BaseEntity {
     public static readonly collectionName: string;
 
     /**
+     * This gives access to the model (instance | class) without proxy around.
+     * This enables to change an attribute without causing
+     * changes and also gives the ability to improve performance.
+     */
+    public static readonly unProxyfiedModel: typeof BaseModel;
+
+    /**
      * The ID field in the database to be able to identify each model doubtless.
      * This will be set by the server. You never should use this to identify a model.
      * Use getId instead!
@@ -88,9 +95,7 @@ export default abstract class BaseModel extends BaseEntity {
     public readonly collectionName!: string;
 
     /**
-     * This gives access to the model instance without proxy around.
-     * This enables to change an attribute without causing
-     * changes and also gives the ability to improve performance.
+     * @see BaseModel.unProxyfiedModel
      */
     public readonly unProxyfiedModel!: typeof this;
 
@@ -131,7 +136,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the schema of the attribute given by name
      */
-    public static getActionSchema<T extends typeof EnvBaseModel>(this: T, name: keyof T) {
+    public static getActionSchema<T extends typeof EnvBaseModel>(this: T, name: string) {
         return this.getSchema()?.getActionSchema(name) || null;
     }
 
@@ -228,7 +233,7 @@ export default abstract class BaseModel extends BaseEntity {
     /**
      * @see BaseModel.getAttributeSchema
      */
-    public getActionSchema<T extends typeof EnvBaseModel>(this: InstanceType<T>, name: keyof T) {
+    public getActionSchema<T extends typeof EnvBaseModel>(this: InstanceType<T>, name: string) {
         return this.getSchema()?.getActionSchema(name) || null;
     }
 
@@ -339,7 +344,7 @@ export default abstract class BaseModel extends BaseEntity {
     }
 
     public isAllowed<T extends typeof EnvBaseModel>(this: InstanceType<T>, actionName: keyof T, user: EnvBaseModel) {
-        const action = this.getActionSchema(actionName);
+        const action = this.getActionSchema(String(actionName));
         if (!action) return false;
         return Boolean(action.accessRight?.(user, this));
     }

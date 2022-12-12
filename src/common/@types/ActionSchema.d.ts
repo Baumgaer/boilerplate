@@ -3,9 +3,8 @@ import type { ArgOptions } from "~env/@types/ArgumentSchema";
 import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IDeepTypedMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
-import type BaseModel from "~env/lib/BaseModel";
 
-export type AccessRightFunc = (user: BaseModel, object: BaseModel) => boolean;
+export type AccessRightFunc = (user: any, object: any) => boolean;
 export type HttpMethods = "GET" | "POST" | "PUT" | "PATCH" | "OPTIONS" | "DELETE";
 
 export interface ActionOptions<T extends ModelLike> extends DeepTypedOptions<T> {
