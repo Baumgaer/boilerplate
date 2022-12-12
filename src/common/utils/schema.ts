@@ -78,7 +78,7 @@ export const baseTypeFuncs = {
     void: z.void.bind(z)
 };
 
-export function toInternalValidationReturnType(result: SafeParseReturnType<any, any>): ValidationResult {
+export function toInternalValidationReturnType(result: SafeParseReturnType<any, any>, errorClass = TypeError): ValidationResult {
     if (result.success) return { success: result.success, errors: [] };
 
     const errors = [];
@@ -95,7 +95,7 @@ export function toInternalValidationReturnType(result: SafeParseReturnType<any, 
         } else if (issue.code.startsWith("invalid") && !issue.code.endsWith("type")) {
             kind = "format";
         } else kind = "type";
-        errors.push(new TypeError("Error while validating type", kind, issue.path));
+        errors.push(new errorClass("Error while validating type", kind, issue.path));
     }
 
     if (errors.length) return { success: false, errors };

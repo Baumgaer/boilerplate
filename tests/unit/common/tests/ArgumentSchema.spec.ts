@@ -36,6 +36,7 @@ export default function (_environment = "common") {
 
             const param2ArgumentSchema = actionSchema?.getArgumentSchema("param2");
             expect(param2ArgumentSchema?.validate({ prop1: "test" }).success).to.be.true;
+            expect(param2ArgumentSchema?.validate({ prop1: 42 }).success).to.be.false;
         });
 
         it("should overwrite options", () => {
