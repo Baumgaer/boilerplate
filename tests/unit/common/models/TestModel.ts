@@ -1,9 +1,16 @@
 import { AttributeError } from "~common/lib/Errors";
 import TestAbstractModel from "~env/models/TestAbstractModel";
-import { Attr, AttrGetter, AttrSetter, AttrObserver, AttrValidator, Model } from "~env/utils/decorators";
+import { Attr, AttrGetter, AttrSetter, AttrObserver, AttrValidator, Model, Arg, Mutation, Query } from "~env/utils/decorators";
 import type { ITestMyInterface, ITestMySecondInterface } from "~env/@types/ITestMyInterface";
+import type BaseModel from "~env/lib/BaseModel";
 import type TestMyTestModel from "~env/models/TestMyTestModel";
 import type TestMyTesterModel from "~env/models/TestMyTesterModel";
+
+
+function queryAccessRight(user: BaseModel, object: TestModel) {
+    object.queryResult = "TestModel";
+    return true;
+}
 
 @Model()
 export default class TestModel extends TestAbstractModel {
@@ -119,6 +126,21 @@ export default class TestModel extends TestAbstractModel {
 
     public constructor(params?: ConstructionParams<TestModel>) {
         super(params);
+    }
+
+    @Query({ accessRight: queryAccessRight })
+    public override testQueryAction(@Arg() id: UUID, @Arg({ max: 20 }) param1: string) {
+        console.log(this);
+        this.actionParameters.id = id;
+        this.actionParameters.param1 = param1;
+        return Promise.resolve(true);
+    }
+
+    @Mutation()
+    public override testMutationAction(@Arg() id: UUID, @Arg() param1: string) {
+        this.actionParameters.id = id;
+        this.actionParameters.param1 = param1;
+        return Promise.resolve(true);
     }
 
     @AttrGetter("aDate")
