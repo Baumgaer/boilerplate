@@ -67,7 +67,18 @@ export default class ApiClient {
         let target = `${collectionName}`;
         if (id) target += `/${id}`;
         target += `/${actionName}`;
-        if (parameters.length) target += `?${parameters.map((parameter) => `${parameter[0]}=${parameter[1]}`).join("&")}`;
+        if (parameters.length) {
+            target += `?${parameters.map((parameter) => {
+                const key = String(parameter[0]);
+                let value = "";
+                try {
+                    value = JSON.stringify(parameter[1]);
+                } catch (error) {
+                    value = String(parameter[1]);
+                }
+                return `${key}=${value}`;
+            }).join("&")}`;
+        }
         return target;
     }
 }
