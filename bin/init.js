@@ -163,7 +163,7 @@ const files = {
     ".commitlintrc": "copy",
     ".editorconfig": "copy",
     ".eslintrc": "copy",
-    ".gitignore": "copy",
+    ".gitignore": "fill gitIgnore",
     ".lintstagedrc": "copy",
     ".mocharc.js": "copy",
     ".nycrc": "copy",
