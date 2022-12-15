@@ -93,7 +93,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      */
     public get(): InstanceType<T>[this["name"]] {
         const hookValue = this.callHook("getter");
-        return hookValue !== undefined ? hookValue : Reflect.get(this.unProxyfiedOwner, this.name);
+        return (hookValue !== undefined ? hookValue : Reflect.get(this.unProxyfiedOwner, this.name)) as InstanceType<T>[this["name"]];
     }
 
     /**

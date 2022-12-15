@@ -8,8 +8,8 @@
                 "./../../../src/server/*"
             ],
             "~common/*": [
-                "./../../../src/common/*",
-                "./../common/*"
+                "./../common/*",
+                "./../../../src/common/*"
             ],
             "~env/*": [
                 "./*",
@@ -31,8 +31,8 @@
         "plugins": [
             {
                 "transform": "./dev/transformers/TypeReflectionTransformer.ts",
-                "environment": "test",
-                "subEnvironment": "server"
+                "tsConfigPath": "./tests/unit/server/tsconfig.json",
+                "environment": "server"
             }
         ]
     },

@@ -1,0 +1,38 @@
+{
+    "extends": "./../../tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "~client/*": [
+                "./*",
+                "./../../node_modules/boilerplate/src/client/*"
+            ],
+            "~common/*": [
+                "./../common/*",
+                "./../../node_modules/boilerplate/src/common/*"
+            ],
+            "~env/*": [
+                "./*",
+                "./../../node_modules/boilerplate/src/client/*"
+            ]
+        },
+        "plugins": [
+            {
+                "transform": "./node_modules/boilerplate/dev/typescript-transformer-boilerplate/index.ts",
+                "tsConfigPath": "./src/client/tsconfig.json",
+                "environment": "client"
+            }
+        ]
+    },
+    "include": [
+        "./**/*.ts",
+        "./**/*.tsx",
+        "./**/*.vue",
+        "./../common/**/*.ts",
+        "./../common/**/*.tsx",
+        "./../../node_modules/boilerplate/src/client/**/*.ts",
+        "./../../node_modules/boilerplate/src/client/**/*.tsx",
+        "./../../node_modules/boilerplate/src/common/**/*.ts",
+        "./../../node_modules/boilerplate/src/common/**/*.tsx"
+    ]
+}

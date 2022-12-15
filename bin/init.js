@@ -3,7 +3,7 @@ const childProcess = require("child_process");
 const path = require("path");
 const arp = require("app-root-path");
 const deepDash = require("deepdash");
-const { writeFile, copy, readJSONSync, writeJSONSync } = require("fs-extra");
+const { writeFile, copy, readJSONSync, writeJSONSync, existsSync } = require("fs-extra");
 const lodash = require("lodash");
 const { get } = require("lodash");
 const mkdirp = require("mkdirp");
@@ -12,19 +12,7 @@ deepDash(lodash);
 
 const gitKeep = "";
 
-const esLintRC = `{
-    "extends": "./node_modules/boilerplate/.eslintrc"
-}`;
-
-const gulpFile = `const boilerplateTasks = require("boilerplate/gulpfile").default;
-
-exports.default = boilerplateTasks;`;
-
-const fill = {
-    gitKeep,
-    esLintRC,
-    gulpFile
-};
+const fill = { gitKeep };
 
 const files = {
     ".husky": "copy",
@@ -68,7 +56,8 @@ const files = {
         common: {
             "@types": {
                 ".gitkeep": "fill gitKeep",
-                "Datatypes.d.ts": "copy"
+                "Datatypes.d.ts": "copy",
+                "Globals.d.ts": "copy"
             },
             attributes: { ".gitkeep": "fill gitKeep" },
             configs: {
@@ -84,7 +73,7 @@ const files = {
             models: { ".gitkeep": "fill gitKeep" },
             utils: { ".gitkeep": "fill gitKeep" },
             views: { ".gitkeep": "fill gitKeep" },
-            ".eslintrc": "fill esLintRC",
+            ".eslintrc": "copy",
             "tsconfig.json": "copy"
         },
         server: {
@@ -104,14 +93,39 @@ const files = {
             routes: { ".gitkeep": "fill gitKeep" },
             utils: { ".gitkeep": "fill gitKeep" },
             views: { ".gitkeep": "fill gitKeep" },
-            ".eslintrc": "fill esLintRC",
+            ".eslintrc": "copy",
             "tsconfig.json": "copy"
+        }
+    },
+    tests: {
+        e2e: {
+            plugins: "copy",
+            specs: { ".gitkeep": "fill gitKeep" },
+            support: "copy",
+            ".eslintrc": "copy"
+        },
+        unit: {
+            client: {
+                tests: { ".gitkeep": "fill gitKeep" },
+                "index.spec.ts": "copy",
+                "tsconfig.json": "copy"
+            },
+            common: {
+                tests: { ".gitkeep": "fill gitKeep" },
+                "index.spec.ts": "copy",
+                "tsconfig.json": "copy"
+            },
+            server: {
+                tests: { ".gitkeep": "fill gitKeep" },
+                "index.spec.ts": "copy",
+                "tsconfig.json": "copy"
+            }
         }
     },
     ".browserslistrc": "copy",
     ".commitlintrc": "copy",
     ".editorconfig": "copy",
-    ".eslintrc": "fill esLintRC",
+    ".eslintrc": "copy",
     ".gitignore": "copy",
     ".lintstagedrc": "copy",
     ".mocharc.js": "copy",
@@ -121,104 +135,90 @@ const files = {
     "babel.config.js": "copy",
     "capacitor.config.ts": "copy",
     "cypress.config.ts": "copy",
-    "gulpfile.js": "fill gulpFile",
+    "gulpfile.js": "copy",
     "ionic.config.json": "copy",
     "tsconfig.json": "copy",
     "typedoc.json": "copy",
     "vue.config.js": "copy"
 };
 
+const dependencies = [
+    "@babel/runtime",
+    "@capacitor/android",
+    "@capacitor/app",
+    "@capacitor/core",
+    "@capacitor/haptics",
+    "@capacitor/ios",
+    "@capacitor/keyboard",
+    "@capacitor/status-bar",
+    "@ionic/pwa-elements",
+    "@ionic/vue",
+    "@ionic/vue-router",
+    "app-root-path",
+    "localforage",
+    "reflect-metadata",
+    "sql.js",
+    "tslib",
+    "vue",
+    "vue-router"
+];
+
 async function init() {
+
+    // Build file structure
     const promises = [];
     lodash.eachDeep(files, (value, key, parentValue, context) => {
         promises.push(new Promise((resolve) => {
-            const [cmd, name] = value.split(" ");
             const dirPath = path.join(...context.path.slice(0, -1));
             const filePath = path.join(dirPath, key);
 
             mkdirp(dirPath).then(() => {
-                if (cmd === "fill") {
-                    writeFile(filePath, get(fill, name), { encoding: "utf-8", flag: "w" }).then(resolve);
-                } else if (cmd === "copy") {
-                    copy(path.join(arp.path, filePath), filePath).then(resolve);
+                const commands = value.split(",");
+                for (const command of commands) {
+                    const [cmd, arg1] = command.trim().split(" ");
+
+                    if (cmd === "fill") {
+                        writeFile(filePath, get(fill, arg1), { encoding: "utf-8", flag: "w" }).then(resolve);
+                    } else if (cmd === "copy") {
+                        let srcPath = path.join(arp.path, "bin", "templates", filePath);
+                        if (!existsSync(srcPath)) srcPath = path.join(arp.path, filePath);
+                        copy(srcPath, filePath).then(resolve);
+                    }
                 }
             });
 
         }));
     }, { pathFormat: "array", leavesOnly: true });
+
     await Promise.all(promises);
 
     const ownPackageJSON = readJSONSync(path.join(arp.path, "package.json"), { encoding: "utf-8" });
     const projectPackageJSON = readJSONSync("./package.json", { encoding: "utf-8" });
 
+    ownPackageJSON.devDependencies["eslint-plugin-boilerplate"] = "./node_modules/boilerplate/dev/eslint-plugin-boilerplate";
+
+    ownPackageJSON.dependencies;
     lodash.merge(projectPackageJSON, {
         engineStrict: true,
         engines: {
             "npm": "~8.18.0",
             "node": ">= 16.16.0"
         },
-        scripts: {
-            "dev": "npm-run-all -p dev:!(app)",
-            "dev:server": "echo 'no dev:server script'",
-            "dev:web": "npm run compile:build:client:config && concurrently \"npm run compile:dev:client:config\" \"vue-cli-service serve --env development --deep-monitoring --source-map-support\"",
-            "//1": "",
-            "dev:app": "npm run build:web && cap sync && cap run",
-            "dev:app:android": "npm run build:web && cap sync && cap run android",
-            "dev:app:ios": "npm run build:web && cap sync && cap run ios",
-            "//1b": "",
-            "compile:dev:server:config": "cross-env NODE_ENV=development TS_CONFIG_PATH=src/server/tsconfig.json ENVIRONMENT=server gulp",
-            "compile:dev:client:config": "cross-env NODE_ENV=development TS_CONFIG_PATH=src/client/tsconfig.json ENVIRONMENT=client gulp",
-            "//2": "",
-            "build": "npm-run-all -p build:!(app)",
-            "build:server": "echo 'no build:server script'",
-            "build:web": "npm run compile:build:client:config && cross-env NODE_OPTIONS=--no-warnings vue-cli-service build",
-            "//2b": "",
-            "compile:build:server:config": "cross-env NODE_ENV=production TS_CONFIG_PATH=src/server/tsconfig.json ENVIRONMENT=server gulp",
-            "compile:build:client:config": "cross-env NODE_ENV=production TS_CONFIG_PATH=src/client/tsconfig.json ENVIRONMENT=client gulp",
-            "//3": "",
-            "build:app": "npm run build:web && cap copy && cap sync && cap open",
-            "build:app:android": "npm run build:web && cap copy && cap sync && cap open android",
-            "build:app:ios": "npm run build:web && cap copy && cap sync && cap open ios",
-            "//4": "",
-            "test": "npm run test:unit && npm run test:e2e",
-            "test:unit": "npm run test:unit:server && npm run test:unit:client",
-            "test:unit:server": "echo 'no test:unit:server script",
-            "test:unit:client": "npm run compile:test:unit:client:config && cross-env NODE_ENV=test nyc vue-cli-service test:unit ./tests/unit/client/index.spec.ts",
-            "test:e2e": "cross-env NODE_OPTIONS=--no-warnings vue-cli-service test:e2e",
-            "//4b": "",
-            "compile:test:unit:server:config": "cross-env NODE_ENV=test TS_CONFIG_PATH=tests/unit/server/tsconfig.json ENVIRONMENT=server gulp",
-            "compile:test:unit:client:config": "cross-env NODE_ENV=test TS_CONFIG_PATH=tests/unit/client/tsconfig.json ENVIRONMENT=client gulp",
-            "//5": "",
-            "lint": "npm-run-all -p lint:*",
-            "lint:script": "vue-cli-service lint",
-            "lint:style": "stylelint **/*.scss",
-            "//6": "",
-            "type-coverage": "typescript-coverage-report -o ./coverage/type-report",
-            "prepare": "cd dev/eslint-plugin-boilerplate && npm run build && cd ../.. && is-ci || husky install"
-        },
+        scripts: ownPackageJSON.scripts,
         devDependencies: ownPackageJSON.devDependencies,
-        dependencies: {
-            "vue": "^3.2.45",
-            "vue-router": "^4.1.6",
-            "reflect-metadata": "^0.1.13",
-            "sql.js": "^1.8.0",
-            "localforage": "^1.10.0",
-            "@babel/runtime": "^7.20.1",
-            "@capacitor/android": "4.0.1",
-            "@capacitor/app": "4.0.1",
-            "@capacitor/core": "4.0.1",
-            "@capacitor/haptics": "4.0.1",
-            "@capacitor/ios": "4.0.1",
-            "@capacitor/keyboard": "4.0.1",
-            "@capacitor/status-bar": "4.0.1",
-            "@ionic/pwa-elements": "^3.1.1",
-            "@ionic/vue": "^6.3.6",
-            "@ionic/vue-router": "^6.3.6"
-        }
+        dependencies: Object.fromEntries(Object.keys(ownPackageJSON.dependencies).filter((key) => {
+            return dependencies.includes(key);
+        }).map((key) => {
+            return [key, ownPackageJSON.dependencies[key]];
+        }))
     });
 
     writeJSONSync("./package.json", projectPackageJSON, { encoding: "utf-8", spaces: 4, EOL: "\n" });
     childProcess.execSync("npm install", { encoding: "utf-8", stdio: "inherit" });
+    childProcess.execSync(`cd ${path.join(arp.path, "dev", "eslint-plugin-boilerplate")} && npm install && npm run build`, {
+        encoding: "utf-8",
+        stdio: "inherit"
+    });
 
 }
 

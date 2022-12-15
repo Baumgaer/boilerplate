@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import * as path from "path";
-import { path as arPart } from "app-root-path";
 import { merge } from "lodash";
 import * as ts from "typescript";
 import { isIdentifierNode, isDecoratorNode } from "../../utils/SyntaxKind";
@@ -14,7 +13,7 @@ let program: ts.Program | null = null;
 
 export default function transformer(config: PluginConfig & IConfiguration, rules: ReturnType<typeof createRule>[]) {
     if (!config.tsConfigPath) throw new Error("No ts config path given");
-    config.tsConfigPath = path.resolve(arPart, config.tsConfigPath);
+    config.tsConfigPath = path.resolve(config.tsConfigPath);
     if (!fs.existsSync(config.tsConfigPath)) throw new Error(`No such config file ${config.tsConfigPath}`);
 
     return (context: ts.TransformationContext) => {

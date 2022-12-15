@@ -7,6 +7,7 @@ import App from '~client/App.vue';
 import Configurator from "~client/lib/Configurator";
 import router from '~client/routes';
 import type { DataSourceOptions } from "typeorm";
+import type { IMain } from "~client/@types/main";
 
 /* Core CSS required for Ionic components to work properly */
 import '@ionic/vue/css/core.css';
@@ -30,34 +31,40 @@ import '~client/themes/default.css';
 /* Web database */
 import "sql.js/dist/sql-wasm.js";
 
-const configurator = new Configurator();
+export default async function main(params?: IMain) {
+    const configurator = new Configurator();
 
-global.MODEL_NAME_TO_MODEL_MAP = {};
-const context = require.context("~env/models/", true, /.+\.ts/, "sync");
-context.keys().forEach((key) => {
-    global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = context(key).default;
-});
+    global.MODEL_NAME_TO_MODEL_MAP = {};
+    const context = require.context("~env/models/", true, /.+\.ts/, "sync");
+    context.keys().forEach((key) => {
+        global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = context(key).default;
+    });
 
-const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
+    const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
 
-// Wait for all model schemas constructed to ensure all models have correct relations
-const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
-await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
+    // Wait for all model schemas constructed to ensure all models have correct relations
+    const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
+    await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
 
-await new DataSource(Object.assign(configurator.get("databases.web") as DataSourceOptions, {
-    entities: modelClasses,
-    sqlJsConfig: {
-        locateFile: () => sqlWasm.href
+    await new DataSource(Object.assign(configurator.get("databases.web") as DataSourceOptions, {
+        entities: modelClasses,
+        sqlJsConfig: {
+            locateFile: () => sqlWasm.href
+        }
+    }, params?.dataSourceOptions ?? {})).initialize();
+
+    const app = createApp(App).use(IonicVue).use(router);
+    params?.appExtension?.(app);
+    for (const iconName in Icons) {
+        if (Object.prototype.hasOwnProperty.call(Icons, iconName)) {
+            // eslint-disable-next-line import/namespace
+            const icon = (Icons as any)[iconName];
+            app.component(icon);
+        }
     }
-})).initialize();
-
-const app = createApp(App).use(IonicVue).use(router);
-for (const iconName in Icons) {
-    if (Object.prototype.hasOwnProperty.call(Icons, iconName)) {
-        // eslint-disable-next-line import/namespace
-        const icon = (Icons as any)[iconName];
-        app.component(icon);
-    }
+    await router.isReady();
+    app.mount('#app');
 }
-await router.isReady();
-app.mount('#app');
+
+// @ts-expect-error parents is not part of a declaration file
+if (!require.main?.parents?.length) main();

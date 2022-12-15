@@ -28,19 +28,24 @@
         ],
         "paths": {
             "~root/*": [
-                "src/*"
+                "src/*",
+                "node_modules/boilerplate/src/*"
             ],
             "~client/*": [
-                "src/client/*"
+                "src/client/*",
+                "node_modules/boilerplate/src/client/*"
             ],
             "~server/*": [
-                "src/server/*"
+                "src/server/*",
+                "node_modules/boilerplate/src/server/*"
             ],
             "~common/*": [
-                "src/common/*"
+                "src/common/*",
+                "node_modules/boilerplate/src/common/*"
             ],
             "~env/*": [
-                "src/*"
+                "src/*",
+                "node_modules/boilerplate/src/*"
             ],
             "~test/*": [
                 "tests/*"
@@ -67,7 +72,12 @@
         "tests/**/*.tsx",
         "./capacitor.config.ts",
         "./cypress.config.ts",
-        "./.mocharc.js"
+        "./.mocharc.js",
+        "node_modules/boilerplate/src/**/*.ts",
+        "node_modules/boilerplate/src/**/*.tsx",
+        "node_modules/boilerplate/src/**/*.vue",
+        "node_modules/boilerplate/dev/**/*.ts",
+        "node_modules/boilerplate/dev/**/*.js"
     ],
     "exclude": [
         "node_modules"

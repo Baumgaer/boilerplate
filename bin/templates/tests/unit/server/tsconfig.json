@@ -1,0 +1,65 @@
+{
+    "extends": "./../../../src/server/tsconfig.json",
+    "compilerOptions": {
+        "baseUrl": ".",
+        "paths": {
+            "~server/*": [
+                "./*",
+                "./../../../src/server/*",
+                "./../../../node_modules/boilerplate/src/server/*"
+            ],
+            "~common/*": [
+                "./../common/*",
+                "./../../../src/common/*",
+                "./../../../node_modules/boilerplate/src/common/*"
+            ],
+            "~env/*": [
+                "./*",
+                "./../../../src/server/*",
+                "./../../../node_modules/boilerplate/src/server/*"
+            ],
+            "~test/*": [
+                "./../*"
+            ],
+            "~test/env/*": [
+                "./*"
+            ],
+            "~src/*": [
+                "./../../../src/*",
+                "./../../../node_modules/boilerplate/src/*"
+            ],
+            "~src/env/*": [
+                "./../../../src/server/*",
+                "./../../../node_modules/boilerplate/src/server/*"
+            ]
+        },
+        "plugins": [
+            {
+                "transform": "./node_modules/boilerplate/dev/transformers/TypeReflectionTransformer.ts",
+                "tsConfigPath": "./tests/unit/server/tsconfig.json",
+                "environment": "server"
+            }
+        ]
+    },
+    "include": [
+        "../../../src/server/**/*.ts",
+        "../../../src/server/**/*.d.ts",
+        "../../../src/server/**/*.tsx",
+        "../../../src/common/**/*.ts",
+        "../../../src/common/**/*.d.ts",
+        "../../../src/common/**/*.tsx",
+        "./**/*.ts",
+        "./**/*.d.ts",
+        "./**/*.tsx",
+        "./../common/**/*.ts",
+        "./../common/**/*.d.ts",
+        "./../common/**/*.tsx",
+        "./../../../node_modules/boilerplate/src/server/**/*.ts",
+        "./../../../node_modules/boilerplate/src/server/**/*.d.ts",
+        "./../../../node_modules/boilerplate/src/server/**/*.tsx",
+        "./../../../node_modules/boilerplate/src/server/**/*.vue",
+        "./../../../node_modules/boilerplate/src/common/**/*.ts",
+        "./../../../node_modules/boilerplate/src/common/**/*.d.ts",
+        "./../../../node_modules/boilerplate/src/common/**/*.tsx"
+    ]
+}
