@@ -12,7 +12,44 @@ deepDash(lodash);
 
 const gitKeep = "";
 
-const fill = { gitKeep };
+const gitIgnore = `# Specifies intentionally untracked files to ignore when using Git
+# http://git-scm.com/docs/gitignore
+
+*~
+*.sw[mnpcod]
+.tmp
+*.tmp
+*.tmp.*
+*.sublime-project
+*.sublime-workspace
+.DS_Store
+Thumbs.db
+UserInterfaceState.xcuserstate
+$RECYCLE.BIN/
+
+*.log
+log.txt
+npm-debug.log*
+
+/.idea
+/.ionic
+/.sass-cache
+/.sourcemaps
+/.versions
+/.vscode/launch.json
+/.nyc_output
+!/.vscode/settings.json
+!/.vscode/extensions.json
+/coverage
+/coverage-ts
+/src/*/configs/development/*.yml
+/dist
+/node_modules
+/platforms
+/plugins
+/www`;
+
+const fill = { gitKeep, gitIgnore };
 
 const files = {
     ".husky": "copy",
@@ -180,8 +217,8 @@ async function init() {
                     if (cmd === "fill") {
                         writeFile(filePath, get(fill, arg1), { encoding: "utf-8", flag: "w" }).then(resolve);
                     } else if (cmd === "copy") {
-                        let srcPath = path.join(arp.path, "bin", "templates", filePath);
-                        if (!existsSync(srcPath)) srcPath = path.join(arp.path, filePath);
+                        let srcPath = path.join(arp.path, "node_modules", "boilerplate", "bin", "templates", filePath);
+                        if (!existsSync(srcPath)) srcPath = path.join(arp.path, "node_modules", "boilerplate", filePath);
                         copy(srcPath, filePath).then(resolve);
                     }
                 }
@@ -192,12 +229,11 @@ async function init() {
 
     await Promise.all(promises);
 
-    const ownPackageJSON = readJSONSync(path.join(arp.path, "package.json"), { encoding: "utf-8" });
-    const projectPackageJSON = readJSONSync("./package.json", { encoding: "utf-8" });
+    const ownPackageJSON = readJSONSync(path.join(arp.path, "node_modules", "boilerplate", "package.json"), { encoding: "utf-8" });
+    const projectPackageJSON = readJSONSync(path.join(arp.path, "package.json"), { encoding: "utf-8" });
 
-    ownPackageJSON.devDependencies["eslint-plugin-boilerplate"] = "./node_modules/boilerplate/dev/eslint-plugin-boilerplate";
+    ownPackageJSON.devDependencies["eslint-plugin-boilerplate"] = "file:./node_modules/boilerplate/dev/eslint-plugin-boilerplate";
 
-    ownPackageJSON.dependencies;
     lodash.merge(projectPackageJSON, {
         engineStrict: true,
         engines: {
