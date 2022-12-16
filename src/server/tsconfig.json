@@ -15,7 +15,7 @@
         },
         "plugins": [
             {
-                "transform": "./dev/typescript-transformer-boilerplate/index.ts",
+                "transform": "typescript-transformer-boilerplate",
                 "tsConfigPath": "./src/server/tsconfig.json",
                 "environment": "server"
             }

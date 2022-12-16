@@ -233,6 +233,7 @@ async function init() {
     const projectPackageJSON = readJSONSync(path.join(arp.path, "package.json"), { encoding: "utf-8" });
 
     ownPackageJSON.devDependencies["eslint-plugin-boilerplate"] = "file:./node_modules/boilerplate/dev/eslint-plugin-boilerplate";
+    ownPackageJSON.devDependencies["typescript-transformer-boilerplate"] = "file:./node_modules/boilerplate/dev/typescript-transformer-boilerplate";
 
     lodash.merge(projectPackageJSON, {
         engineStrict: true,
@@ -249,12 +250,14 @@ async function init() {
         }))
     });
 
-    writeJSONSync("./package.json", projectPackageJSON, { encoding: "utf-8", spaces: 4, EOL: "\n" });
-    childProcess.execSync("npm install", { encoding: "utf-8", stdio: "inherit" });
-    childProcess.execSync(`cd ${path.join(arp.path, "dev", "eslint-plugin-boilerplate")} && npm install && npm run build`, {
-        encoding: "utf-8",
-        stdio: "inherit"
-    });
+    writeJSONSync(path.join(arp.path, "package.json"), projectPackageJSON, { encoding: "utf-8", spaces: 4, EOL: "\n" });
+
+    const devPath = path.join(arp.path, "node_modules", "boilerplate", "dev");
+    const buildCmd = "npm install && npm run build";
+    const options = { encoding: "utf-8", stdio: "inherit" };
+    childProcess.execSync("npm install", options);
+    childProcess.execSync(`cd ${path.join(devPath, "eslint-plugin-boilerplate")} && ${buildCmd}`, options);
+    childProcess.execSync(`cd ${path.join(devPath, "typescript-transformer-boilerplate")} && ${buildCmd}`, options);
 
 }
 
