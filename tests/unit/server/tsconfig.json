@@ -30,7 +30,7 @@
         },
         "plugins": [
             {
-                "transform": "./dev/transformers/TypeReflectionTransformer.ts",
+                "transform": "typescript-transformer-boilerplate",
                 "tsConfigPath": "./tests/unit/server/tsconfig.json",
                 "environment": "server"
             }
