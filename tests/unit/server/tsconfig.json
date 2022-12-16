@@ -49,5 +49,8 @@
         "./../common/**/*.ts",
         "./../common/**/*.d.ts",
         "./../common/**/*.tsx"
+    ],
+    "exclude": [
+        "node_modules"
     ]
 }
