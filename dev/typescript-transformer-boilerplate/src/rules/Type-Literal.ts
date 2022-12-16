@@ -1,6 +1,6 @@
-import { isLiteralType, isStringLiteralType, isNumberLiteralType, isBigIntLiteralType, isBooleanLiteralType } from "../../utils/Type";
-import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isLiteralType, isStringLiteralType, isNumberLiteralType, isBigIntLiteralType, isBooleanLiteralType } from "../utils/Type";
+import { getTypeFromNode } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypeLiteral = createRule({

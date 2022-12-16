@@ -1,5 +1,5 @@
-import { isMethodDeclaration } from "../../utils/SyntaxKind";
 import { createRule } from "../lib/RuleContext";
+import { isMethodDeclaration } from "../utils/SyntaxKind";
 import type ts from "typescript";
 
 export const Action = createRule({

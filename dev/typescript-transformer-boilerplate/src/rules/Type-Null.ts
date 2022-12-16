@@ -1,6 +1,6 @@
-import { isNullType } from "../../utils/Type";
-import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isNullType } from "../utils/Type";
+import { getTypeFromNode } from "../utils/utils";
 
 export const TypeNull = createRule({
     name: "Type-Null",

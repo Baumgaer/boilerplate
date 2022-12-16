@@ -1,4 +1,5 @@
 import { getJSDocTags } from "typescript";
+import { createRule } from "../lib/RuleContext";
 import {
     isPropertyDeclaration,
     isPropertySignature,
@@ -6,9 +7,8 @@ import {
     isTypeNode,
     isTypeReferenceNode,
     isLiteralTypeNode
-} from "../../utils/SyntaxKind";
-import { isInEnvironmentalPath } from "../../utils/utils";
-import { createRule } from "../lib/RuleContext";
+} from "../utils/SyntaxKind";
+import { isInEnvironmentalPath } from "../utils/utils";
 import type ts from "typescript";
 
 const NOT_FOUND = "$$__NotFound__$$" as const;

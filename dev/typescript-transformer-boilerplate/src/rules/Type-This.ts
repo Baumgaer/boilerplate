@@ -1,5 +1,5 @@
-import { isThisTypeNode } from "../../utils/SyntaxKind";
 import { createRule } from "../lib/RuleContext";
+import { isThisTypeNode } from "../utils/SyntaxKind";
 
 export const TypeThis = createRule({
     name: "Type-This",

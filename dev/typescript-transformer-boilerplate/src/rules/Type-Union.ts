@@ -1,3 +1,4 @@
+import { createRule } from "../lib/RuleContext";
 import {
     isPropertyDeclaration,
     isPropertySignature,
@@ -5,10 +6,9 @@ import {
     isTypeNode,
     isOptionalTypeNode,
     isParameter
-} from "../../utils/SyntaxKind";
-import { isUnionOrIntersectionType, isUnionType, isBooleanType } from "../../utils/Type";
-import { getTypeFromNode } from "../../utils/utils";
-import { createRule } from "../lib/RuleContext";
+} from "../utils/SyntaxKind";
+import { isUnionOrIntersectionType, isUnionType, isBooleanType } from "../utils/Type";
+import { getTypeFromNode } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypeUnion = createRule({

@@ -1,7 +1,7 @@
-import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isPropertySignature, isParameter } from "../../utils/SyntaxKind";
-import { isObjectType, isAnyType, isClassType, isInterfaceType } from "../../utils/Type";
-import { getTypeFromNode, resolveTypeReferenceTo, isInEnvironmentalPath } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isPropertySignature, isParameter } from "../utils/SyntaxKind";
+import { isObjectType, isAnyType, isClassType, isInterfaceType } from "../utils/Type";
+import { getTypeFromNode, resolveTypeReferenceTo, isInEnvironmentalPath } from "../utils/utils";
 import type ts from "typescript";
 
 function getTypeContainingNode(node: ts.Node) {

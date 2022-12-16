@@ -1,6 +1,6 @@
-import { isStringType, isLiteralType } from "../../utils/Type";
-import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isStringType, isLiteralType } from "../utils/Type";
+import { getTypeFromNode } from "../utils/utils";
 
 export const TypeString = createRule({
     name: "Type-String",

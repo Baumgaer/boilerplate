@@ -1,7 +1,7 @@
-import { isPropertyDeclaration, isPropertySignature, isIntersectionTypeNode, isParameter } from "../../utils/SyntaxKind";
-import { isUnionOrIntersectionType, isIntersectionType } from "../../utils/Type";
-import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isPropertyDeclaration, isPropertySignature, isIntersectionTypeNode, isParameter } from "../utils/SyntaxKind";
+import { isUnionOrIntersectionType, isIntersectionType } from "../utils/Type";
+import { getTypeFromNode } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypeIntersection = createRule({

@@ -10,7 +10,7 @@ import {
     isParameter,
     isClassDeclaration,
     isMethodDeclaration
-} from "../../utils/SyntaxKind";
+} from "../utils/SyntaxKind";
 import type { DecoratorNames, IOptions } from "../@types/RuleContext";
 import type { IConfiguration } from "../@types/Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
@@ -59,14 +59,14 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
     public emitMetadata(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitMetadata"]>) {
         const echoType = this.getEchoType(declarationNode);
         const methodName = `emitMetadata${capitalize(echoType) as PascalCase<typeof echoType>}` as const;
-        if (methodName in this) return Reflect.get(this, methodName).call(this, declarationNode, ...params);
+        if (methodName in this) return (Reflect.get(this, methodName) as any).call(this, declarationNode, ...params);
         return this.emitMetadataDefault(declarationNode, ...params);
     }
 
     public emitType(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitType"]>) {
         const echoType = this.getEchoType(declarationNode);
         const methodName = `emitType${capitalize(echoType) as PascalCase<typeof echoType>}` as const;
-        if (methodName in this) return Reflect.get(this, methodName).call(this, ...params);
+        if (methodName in this) return (Reflect.get(this, methodName) as any).call(this, ...params);
         return this.emitTypeDefault(...params);
     }
 

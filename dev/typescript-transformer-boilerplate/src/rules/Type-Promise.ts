@@ -1,5 +1,5 @@
-import { isPropertyDeclaration, isPropertySignature, isParameter, isTypeReferenceNode, isIdentifierNode } from "../../utils/SyntaxKind";
 import { createRule } from "../lib/RuleContext";
+import { isPropertyDeclaration, isPropertySignature, isParameter, isTypeReferenceNode, isIdentifierNode } from "../utils/SyntaxKind";
 import type ts from "typescript";
 
 export const TypePromise = createRule({

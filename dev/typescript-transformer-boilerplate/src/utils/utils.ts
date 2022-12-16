@@ -25,8 +25,8 @@ import {
     isPropertyDeclaration,
     isPropertySignature
 } from "./SyntaxKind";
+import type { environment } from "../@types/Transformer";
 import type { TypeReturn, TSNodeNames } from "../@types/Utils";
-import type { environment } from "../typescript-transformer-boilerplate/@types/Transformer";
 import type * as ts from "typescript";
 
 export function getTypeFromTypeNode(checker: ts.TypeChecker, node?: ts.TypeNode): TypeReturn {

@@ -1,6 +1,6 @@
 import { isEqual } from "lodash";
-import { isPropertyDeclaration, isPropertySignature, isParameter, isArrayTypeNode, isArrayLiteralExpression } from "../../utils/SyntaxKind";
 import { createRule } from "../lib/RuleContext";
+import { isPropertyDeclaration, isPropertySignature, isParameter, isArrayTypeNode, isArrayLiteralExpression } from "../utils/SyntaxKind";
 import type { MetadataType } from "../@types/MetadataTypes";
 import type ts from "typescript";
 

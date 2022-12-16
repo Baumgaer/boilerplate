@@ -1,8 +1,8 @@
 import { merge } from "lodash";
-import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isParameter } from "../../utils/SyntaxKind";
-import { isObjectType, isAnyType, isInterfaceType } from "../../utils/Type";
-import { getTypeFromNode, resolveTypeReferenceTo } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isTypeReferenceNode, isNewExpression, isIdentifierNode, isPropertyDeclaration, isParameter } from "../utils/SyntaxKind";
+import { isObjectType, isAnyType, isInterfaceType } from "../utils/Type";
+import { getTypeFromNode, resolveTypeReferenceTo } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypeInterface = createRule({

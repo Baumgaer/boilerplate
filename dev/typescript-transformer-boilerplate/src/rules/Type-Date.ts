@@ -1,7 +1,7 @@
-import { isDateTypeNode, isPropertyDeclaration, isPropertySignature, isParameter } from "../../utils/SyntaxKind";
-import { isObjectType } from "../../utils/Type";
-import { getTypeFromNode } from "../../utils/utils";
 import { createRule } from "../lib/RuleContext";
+import { isDateTypeNode, isPropertyDeclaration, isPropertySignature, isParameter } from "../utils/SyntaxKind";
+import { isObjectType } from "../utils/Type";
+import { getTypeFromNode } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypeDate = createRule({
