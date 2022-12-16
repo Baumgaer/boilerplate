@@ -5,7 +5,7 @@
     "private": true,
     "engineStrict": true,
     "engines": {
-        "npm": "~8.18.0",
+        "npm": ">=8.18.0",
         "node": ">= 16.16.0"
     },
     "bin": "bin/index.js",
