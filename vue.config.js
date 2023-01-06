@@ -8,6 +8,7 @@ let TSCONFIG_PATH = path.resolve(arp.path, "src", "client", "tsconfig.json");
 if (process.env.NODE_ENV === "test") TSCONFIG_PATH = path.resolve(arp.path, "tests", "unit", "client", "tsconfig.json");
 
 module.exports = {
+    outputDir: path.resolve(arp.path, "dist", "client"),
     pages: {
         index: {
             entry: 'src/client/main.ts',
@@ -59,8 +60,6 @@ module.exports = {
         }
     },
     chainWebpack: (config) => {
-
-        //config.module.rule('ts').uses.delete('cache-loader'); // when developing type transformer
 
         config.module.rule('ts').use('ts-loader').merge({
             options: {

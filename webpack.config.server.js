@@ -14,9 +14,9 @@ module.exports = (env, options, returnConfigObject) => {
 
     const inherited = Object.assign({}, options);
     Object.assign(options, {
-        cacheDir: "./.build/cache/backend",
-        scriptDir: "./src/server",
-        tsConfigPath: "./src/server/tsconfig.json"
+        cacheDir: path.resolve(arp.path, ".build", "cache", "backend"),
+        scriptDir: path.resolve(arp.path, "src", "server"),
+        tsConfigPath: path.resolve(arp.path, "src", "server", "tsconfig.json")
     }, inherited);
 
     ///////////////////////////////////
@@ -71,12 +71,9 @@ module.exports = (env, options, returnConfigObject) => {
 
     ///////////////////////////////////
     // EXTEND BUILD PLUGINS
-    // settings.plugins = settings.plugins.concat([]);
 
     ///////////////////////////////////
     // EXTENDS BUILD MODULE RULES
-
-    // settings.module.rules = settings.module.rules.concat([]);
 
     return returnConfigObject ? webpackConfigObject : settings;
 };

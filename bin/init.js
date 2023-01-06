@@ -176,7 +176,8 @@ const files = {
     "ionic.config.json": "copy",
     "tsconfig.json": "copy",
     "typedoc.json": "copy",
-    "vue.config.js": "copy"
+    "vue.config.js": "copy",
+    "webpack.config.server.js": "copy"
 };
 
 const dependencies = [
@@ -193,6 +194,7 @@ const dependencies = [
     "@ionic/vue-router",
     "app-root-path",
     "localforage",
+    "lodash",
     "reflect-metadata",
     "sql.js",
     "tslib",
