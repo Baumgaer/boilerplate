@@ -44,9 +44,6 @@ module.exports = (_env, options, returnConfigObject) => {
             type: 'filesystem',
             cacheDirectory: path.resolve(__dirname, '.build'),
         },
-        experiments: {
-            topLevelAwait: true,
-        },
         plugins: [
             new ForkTsCheckerWebpackPlugin({
                 async: true,
@@ -84,8 +81,6 @@ module.exports = (_env, options, returnConfigObject) => {
                                 "@babel/plugin-proposal-class-properties",
                                 "@babel/plugin-proposal-nullish-coalescing-operator",
                                 "@babel/plugin-proposal-optional-chaining",
-                                "@babel/plugin-transform-modules-commonjs",
-                                "@babel/plugin-syntax-top-level-await"
                             ],
                             sourceMap: 'inline'
                         }

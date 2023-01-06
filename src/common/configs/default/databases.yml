@@ -1,0 +1,11 @@
+common: &commonDatabases
+    synchronize: false
+    autoSave: true
+    location: "main"
+    logger: "simple-console"
+    logging:
+        - "error"
+
+web: *commonDatabases
+
+server: *commonDatabases

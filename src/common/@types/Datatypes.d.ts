@@ -45,7 +45,7 @@ declare type Varchar<Length extends number> = import("type-fest").Opaque<string,
  * A number that has to be between Min and Max (inclusive).
  * <Min> and <Max> can be Infinity or -Infinity
  *
- * @alias double
+ * @alias float
  * @property {Min} min The minimum length of the string
  * @property {Max} max The maximum length of the string
  * @property {"NumberRange"} validator The check function to ensure type safety at runtime

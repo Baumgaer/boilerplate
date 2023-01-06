@@ -2,9 +2,6 @@ server:
     type: "postgres"
     host: "localhost"
     port: 5432
-    database: "boilerplate"
-    autoSave: true
-    location: "main"
-    logger: "debug"
-    logging:
-        - "error"
+    username: ""
+    password: ""
+    database: ""

@@ -20,8 +20,8 @@ export default class MetadataStore {
 
     public constructor() {
         if (MetadataStore.instance) return MetadataStore.instance;
-        // @ts-expect-error test
-        window.metadataStore = this;
+        // @ts-expect-error for testing
+        global.metadataStore = this;
         MetadataStore.instance = this;
         return this;
     }

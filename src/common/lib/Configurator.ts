@@ -19,6 +19,8 @@ export default class Configurator {
         // Make this class singleton
         if (Configurator.instance) return Configurator.instance;
         Configurator.instance = this;
+        // @ts-expect-error just for testing
+        global.configurator = this;
         this.load();
     }
 
@@ -87,6 +89,16 @@ export default class Configurator {
             for (const key of context.keys()) {
                 const value = context(key);
                 const name = key.split("/").at(-1)?.split(".")[0] as string;
+
+                eachDeep(value.default, (value, key, parentValue, context) => {
+                    if (key === "<<" && context.path) {
+                        const clonedParent = cloneDeep(parentValue);
+                        merge(parentValue, value, clonedParent);
+                        delete parentValue[key];
+                        return false;
+                    }
+                }, { checkCircular: false, pathFormat: "array", includeRoot: true });
+
                 merge(this.config, { [name]: value.default } || {});
             }
         }

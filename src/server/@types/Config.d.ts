@@ -6,9 +6,9 @@
  */
 export interface IConfig {
     databases: Databases;
-    server: Server2;
+    server: Server;
 }
-interface Server2 {
+interface Server {
     session: Session;
     engine: Engine;
     csp: Csp;
@@ -38,15 +38,20 @@ interface Session {
     secretAlgo: string;
 }
 interface Databases {
-    server: Server;
+    common: Common;
+    web: Common;
+    server: Common;
 }
-interface Server {
-    type: string;
-    host: string;
-    port: number;
-    database: string;
+interface Common {
+    synchronize: boolean;
     autoSave: boolean;
     location: string;
     logger: string;
     logging: string[];
+    type: string;
+    host: string;
+    port: number;
+    username: string;
+    password: string;
+    database: string;
 }

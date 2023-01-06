@@ -269,7 +269,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             defaultOptions.array = true;
         }
         if (this.isPlainObjectType(type)) typeName = "simple-json";
-        if (this.isNumberType(type)) typeName = "double"; // because every number in javascript is a double
+        if (this.isNumberType(type)) typeName = "double precision"; // because every number in javascript is a double
         if (this.isBooleanType(type)) typeName = "boolean";
         if (this.isDateType(type)) typeName = "date";
         if (this.isUnionType(type)) {

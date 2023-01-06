@@ -58,7 +58,12 @@ module.exports = (env, options, returnConfigObject) => {
             __dirname: false,   // if you don't put this is, __dirname
             __filename: false,  // and __filename return blank or /
         },
-        externals: [nodeExternals()], // Need this to avoid error when working with Express
+        externals: [nodeExternals({
+            allowlist: [
+                "on-change",
+                "normalize-url"
+            ]
+        })], // Need this to avoid error when working with Express
         optimization: {
             splitChunks: false
         }
