@@ -88,6 +88,7 @@
         "normalize-url": "^8.0.0",
         "on-change": "^4.0.2",
         "pg": "^8.8.0",
+        "pg-native": "^3.0.1",
         "reflect-metadata": "^0.1.13",
         "sql.js": "^1.8.0",
         "tslib": "^2.4.1",
