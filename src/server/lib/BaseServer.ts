@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import { createHash, randomBytes } from "crypto";
 import { createServer } from "http";
 import compression from "compression";
@@ -9,10 +10,14 @@ import hpp from "hpp";
 import HttpErrors from "http-errors";
 import ms from "ms";
 import normalizeUrl from "normalize-url";
+import { DataSource } from "typeorm";
+import Configurator from "~env/lib/Configurator";
+import { getModelNameToModelMap } from "~env/utils/schema";
 import Train from "~server/lib/Train";
 import { middleware as i18nMiddleware } from "~server/utils/language";
 import type { Request, Response, NextFunction, Express } from "express";
 import type { Server } from "http";
+import type { DataSourceOptions } from "typeorm";
 import type { HttpMethods } from "~server/@types/http";
 import type BaseRoute from "~server/lib/BaseRoute";
 
@@ -21,18 +26,7 @@ type cspSrcNames = "default" | "font" | "frame" | "img" | "media" | "manifest" |
 type cspSrc = `${cspSrcNames}Src` | "frameAncestors" | "baseUri" | "formAction"
 type SetupCspReturn = Partial<Record<cspSrc, string[]>>
 
-interface options {
-    maximumRequestBodySize?: string;
-    useQueryStringLibrary?: boolean;
-    enableETag?: boolean;
-    sessionSecret?: string;
-    sessionMaxAge?: string;
-    secure?: boolean;
-    domain?: string;
-    sessionName?: string;
-    host?: string,
-    port?: number
-}
+const configurator = new Configurator();
 
 export default abstract class BaseServer {
 
@@ -40,18 +34,17 @@ export default abstract class BaseServer {
 
     protected readonly server: Server = createServer(this.app);
 
-    private readonly options: options;
-
     private setupFinished: boolean = false;
 
-    public constructor(options: options) {
-        this.options = options;
+    private dataSource?: DataSource;
+
+    public constructor() {
         this.setup();
     }
 
     public async start() {
         await this.awaitSetupFinished();
-        const { host, port } = this.options;
+        const { host, port } = configurator.get("server.engine");
         this.server.listen(port, host, undefined, () => {
             console.info(`Server is running and reachable on http://${host}:${port}`);
             process.send?.('ready');
@@ -69,7 +62,7 @@ export default abstract class BaseServer {
     }
 
     protected async setupGeneral() {
-        const { enableETag, maximumRequestBodySize, useQueryStringLibrary } = this.options;
+        const { enableETag, maximumRequestBodySize, useQueryStringLibrary } = configurator.get("server.engine");
 
         this.app.use(json({ limit: maximumRequestBodySize }));
         this.app.use(urlencoded({ extended: Boolean(useQueryStringLibrary), limit: maximumRequestBodySize }));
@@ -89,12 +82,18 @@ export default abstract class BaseServer {
         this.app.use(i18nMiddleware);
     }
 
-    protected setupDatabase() {
-        // Nothing to do here
+    protected async setupDatabase() {
+        // Wait for all model schemas constructed to ensure all models have correct relations
+        const modelClasses = Object.values(getModelNameToModelMap());
+        await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
+
+        this.dataSource = await new DataSource(Object.assign(configurator.get("databases.server") as DataSourceOptions, {
+            entities: modelClasses
+        })).initialize();
     }
 
     protected tearDownDatabase() {
-        // Nothing to do here
+        return this.dataSource?.driver?.disconnect();
     }
 
     protected setupEmailConnection() {
@@ -109,20 +108,20 @@ export default abstract class BaseServer {
     ///////////////////////////////
 
     protected async setupSession() {
-        const { sessionMaxAge, secure, domain, sessionName, sessionSecret } = this.options;
+        const { maxAge, secure, domain, name, sessionSecret, secretAlgo } = configurator.get("server.session");
         const urlParts = new URL(normalizeUrl(`${domain}`, { forceHttps: secure, forceHttp: !secure }));
 
         this.app.use(expressSession({
-            secret: createHash("sha512").update(sessionSecret ?? randomBytes(256)).digest("base64"),
+            secret: createHash(secretAlgo).update(sessionSecret ?? randomBytes(256)).digest("base64"),
             cookie: {
                 httpOnly: true,
                 domain: urlParts.hostname === "localhost" || process.env.NODE_ENV === "development" ? undefined : urlParts.hostname,
                 secure,
-                maxAge: ms(`${sessionMaxAge}`)
+                maxAge: ms(`${maxAge}`)
             },
             resave: true,
             saveUninitialized: false,
-            name: sessionName,
+            name: name,
             rolling: true,
             unset: "destroy"
         }));
@@ -172,11 +171,15 @@ export default abstract class BaseServer {
     }
 
     private setupHelmet(request: Request, response: Response, next: NextFunction) {
-        const nonce = createHash("sha512").update(randomBytes(32)).digest("base64");
+        const { includeSelf, length, nonceAlgo, hashes } = configurator.get("server.csp");
+        const nonce = createHash(nonceAlgo).update(randomBytes(length)).digest("base64");
         response.locals.cspNonce = nonce;
 
         const cspNonce = `'nonce-${nonce}'`;
-        const all = ["'self'", cspNonce];
+        const all = [];
+        if (includeSelf) all.push("'self'");
+        all.push(nonce);
+        all.push(...hashes);
         const directives = this.setupCsp(cspNonce);
 
         helmet({

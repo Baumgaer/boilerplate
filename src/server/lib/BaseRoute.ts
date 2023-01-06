@@ -35,7 +35,7 @@ export default class BaseRoute {
         }
     }
 
-    public async handle(train: Train<BaseModel>, routeObject: IMinimumRouteObject) {
+    public async handle(train: Train<typeof BaseModel>, routeObject: IMinimumRouteObject) {
         // 1. Check access to route
         // 2. Get Data if ID is given
         // 3. Check access to asked data

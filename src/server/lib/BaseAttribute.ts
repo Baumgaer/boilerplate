@@ -1,10 +1,10 @@
 import CommonBaseAttribute from "~common/lib/BaseAttribute";
-import type BaseModel from "~server/lib/BaseModel";
+import type { ModelLike } from "~server/@types/ModelClass";
 
 /**
  * @see CommonBaseAttribute
  */
-export default class BaseAttribute<T extends typeof BaseModel> extends CommonBaseAttribute<T> {
+export default class BaseAttribute<T extends ModelLike> extends CommonBaseAttribute<T> {
 
     /**
      * @InheritDoc

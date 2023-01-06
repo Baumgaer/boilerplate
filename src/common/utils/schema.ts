@@ -101,3 +101,14 @@ export function toInternalValidationReturnType(result: SafeParseReturnType<any, 
     if (errors.length) return { success: false, errors };
     return { success: true, errors: [] };
 }
+
+export function getModelNameToModelMap() {
+    if (!global.MODEL_NAME_TO_MODEL_MAP) {
+        global.MODEL_NAME_TO_MODEL_MAP = {};
+        const context = require.context("~env/models/", true, /.+\.ts/, "sync");
+        context.keys().forEach((key) => {
+            global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = context(key).default;
+        });
+    }
+    return global.MODEL_NAME_TO_MODEL_MAP;
+}

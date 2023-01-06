@@ -6,6 +6,7 @@ import { createApp } from 'vue';
 import App from '~client/App.vue';
 import Configurator from "~client/lib/Configurator";
 import router from '~client/routes';
+import { getModelNameToModelMap } from "~env/utils/schema";
 import type { DataSourceOptions } from "typeorm";
 import type { IMain } from "~client/@types/main";
 
@@ -34,16 +35,10 @@ import "sql.js/dist/sql-wasm.js";
 export default async function main(params?: IMain) {
     const configurator = new Configurator();
 
-    global.MODEL_NAME_TO_MODEL_MAP = {};
-    const context = require.context("~env/models/", true, /.+\.ts/, "sync");
-    context.keys().forEach((key) => {
-        global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = context(key).default;
-    });
-
     const sqlWasm = await new URL('sql.js/dist/sql-wasm.wasm', import.meta.url);
 
     // Wait for all model schemas constructed to ensure all models have correct relations
-    const modelClasses = Object.values(global.MODEL_NAME_TO_MODEL_MAP);
+    const modelClasses = Object.values(getModelNameToModelMap());
     await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
 
     await new DataSource(Object.assign(configurator.get("databases.web") as DataSourceOptions, {

@@ -1,0 +1,23 @@
+session:
+    maxAge: "1h"
+    domain: "localhost"
+    name: "session"
+    sessionSecret: "K3bo@rdC4t"
+    secure: false
+    resave: true
+    rolling: true
+    unset: "destroy"
+    secretAlgo: "sha512"
+
+engine:
+    host: "localhost"
+    port: 3000
+    enableETag: true
+    maximumRequestBodySize: "100kb"
+    useQueryStringLibrary: true
+
+csp:
+    includeSelf: true
+    length: 32
+    nonceAlgo: "sha512"
+    hashes: []

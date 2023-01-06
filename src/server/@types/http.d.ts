@@ -4,7 +4,7 @@ import type Train from "~server/lib/Train";
 export type HttpMethods = "POST" | "PUT" | "PATCH" | "DELETE" | "GET" | "OPTIONS";
 
 export interface IMinimumRouteObject {
-    descriptor: TypedPropertyDescriptor<(train: Train<BaseModel>) => any>;
+    descriptor: TypedPropertyDescriptor<(train: Train<typeof BaseModel>) => any>;
     accessCheck: (train: Train) => boolean;
 }
 

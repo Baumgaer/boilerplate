@@ -11,7 +11,7 @@
     "bin": "bin/index.js",
     "scripts": {
         "dev": "npm-run-all -p dev:!(app)",
-        "dev:server": "echo 'no dev:server script'",
+        "dev:server": "npm run compile:build:client:config && concurrently \"npm run compile:dev:server:config\" \"webpack --mode development --watch --config webpack.config.server.js\"",
         "dev:web": "npm run compile:build:client:config && concurrently \"npm run compile:dev:client:config\" \"vue-cli-service serve --env development --deep-monitoring --source-map-support\"",
         "//1": "",
         "dev:app": "npm run build:web && cap sync && cap run",
@@ -22,7 +22,7 @@
         "compile:dev:client:config": "cross-env NODE_ENV=development TS_CONFIG_PATH=src/client/tsconfig.json ENVIRONMENT=client gulp",
         "//2": "",
         "build": "npm-run-all -p build:!(app)",
-        "build:server": "echo \"no build:server script\"",
+        "build:server": "npm run compile:build:server:config && cross-env NODE_OPTIONS=--no-warnings webpack --mode production --config webpack.config.server.js",
         "build:web": "npm run compile:build:client:config && cross-env NODE_OPTIONS=--no-warnings vue-cli-service build",
         "//2b": "",
         "compile:build:server:config": "cross-env NODE_ENV=production TS_CONFIG_PATH=src/server/tsconfig.json ENVIRONMENT=server gulp",
@@ -87,6 +87,7 @@
         "ms": "^2.1.3",
         "normalize-url": "^8.0.0",
         "on-change": "^4.0.2",
+        "pg": "^8.8.0",
         "reflect-metadata": "^0.1.13",
         "sql.js": "^1.8.0",
         "tslib": "^2.4.1",
@@ -99,8 +100,13 @@
         "zod": "^3.20.2"
     },
     "devDependencies": {
+        "@babel/core": "^7.20.5",
         "@babel/plugin-proposal-class-properties": "^7.18.6",
         "@babel/plugin-proposal-decorators": "^7.20.5",
+        "@babel/plugin-proposal-nullish-coalescing-operator": "^7.18.6",
+        "@babel/plugin-proposal-optional-chaining": "^7.18.9",
+        "@babel/plugin-syntax-top-level-await": "^7.14.5",
+        "@babel/preset-env": "^7.20.2",
         "@capacitor/cli": "4.0.1",
         "@commitlint/cli": "^17.3.0",
         "@commitlint/config-conventional": "^17.3.0",
@@ -130,6 +136,7 @@
         "@vue/cli-service": "^5.0.8",
         "@vue/eslint-config-typescript": "^11.0.2",
         "@vue/test-utils": "^2.2.6",
+        "babel-loader": "^9.1.0",
         "babel-plugin-istanbul": "^6.1.1",
         "chai": "^4.3.7",
         "concurrently": "^7.6.0",
@@ -156,6 +163,7 @@
         "stylelint": "^14.16.0",
         "stylelint-config-clean-order": "^2.1.0",
         "stylelint-config-standard-scss": "^6.1.0",
+        "thread-loader": "^3.0.4",
         "ts-loader": "^9.4.2",
         "ts-plugin-type-coverage": "^2.24.1",
         "tsconfig-paths-webpack-plugin": "^4.0.0",
@@ -170,6 +178,8 @@
         "typescript-coverage-report": "^0.7.0",
         "typescript-transformer-boilerplate": "./dev/typescript-transformer-boilerplate/",
         "webpack": "^5.75.0",
+        "webpack-cli": "^5.0.1",
+        "webpack-node-externals": "^3.0.0",
         "yaml-loader": "^0.8.0"
     }
 }

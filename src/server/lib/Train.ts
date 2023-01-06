@@ -1,12 +1,12 @@
 import type { NextFunction, Request, Response } from "express";
+import type EnvBaseModel from "~env/lib/BaseModel";
 import type { HttpMethods } from "~server/@types/http";
-import type BaseModel from "~server/lib/BaseModel";
 
-export default class Train<T extends BaseModel> {
+export default class Train<T extends typeof EnvBaseModel> {
 
-    public head: T | null;
+    public head: InstanceType<T> | null;
 
-    public tail: T[] = [];
+    public tail: InstanceType<T>[] = [];
 
     private request: Request;
 
@@ -16,7 +16,7 @@ export default class Train<T extends BaseModel> {
 
     private _user: any | null;
 
-    public constructor(request: Request, response: Response, next: NextFunction, object?: T[]) {
+    public constructor(request: Request, response: Response, next: NextFunction, object?: InstanceType<T>[]) {
         this.request = request;
         this.response = response;
         this.nextFunction = next;
@@ -77,11 +77,11 @@ export default class Train<T extends BaseModel> {
         return this.request.originalUrl;
     }
 
-    public isAllowed(actionName: string) {
+    public isAllowed(actionName: keyof T) {
         return Boolean(this.head?.isAllowed(actionName, this.user));
     }
 
-    public setUser(user: BaseModel) {
+    public setUser(user: EnvBaseModel) {
         this._user = user;
     }
 
