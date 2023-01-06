@@ -17,6 +17,8 @@ This boilerplate aims to provide a fullstack single page webapp with mobile appl
 - typeorm
     - sql.js
     - localforage
+    - pg (postgres driver)
+      - gp-native
 - zod
 
 ### most important development dependencies
@@ -46,6 +48,10 @@ This boilerplate aims to provide a fullstack single page webapp with mobile appl
 
 ## Dependencies
 
+- server
+    - Node.js version 14 or higher
+    - postgreSQL
+        - path to postgres bin folder in the PATHS environment
 - Web
     - Node.js version 14 or higher
 - Android
