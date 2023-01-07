@@ -18,13 +18,9 @@ import { middleware as i18nMiddleware } from "~server/utils/language";
 import type { Request, Response, NextFunction, Express } from "express";
 import type { Server } from "http";
 import type { DataSourceOptions } from "typeorm";
+import type { SetupCspReturn } from "~server/@types/BaseServer";
 import type { HttpMethods } from "~server/@types/http";
 import type BaseRoute from "~server/lib/BaseRoute";
-
-
-type cspSrcNames = "default" | "font" | "frame" | "img" | "media" | "manifest" | "object" | "script" | "style" | "connect"
-type cspSrc = `${cspSrcNames}Src` | "frameAncestors" | "baseUri" | "formAction"
-type SetupCspReturn = Partial<Record<cspSrc, string[]>>
 
 const configurator = new Configurator();
 
