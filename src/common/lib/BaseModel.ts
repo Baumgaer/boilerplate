@@ -349,6 +349,19 @@ export default abstract class BaseModel extends BaseEntity {
         return Boolean(action.accessRight?.(user, this));
     }
 
+    public _getPropertyNames(): string[] {
+        throw new Error("this is just an interface! Do not use it!");
+    }
+
+    public _get(_target: this, _propertyName: string | symbol, _receiver: this): boolean {
+        throw new Error("this is just an interface! Do not use it!");
+    }
+
+    public _set(_target: this, _propertyName: string | symbol, _value: any, _receiver: this, _currentActionName: string): boolean {
+        throw new Error("this is just an interface! Do not use it!");
+    }
+
+
     /**
      * A lifecycle hook that will be called before the passed properties
      * will be assigned to the instance. This has to return an object with

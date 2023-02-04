@@ -104,7 +104,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      * @param value The value which should be set on the attribute
      * @returns true if it was set and false on error
      */
-    public set(value: unknown): boolean {
+    public set(value: unknown, currentActionName?: string): boolean {
         let changeType: IAttributeChange["type"] = "change";
         if (this.unProxyfiedOwner[this.name] === undefined) changeType = "init";
 
@@ -115,7 +115,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
         if (setResult && oldValue !== newValue) {
             this.callHook("observer:change", newValue, { path: [], oldValue });
-            this.addChange({ type: changeType, path: [], value: newValue, previousValue: oldValue });
+            this.addChange({ type: changeType, path: [], value: newValue, previousValue: oldValue, currentActionName });
         }
 
         return setResult;

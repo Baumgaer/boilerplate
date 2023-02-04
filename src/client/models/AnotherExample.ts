@@ -24,6 +24,25 @@ export default class AnotherExample extends AnotherCommonExample {
         return Promise.resolve();
     }
 
+    @Query({ name: "testIt2", accessRight: () => true })
+    public testIt2(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
+        console.log("AnotherExample", this, id, test);
+        this.name = "test123";
+        return Promise.resolve();
+    }
+
+    @Query({ name: "testIt", accessRight: () => true })
+    public testIt(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
+        this.testIt2(id);
+        return new Promise<void>((resolve) => {
+            console.log("AnotherExample", this, id, test);
+            setTimeout(() => {
+                this.myUnion = "test";
+                resolve();
+            });
+        });
+    }
+
     @AttrValidator("name")
     public validateName(value: string) {
         if (value === "lala") return true;

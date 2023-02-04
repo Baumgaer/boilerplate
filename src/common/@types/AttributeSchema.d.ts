@@ -79,7 +79,8 @@ export interface IAttributeChange {
     type: AttrObserverTypes | "init";
     path: (string | symbol)[];
     value: unknown,
-    previousValue: unknown
+    previousValue: unknown,
+    currentActionName?: string
 }
 
 export interface IEmbeddedEntity {

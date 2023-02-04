@@ -17,12 +17,12 @@ export default class BaseAttribute<T extends ModelLike> extends CommonBaseAttrib
      * This traps the "refresh-set" of observed objects to avoid calling all
      * the setter hooks just for refreshing the UI.
      */
-    public override set(value: unknown): boolean {
+    public override set(value: unknown, currentActionName?: string): boolean {
         if (this.isChangeTrigger) {
             this.isChangeTrigger = false;
             return true;
         }
-        return super.set(value);
+        return super.set(value, currentActionName);
     }
 
     /**

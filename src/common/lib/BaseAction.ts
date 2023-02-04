@@ -3,6 +3,7 @@ import { isUndefined } from "~env/utils/utils";
 import type { ActionOptions } from "~env/@types/ActionSchema";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type ActionSchema from "~env/lib/ActionSchema";
+import type BaseModel from "~env/lib/BaseModel";
 
 export default class BaseAction<T extends ModelLike> {
 
@@ -42,7 +43,10 @@ export default class BaseAction<T extends ModelLike> {
     }
 
     public call(thisArg: T | InstanceType<T>, ...args: any[]) {
-        const result = this.schema.descriptor.value?.call(thisArg, ...args);
+
+        let newThisArg: T | InstanceType<T> | BaseModel = thisArg;
+        if ("isBaseModel" in thisArg && thisArg.isBaseModel) newThisArg = new Proxy(thisArg as BaseModel, this.getProxyHandler(thisArg));
+        const result = this.schema.descriptor.value?.call(newThisArg, ...args);
         const entries = Object.entries(this.schema.argumentSchemas);
 
         const parameters = entries.filter((entry) => {
@@ -66,5 +70,28 @@ export default class BaseAction<T extends ModelLike> {
         }
 
         return result || Promise.resolve();
+    }
+
+    /**
+         * The proxy handler object for the instance proxy. This has to be
+         * complete to ensure a full working proxy
+         */
+    /* istanbul ignore next Not needed to bee tested because it's just an assignment */
+    private getProxyHandler(thisArg: BaseModel): ProxyHandler<BaseModel> {
+        return {
+            get: (target, propertyName, _receiver) => thisArg._get(target.unProxyfiedModel, propertyName, target),
+            set: (target, propertyName, value, _receiver) => thisArg._set(target.unProxyfiedModel, propertyName, value, target, String(this.name)),
+            defineProperty: (target, propertyName, attributes) => Reflect.defineProperty(target, propertyName, attributes),
+            deleteProperty: (target, propertyName) => Reflect.deleteProperty(target, propertyName),
+            apply: (target, thisArg, argArray) => Reflect.apply(<any>target, thisArg, argArray),
+            has: (target, propertyName) => Reflect.has(target, propertyName),
+            getOwnPropertyDescriptor: (target, propertyName) => Reflect.getOwnPropertyDescriptor(target, propertyName),
+            setPrototypeOf: (target, v) => Reflect.setPrototypeOf(target, v),
+            getPrototypeOf: (target) => Reflect.getPrototypeOf(target),
+            ownKeys: () => thisArg._getPropertyNames(),
+            isExtensible: (target) => Reflect.isExtensible(target),
+            preventExtensions: (target) => Reflect.preventExtensions(target),
+            construct: (target, argArray) => Reflect.construct(<any>target, argArray)
+        };
     }
 }
