@@ -54,7 +54,7 @@
         "prepare": "cd dev/eslint-plugin-boilerplate && npm run build && cd ../.. && is-ci || husky install"
     },
     "dependencies": {
-        "@babel/runtime": "^7.20.6",
+        "@babel/runtime": "^7.20.13",
         "@capacitor/android": "4.0.1",
         "@capacitor/app": "4.0.1",
         "@capacitor/core": "4.0.1",
@@ -63,11 +63,11 @@
         "@capacitor/keyboard": "4.0.1",
         "@capacitor/status-bar": "4.0.1",
         "@ionic/pwa-elements": "^3.1.1",
-        "@ionic/vue": "^6.4.1",
-        "@ionic/vue-router": "^6.4.1",
+        "@ionic/vue": "^6.5.2",
+        "@ionic/vue-router": "^6.5.2",
         "app-root-path": "^3.1.0",
         "compression": "^1.7.4",
-        "core-js": "^3.26.1",
+        "core-js": "^3.27.2",
         "csurf": "^1.11.0",
         "deepdash": "^5.3.9",
         "deepdash-es": "^5.3.9",
