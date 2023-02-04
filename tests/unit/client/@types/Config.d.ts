@@ -9,15 +9,18 @@ export interface IConfig {
     databases: Databases;
 }
 interface Databases {
-    web: Web;
+    common: Common;
+    web: Common;
+    server: Common;
 }
-interface Web {
-    type: string;
+interface Common {
+    synchronize: boolean;
     autoSave: boolean;
     location: string;
-    useLocalForage: boolean;
     logger: string;
     logging: string[];
+    type: string;
+    useLocalForage: boolean;
 }
 interface Test {
     string: string;

@@ -6,6 +6,19 @@
  */
 export interface IConfig {
     test: Test;
+    databases: Databases;
+}
+interface Databases {
+    common: Common;
+    web: Common;
+    server: Common;
+}
+interface Common {
+    synchronize: boolean;
+    autoSave: boolean;
+    location: string;
+    logger: string;
+    logging: string[];
 }
 interface Test {
     string: string;
