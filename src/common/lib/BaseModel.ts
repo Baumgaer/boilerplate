@@ -1,8 +1,10 @@
 import { BaseEntity } from "typeorm";
+import { v4 as UUidV4 } from "uuid";
 import MetadataStore from "~common/lib/MetadataStore";
 import { Model } from "~env/lib/DataTypes";
 import { Attr, AttrObserver } from "~env/utils/decorators";
-import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
+import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject, isEqual } from "~env/utils/utils";
+import type { IExecutedAction } from "~env/@types/ActionSchema";
 import type { AttributeSchemaName, ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type { ModelLike } from "~env/@types/ModelClass";
 import type BaseAction from "~env/lib/BaseAction";
@@ -103,6 +105,8 @@ export default abstract class BaseModel extends BaseEntity {
      * The id of the model until it has no official id from the server
      */
     public dummyId: string = "";
+
+    private executedActions: IExecutedAction[] = [];
 
     public constructor(_params?: ConstructionParams<BaseModel>) {
         super();
@@ -263,6 +267,22 @@ export default abstract class BaseModel extends BaseEntity {
         return metadataStore.getInstance("Action", this, String(name)) || null;
     }
 
+    public addExecutedAction(name: string, args: Record<string, any>) {
+        this.executedActions.push({ name, args, id: UUidV4() });
+    }
+
+    public getExecutedActionsByName(name: string) {
+        return this.getExecutedAction("name", name);
+    }
+
+    public getExecutedActionsById(id: string) {
+        return this.getExecutedAction("id", id);
+    }
+
+    public getExecutedActionsByArgs(args: Record<string, any>) {
+        return this.getExecutedAction("args", args);
+    }
+
     /**
      * collects all attributes of this model instance and returns them.
      *
@@ -349,19 +369,6 @@ export default abstract class BaseModel extends BaseEntity {
         return Boolean(action.accessRight?.(user, this));
     }
 
-    public _getPropertyNames(): string[] {
-        throw new Error("this is just an interface! Do not use it!");
-    }
-
-    public _get(_target: this, _propertyName: string | symbol, _receiver: this): boolean {
-        throw new Error("this is just an interface! Do not use it!");
-    }
-
-    public _set(_target: this, _propertyName: string | symbol, _value: any, _receiver: this, _currentActionName: string): boolean {
-        throw new Error("this is just an interface! Do not use it!");
-    }
-
-
     /**
      * A lifecycle hook that will be called before the passed properties
      * will be assigned to the instance. This has to return an object with
@@ -392,6 +399,10 @@ export default abstract class BaseModel extends BaseEntity {
         if (this.isNew()) entries = this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]);
         if (this.hasChanges()) entries = Object.keys(this.getChanges()).map((attributeName) => [attributeName, Reflect.get(this, attributeName)]);
         return Object.fromEntries(entries.filter((entry) => !this.getAttribute(entry[0])?.schema.isInternal));
+    }
+
+    private getExecutedAction<K extends keyof IExecutedAction>(key: K, value: IExecutedAction[K]) {
+        return this.executedActions.filter((executedAction) => isEqual(executedAction[key], value));
     }
 
 }

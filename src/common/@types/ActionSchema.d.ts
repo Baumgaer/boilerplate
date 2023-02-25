@@ -37,3 +37,10 @@ export interface ActionDefinition<T extends ModelLike> {
 
 export type ActionOptionsWithMetadataJson<T extends ModelLike> = ActionOptions<T> & { metadataJson: string }
 export type ActionOptionsPartialMetadataJson<T extends ModelLike> = IDeepTypedMetadata & SetOptional<ActionOptionsWithMetadataJson<T>, "metadataJson">;
+
+export interface IExecutedAction {
+    id: string;
+    csrfToken?: string;
+    name: string;
+    args: Record<string, any>;
+}

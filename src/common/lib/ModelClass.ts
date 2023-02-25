@@ -120,18 +120,6 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             };
         }
 
-        public override _getPropertyNames(): string[] {
-            return this.getPropertyNames();
-        }
-
-        public override _get(target: this, propertyName: string | symbol, receiver: this): boolean {
-            return this.get(target, propertyName, receiver);
-        }
-
-        public override _set(target: this, propertyName: string | symbol, value: any, receiver: this, currentActionName: string): boolean {
-            return this.set(target, propertyName, value, receiver, currentActionName);
-        }
-
         /**
          * @InheritDoc
          */
@@ -233,7 +221,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @param receiver the instance of the model with proxy
          * @returns the value of the asked attribute or property
          */
-        private set(target: this, propertyName: string | symbol, value: any, receiver: this, currentActionName?: string) {
+        private set(target: this, propertyName: string | symbol, value: any, receiver: this) {
             const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
@@ -241,7 +229,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedModel
-            return metadataStore.getInstance("Attribute", receiver, stringProperty)?.set(value, currentActionName) ?? false;
+            return metadataStore.getInstance("Attribute", receiver, stringProperty)?.set(value) ?? false;
         }
 
     }
