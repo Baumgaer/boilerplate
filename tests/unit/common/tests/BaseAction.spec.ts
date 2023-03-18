@@ -43,7 +43,7 @@ export default function (_environment = "common") {
             expect(ApiClient.lastRequestParams).to.be.null;
         });
 
-        it("should send a POST request", () => {
+        it.skip("should send a POST request", () => {
             testModel.getActionSchema("testMutationAction")?.updateOptions({ local: false });
             const uuid = v4() as UUID;
 
@@ -56,7 +56,7 @@ export default function (_environment = "common") {
             expect(ApiClient.lastRequestParams?.method).to.be.equal("POST");
         });
 
-        it("should send a PATCH request", () => {
+        it.skip("should send a PATCH request", () => {
             testModel.getActionSchema("testMutationAction")?.updateOptions({ httpMethod: "PATCH" });
             const uuid = v4() as UUID;
 

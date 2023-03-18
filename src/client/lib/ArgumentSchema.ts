@@ -1,7 +1,7 @@
 import CommonArgumentSchema from "~common/lib/ArgumentSchema";
-import type { ModelLike } from "~client/@types/ModelClass";
+import type SchemaBased from "~env/lib/SchemaBased";
 
 /**
  * @see CommonArgumentSchema
  */
-export default class ArgumentSchema<T extends ModelLike> extends CommonArgumentSchema<T> { }
+export default class ArgumentSchema<T extends typeof SchemaBased> extends CommonArgumentSchema<T> { }

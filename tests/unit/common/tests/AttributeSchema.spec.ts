@@ -29,7 +29,6 @@ export default function (environment = "common") {
         it(`has an required "aDate" and "aNumber" attribute`, () => {
             const attrs = ["aDate", "aNumber"] as const;
             for (const attr of attrs) {
-                // @ts-expect-error 002
                 const schema = TestModel.getAttributeSchema(attr);
                 expect(schema).not.to.be.undefined.and.not.to.be.null;
                 expect(schema).to.have.property("isRequired", true);
@@ -37,7 +36,6 @@ export default function (environment = "common") {
         });
 
         it(`has an internal "aNumber" attribute`, () => {
-            // @ts-expect-error 002
             const numberSchema = TestModel.getAttributeSchema("aNumber");
             expect(numberSchema).to.have.property("isInternal", true);
         });
@@ -57,7 +55,6 @@ export default function (environment = "common") {
         });
 
         it(`should have generated an optional null type`, () => {
-            // @ts-expect-error 002
             const schema = TestModel.getAttributeSchema("aNull");
             const type = schema?.getSchemaType() as ZodOptional<ZodNull>;
             expect(type).to.be.instanceOf(ZodOptional);
@@ -82,7 +79,6 @@ export default function (environment = "common") {
         });
 
         it(`should have generated a required number type`, () => {
-            // @ts-expect-error 002
             const schema = TestModel.getAttributeSchema("aNumber");
             const type = schema?.getSchemaType() as ZodOptional<ZodString>;
             expect(type).to.be.instanceOf(ZodNumber);

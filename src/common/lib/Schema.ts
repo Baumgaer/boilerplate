@@ -2,8 +2,8 @@
 import { merge } from "~env/utils/utils";
 import type { ValidationResult } from "~env/@types/Errors";
 import type { MetadataType } from "~env/@types/MetadataTypes";
-import type { ModelLike } from "~env/@types/ModelClass";
 import type { Type } from "~env/utils/schema";
+
 
 /**
  * Implements basic functionality for schema validation and defines necessary
@@ -13,7 +13,7 @@ import type { Type } from "~env/utils/schema";
  *
  * @template T The model where the schema of the model belongs to
  */
-export default abstract class Schema<T extends ModelLike> {
+export default abstract class Schema<T> {
 
     /**
      * The name of the attribute in the schema. Corresponds to the attribute

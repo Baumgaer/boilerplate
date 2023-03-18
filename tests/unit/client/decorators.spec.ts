@@ -74,7 +74,6 @@ describe('decorators', () => {
         it(`should have collected the attribute schemas. ${atLeastAttributesText}`, () => {
             const schema = TestModel.getSchema() as unknown as ModelSchema<typeof TestModel>;
             for (const expectedAttributeName of attributesToExpect) {
-                // @ts-expect-error 002
                 const attributeSchema = schema?.getAttributeSchema(expectedAttributeName);
                 expect(attributeSchema).to.be.instanceOf(AttributeSchema);
             }
@@ -111,7 +110,6 @@ describe('decorators', () => {
         it(`has an required "aDate" and "aNumber" attribute`, () => {
             const attrs = ["aDate", "aNumber"] as const;
             for (const attr of attrs) {
-                // @ts-expect-error 002
                 const schema = TestModel.getAttributeSchema(attr);
                 expect(schema).not.to.be.undefined.and.not.to.be.null;
                 expect(schema).to.have.property("isRequired", true);
@@ -119,7 +117,6 @@ describe('decorators', () => {
         });
 
         it(`has an internal "aNumber" attribute`, () => {
-            // @ts-expect-error 002
             const numberSchema = TestModel.getAttributeSchema("aNumber");
             expect(numberSchema).to.have.property("isInternal", true);
         });
@@ -156,7 +153,6 @@ describe('decorators', () => {
         });
 
         it(`should have generated a required number type`, () => {
-            // @ts-expect-error 002
             const schema = TestModel.getAttributeSchema("aNumber");
             const type = schema?.getSchemaType() as ZodOptional<ZodString>;
             expect(type).to.be.instanceOf(ZodNumber);

@@ -8,8 +8,9 @@ import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type ModelSchema from "~env/lib/ModelSchema";
+import type SchemaBased from "~env/lib/SchemaBased";
 
-export interface TypeNameTypeMap<T extends ModelLike> {
+export interface TypeNameTypeMap<T extends typeof SchemaBased> {
     Model: {
         schema: ModelSchema<T>;
         usingInstance: InstanceType<ModelLike>;
@@ -20,7 +21,7 @@ export interface TypeNameTypeMap<T extends ModelLike> {
         schema: AttributeSchema<T>;
         usingInstance: BaseAttribute<T>;
         options: AttrOptionsPartialMetadataJson<T>;
-        nameType: keyof T
+        nameType: string
     }
     Argument: {
         schema: ArgumentSchema<T>;
@@ -36,6 +37,6 @@ export interface TypeNameTypeMap<T extends ModelLike> {
     }
 }
 
-export type SchemaTypeNames<T extends ModelLike> = StringKeyOf<TypeNameTypeMap<T>>;
-export type SchemaTypes<T extends ModelLike> = ValueOf<TypeNameTypeMap<T>>["schema"];
-export type InstanceTypes<T extends ModelLike> = ValueOf<TypeNameTypeMap<T>>["usingInstance"];
+export type SchemaTypeNames<T extends typeof SchemaBased> = StringKeyOf<TypeNameTypeMap<T>>;
+export type SchemaTypes<T extends typeof SchemaBased> = ValueOf<TypeNameTypeMap<T>>["schema"];
+export type InstanceTypes<T extends typeof SchemaBased> = ValueOf<TypeNameTypeMap<T>>["usingInstance"];

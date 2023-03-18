@@ -2,7 +2,6 @@ import { Entity, Index, TableInheritance, ChildEntity } from "typeorm";
 import { Model } from "~env/lib/DataTypes";
 import Schema from "~env/lib/Schema";
 import { baseTypeFuncs } from "~env/utils/schema";
-import type { AttributeSchemaName } from "~env/@types/BaseModel";
 import type { ModelLike, ModelOptions } from "~env/@types/ModelClass";
 import type ActionSchema from "~env/lib/ActionSchema";
 import type AttributeSchema from "~env/lib/AttributeSchema";
@@ -104,7 +103,7 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
      * @param name the name of the attribute
      * @returns the schema of the attribute
      */
-    public getAttributeSchema(name: keyof InstanceType<T>): AttributeSchema<T> {
+    public getAttributeSchema(name: string): AttributeSchema<T> {
         return Reflect.get(this.attributeSchemas, name);
     }
 
@@ -123,8 +122,8 @@ export default class ModelSchema<T extends ModelLike> extends Schema<T> {
      * @InheritDoc
      */
     public validate(value: unknown) {
-        const getAttribute = (name: AttributeSchemaName<ModelLike>) => {
-            return this.getAttributeSchema(name) as unknown as AttributeSchema<ModelLike>;
+        const getAttribute = (name: string) => {
+            return this.getAttributeSchema(name) as unknown as AttributeSchema<typeof BaseModel>;
         };
 
         return Model({ name: this.name, getAttribute }).validate(value);

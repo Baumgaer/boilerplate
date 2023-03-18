@@ -99,3 +99,7 @@ export interface IAttrMetadata extends IDeepTypedMetadata {
     isInternal: boolean;
     isReadOnly: boolean;
 }
+
+export interface IRouteMetadata {
+    name: string;
+}

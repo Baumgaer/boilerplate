@@ -1,11 +1,13 @@
 import { v4 as uuid } from "uuid";
-import MetadataStore from "~common/lib/MetadataStore";
-import BaseAction from "~env/lib/BaseAction";
 import BaseAttribute from "~env/lib/BaseAttribute";
+import MetadataStore from "~env/lib/MetadataStore";
+import ModelAction from "~env/lib/ModelAction";
 import { hasOwnProperty, upperFirst, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { ModelOptions, ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
+
+const metadataStore = new MetadataStore();
 
 // Here we are storing all attributes during construction time to have access
 // to them when creating an attribute. This is possible with some webpack magic.
@@ -43,7 +45,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     /**
      * Sets className and collectionName as well as it traps attribute getter
      * and setter and handles reactivity for the model and wrapping frameworks.
-     * It also creates the attributes and sets the unProxyfiedModel in the
+     * It also creates the attributes and sets the unProxyfiedObject in the
      * models instance.
      */
     class ModelClass extends ctor {
@@ -84,7 +86,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
         public constructor(...args: any[]) {
             super(...args);
             // @ts-expect-error yes it's read only but not during construction...
-            this.unProxyfiedModel = this;
+            this.unProxyfiedObject = this;
 
             let proxy = new Proxy(this, this.proxyHandler);
             proxy = this.addReactivity(proxy);
@@ -145,12 +147,11 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @param proxy the proxy which should recognize all changes of the attributes
          */
         private createAttributes(proxy: this) {
-            const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas || {};
             for (const key in attributeSchemas) {
                 if (hasOwnProperty(attributeSchemas, key)) {
                     const attribute = new (attributes[upperFirst(key)] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
-                    metadataStore.setInstance("Attribute", proxy, key, attribute);
+                    metadataStore.setInstance<ModelLike, "Attribute">("Attribute", proxy, key, attribute);
                 }
             }
         }
@@ -161,12 +162,11 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @param proxy the proxy on which the action should bew invoked
          */
         private createActions(proxy: this) {
-            const metadataStore = new MetadataStore();
             const actionSchemas = this.getSchema()?.actionSchemas || {};
             for (const key in actionSchemas) {
                 if (hasOwnProperty(actionSchemas, key)) {
-                    const action = new BaseAction(proxy, key, Reflect.get(actionSchemas, key));
-                    metadataStore.setInstance("Action", proxy, key, action);
+                    const action = new ModelAction<typeof BaseModel>(proxy, key, Reflect.get(actionSchemas, key));
+                    metadataStore.setInstance<typeof BaseModel, "Action">("Action", proxy, key, action);
                 }
             }
         }
@@ -195,7 +195,6 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // return that manipulating proxy (see below) to ensure that behavior
             if (propertyName === "constructor") return constructorProxy;
 
-            const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
 
@@ -205,7 +204,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
-            // is equal to the unProxyfiedModel
+            // is equal to the unProxyfiedObject
             return metadataStore.getInstance("Attribute", receiver, stringProperty)?.get();
         }
 
@@ -222,13 +221,12 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @returns the value of the asked attribute or property
          */
         private set(target: this, propertyName: string | symbol, value: any, receiver: this) {
-            const metadataStore = new MetadataStore();
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
             if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
-            // is equal to the unProxyfiedModel
+            // is equal to the unProxyfiedObject
             return metadataStore.getInstance("Attribute", receiver, stringProperty)?.set(value) ?? false;
         }
 
@@ -240,7 +238,6 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     // eslint-disable-next-line prefer-const
     constructorProxy = new Proxy(ModelClass, {
         get(target, property) {
-            const metadataStore = new MetadataStore();
             const actionSchema = metadataStore.getSchema("Action", target, String(property));
 
             let action = null;
@@ -248,7 +245,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
                 action = metadataStore.getInstance("Action", target, actionSchema.name);
                 if (!action) {
                     const theTarget = target;
-                    action = new BaseAction(theTarget, actionSchema.name as any, actionSchema);
+                    action = new ModelAction(theTarget, actionSchema.name as any, actionSchema);
                     metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
                 }
             }

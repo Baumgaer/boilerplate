@@ -58,7 +58,6 @@ export default function (_environment = "common") {
         it(`should have collected the attribute schemas. ${atLeastAttributesText}`, () => {
             const schema = TestModel.getSchema() as unknown as ModelSchema<typeof TestModel>;
             for (const expectedAttributeName of attributesToExpect) {
-                // @ts-expect-error 002
                 const attributeSchema = schema?.getAttributeSchema(expectedAttributeName);
                 expect(attributeSchema, `AttributeName "${expectedAttributeName}"`).to.be.instanceOf(AttributeSchema);
             }

@@ -1,4 +1,4 @@
 import CommonActionSchema from "~common/lib/ActionSchema";
-import type { ModelLike } from "~server/@types/ModelClass";
+import type SchemaBased from "~server/lib/SchemaBased";
 
-export default class ActionSchema<T extends ModelLike> extends CommonActionSchema<T> { }
+export default class ActionSchema<T extends typeof SchemaBased> extends CommonActionSchema<T> { }

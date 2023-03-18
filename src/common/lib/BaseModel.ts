@@ -1,15 +1,16 @@
-import { BaseEntity } from "typeorm";
 import { v4 as UUidV4 } from "uuid";
-import MetadataStore from "~common/lib/MetadataStore";
 import { Model } from "~env/lib/DataTypes";
+import MetadataStore from "~env/lib/MetadataStore";
+import SchemaBased from "~env/lib/SchemaBased";
 import { Attr, AttrObserver } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject, isEqual } from "~env/utils/utils";
 import type { IExecutedAction } from "~env/@types/ActionSchema";
-import type { AttributeSchemaName, ModelChanges, RawObject } from "~env/@types/BaseModel";
-import type { ModelLike } from "~env/@types/ModelClass";
+import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
+
+const metadataStore = new MetadataStore();
 
 /**
  * This class should be a parent of each other model. It wraps the BaseEntity
@@ -17,7 +18,7 @@ import type EnvBaseModel from "~env/lib/BaseModel";
  * should have. It also provides some basic methods for data conversion and
  * handling attributes or schemas.
  */
-export default abstract class BaseModel extends BaseEntity {
+export default abstract class BaseModel extends SchemaBased {
 
     /**
      * The name of the class after compile time. This will be set by the
@@ -40,7 +41,7 @@ export default abstract class BaseModel extends BaseEntity {
      * This enables to change an attribute without causing
      * changes and also gives the ability to improve performance.
      */
-    public static readonly unProxyfiedModel: typeof BaseModel;
+    public static override readonly unProxyfiedObject: typeof BaseModel;
 
     /**
      * The ID field in the database to be able to identify each model doubtless.
@@ -97,9 +98,9 @@ export default abstract class BaseModel extends BaseEntity {
     public readonly collectionName!: string;
 
     /**
-     * @see BaseModel.unProxyfiedModel
+     * @see BaseModel.unProxyfiedObject
      */
-    public readonly unProxyfiedModel!: typeof this;
+    public readonly unProxyfiedObject!: typeof this;
 
     /**
      * The id of the model until it has no official id from the server
@@ -118,7 +119,6 @@ export default abstract class BaseModel extends BaseEntity {
      * @returns the schema of the model
      */
     public static getSchema() {
-        const metadataStore = new MetadataStore();
         return metadataStore.getSchema("Model", Object.getPrototypeOf(this), this.className);
     }
 
@@ -129,7 +129,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the schema of the attribute given by name
      */
-    public static getAttributeSchema<T extends typeof EnvBaseModel>(this: T, name: AttributeSchemaName<T>) {
+    public static getAttributeSchema(name: string) {
         return this.getSchema()?.getAttributeSchema(name) || null;
     }
 
@@ -140,7 +140,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the schema of the attribute given by name
      */
-    public static getActionSchema<T extends typeof EnvBaseModel>(this: T, name: string) {
+    public static getActionSchema(name: string) {
         return this.getSchema()?.getActionSchema(name) || null;
     }
 
@@ -223,21 +223,21 @@ export default abstract class BaseModel extends BaseEntity {
     /**
      * @see BaseModel.getSchema
      */
-    public getSchema<T extends EnvBaseModel>(this: T) {
+    public getSchema() {
         return (<typeof BaseModel>this.constructor).getSchema();
     }
 
     /**
      * @see BaseModel.getAttributeSchema
      */
-    public getAttributeSchema<T extends typeof EnvBaseModel>(this: InstanceType<T>, name: AttributeSchemaName<T>) {
+    public getAttributeSchema(name: string) {
         return this.getSchema()?.getAttributeSchema(name) || null;
     }
 
     /**
      * @see BaseModel.getAttributeSchema
      */
-    public getActionSchema<T extends typeof EnvBaseModel>(this: InstanceType<T>, name: string) {
+    public getActionSchema(name: string) {
         return this.getSchema()?.getActionSchema(name) || null;
     }
 
@@ -249,9 +249,8 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the attribute
      * @returns the unique initialized attribute owned by this model instance and identified by the given name
      */
-    public getAttribute<T extends ModelLike>(this: InstanceType<T>, name: keyof this): BaseAttribute<T> | null {
-        const metadataStore = new MetadataStore();
-        return metadataStore.getInstance("Attribute", this, name as keyof T) || null;
+    public getAttribute(name: string): BaseAttribute<typeof EnvBaseModel> | null {
+        return metadataStore.getInstance<typeof EnvBaseModel, "Attribute">("Attribute", this as unknown as EnvBaseModel, String(name)) || null;
     }
 
     /**
@@ -262,9 +261,8 @@ export default abstract class BaseModel extends BaseEntity {
      * @param name the name of the action
      * @returns the unique initialized action owned by this model instance and identified by the given name
      */
-    public getAction<T extends ModelLike>(this: InstanceType<T>, name: keyof this): BaseAction<T> | null {
-        const metadataStore = new MetadataStore();
-        return metadataStore.getInstance("Action", this, String(name)) || null;
+    public getAction(name: keyof this): BaseAction<typeof EnvBaseModel> | null {
+        return metadataStore.getInstance<typeof EnvBaseModel, "Action">("Action", this as unknown as EnvBaseModel, String(name)) || null;
     }
 
     public addExecutedAction(name: string, args: Record<string, any>) {
@@ -289,8 +287,7 @@ export default abstract class BaseModel extends BaseEntity {
      * @param this current this context
      * @returns array of all attributes
      */
-    public getAttributes<T extends ModelLike>(this: InstanceType<T>) {
-        const metadataStore = new MetadataStore();
+    public getAttributes() {
         return metadataStore.getInstances("Attribute", this);
     }
 
@@ -363,7 +360,7 @@ export default abstract class BaseModel extends BaseEntity {
         return Model({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
     }
 
-    public isAllowed<T extends typeof EnvBaseModel>(this: InstanceType<T>, actionName: keyof T, user: EnvBaseModel) {
+    public isAllowed(actionName: keyof this, user: EnvBaseModel) {
         const action = this.getActionSchema(String(actionName));
         if (!action) return false;
         return Boolean(action.accessRight?.(user, this));

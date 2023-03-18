@@ -1,10 +1,7 @@
-import ApiClient from "~env/lib/ApiClient";
-import { isUndefined } from "~env/utils/utils";
-import type { ActionOptions } from "~env/@types/ActionSchema";
-import type { ModelLike } from "~env/@types/ModelClass";
 import type ActionSchema from "~env/lib/ActionSchema";
+import type SchemaBased from "~env/lib/SchemaBased";
 
-export default class BaseAction<T extends ModelLike> {
+export default abstract class BaseAction<T extends typeof SchemaBased> {
 
     /**
      * Holds the instance which holds the attribute. This instance is a proxy
@@ -32,7 +29,7 @@ export default class BaseAction<T extends ModelLike> {
 
     public constructor(owner: T | InstanceType<T>, name: keyof (InstanceType<T> | T), attributeSchema: ActionSchema<T>) {
         this.owner = owner;
-        this.unProxyfiedOwner = owner.unProxyfiedModel as T | InstanceType<T>;
+        this.unProxyfiedOwner = owner.unProxyfiedObject as T | InstanceType<T>;
         this.name = name;
         this.schema = attributeSchema;
     }
@@ -41,42 +38,6 @@ export default class BaseAction<T extends ModelLike> {
         return (...args: any[]) => this.call(this.owner, ...args);
     }
 
-    public call(thisArg: T | InstanceType<T>, ...args: any[]) {
-
-        const result = this.schema.descriptor.value?.call(thisArg, ...args);
-        const entries = Object.entries(this.schema.argumentSchemas);
-
-        const parameters = entries.filter((entry) => {
-            return !entry[1].primary && !isUndefined(args[entry[1].index || 0]);
-        }).map((entry) => [entry[0], args[entry[1].index || 0]]) as [string, any][];
-
-        let id = "";
-        let idParameterIndex = entries.findIndex((entry) => Boolean(entry[1].primary));
-        if ("isNew" in thisArg && !thisArg.isNew()) {
-            id = thisArg.getId();
-        } else if (idParameterIndex > -1) {
-            idParameterIndex = entries[idParameterIndex][1].index || 0;
-            if (isUndefined(args[idParameterIndex])) {
-                id = "";
-            } else id = args[idParameterIndex];
-        }
-
-        if (!this.schema.local) {
-            if ("isBaseModel" in thisArg) {
-                // If this is an instance of a model, just collect all executed
-                // actions to enable sending a batch
-                if (this.schema.httpMethod !== "GET") {
-                    thisArg.addExecutedAction(String(this.name), Object.fromEntries(parameters));
-                } else ApiClient.get({ collectionName: thisArg.collectionName, actionName: String(this.name), parameters, id });
-            } else {
-                // Otherwise we have to send the action immediately because
-                // there is no instance which could collect the actions
-                const httpMethod = (this.schema.httpMethod?.toLowerCase() || "get") as Lowercase<Exclude<ActionOptions<T>["httpMethod"], undefined>>;
-                ApiClient[httpMethod]({ collectionName: thisArg.collectionName, actionName: String(this.name), parameters, id });
-            }
-        }
-
-        return result || Promise.resolve();
-    }
+    public abstract call(thisArg: T | InstanceType<T>, ...args: any[]): void;
 
 }

@@ -1,38 +1,28 @@
 import fs from "fs";
 import { fileTypeFromBuffer } from "file-type";
+import CommonBaseRoute from "~common/lib/BaseRoute";
 import { Forbidden, InternalServerError, NotAcceptable, NotFound } from "~server/lib/Errors";
 import { isValue } from "~server/utils/utils";
-import type { HttpMethods, IFullRouteObject, IMinimumRouteObject } from "~server/@types/http";
+import type { IMinimumRouteObject } from "~server/@types/http";
 import type BaseModel from "~server/lib/BaseModel";
 import type BaseServer from "~server/lib/BaseServer";
 import type Train from "~server/lib/Train";
 
-const registeredRoutes: Record<string, Record<string, IFullRouteObject>> = {};
+export default class BaseRoute extends CommonBaseRoute {
 
-export default class BaseRoute {
+    public static readonly namespace: string;
 
-    public static namespace: string = "";
-
-    public static serverClasses: (typeof BaseServer)[] = [];
+    public readonly namespace!: string;
 
     protected server: BaseServer;
 
     public constructor(server: BaseServer) {
+        super(server);
         this.server = server;
     }
 
-    public get routes() {
-        const namespace = (this.constructor as typeof BaseRoute).namespace;
-        return Object.keys(registeredRoutes[namespace]).map((key) => registeredRoutes[namespace][key]);
-    }
-
-    public static registerRoute(httpMethod: HttpMethods | "ALL", uri: string, descriptor: PropertyDescriptor, accessCheck: () => boolean) {
-        if (!registeredRoutes[this.namespace]) registeredRoutes[this.namespace] = {};
-        let methods = [httpMethod];
-        if (httpMethod === "ALL") methods = ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"];
-        for (const method of methods) {
-            registeredRoutes[this.namespace][uri] = { method: (method as HttpMethods), uri, descriptor, accessCheck };
-        }
+    public override getRoutes() {
+        return [];
     }
 
     public async handle(train: Train<typeof BaseModel>, routeObject: IMinimumRouteObject) {
@@ -92,6 +82,10 @@ export default class BaseRoute {
             train.next(new InternalServerError());
         }
 
+    }
+
+    protected async finish() {
+        // magic
     }
 
 }

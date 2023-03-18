@@ -29,12 +29,14 @@ export default class Example extends CommonExample {
     @Mutation({ accessRight: () => true })
     public changeName(@Arg() name: string): Promise<this> {
         this.name = name;
-        return this.save();
+        // return this.save();
+        return Promise.resolve(this);
     }
 
     @Query({ accessRight: () => true })
-    public queryDeletedNames(@Arg() conditionalDate: Date, @Arg() conditionalModifiedAt: Date): Promise<Example[]> {
+    public queryDeletedNames(@Arg() _conditionalDate: Date, @Arg() _conditionalModifiedAt: Date): Promise<Example[]> {
         console.log(this);
-        return (this.constructor as typeof Example).find({ select: ["name"], where: { deletedAt: conditionalDate, modifiedAt: conditionalModifiedAt } });
+        // return (this.constructor as typeof Example).find({ select: ["name"], where: { deletedAt: conditionalDate, modifiedAt: conditionalModifiedAt } });
+        return Promise.resolve([this]);
     }
 }

@@ -103,12 +103,21 @@ export function toInternalValidationReturnType(result: SafeParseReturnType<any, 
 }
 
 export function getModelNameToModelMap() {
-    if (!global.MODEL_NAME_TO_MODEL_MAP) {
+    if (!global.MODEL_NAME_TO_MODEL_MAP || !global.COLLECTION_NAME_TO_MODEL_MAP) {
         global.MODEL_NAME_TO_MODEL_MAP = {};
+        global.COLLECTION_NAME_TO_MODEL_MAP = {};
         const context = require.context("~env/models/", true, /.+\.ts/, "sync");
         context.keys().forEach((key) => {
-            global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = context(key).default;
+            const ModelClass = context(key).default;
+
+            global.MODEL_NAME_TO_MODEL_MAP[key.substring(2, key.length - 3)] = ModelClass;
+            global.COLLECTION_NAME_TO_MODEL_MAP[ModelClass.collectionName] = ModelClass;
         });
     }
     return global.MODEL_NAME_TO_MODEL_MAP;
+}
+
+export function getCollectionNameToModelMap() {
+    if (!global.COLLECTION_NAME_TO_MODEL_MAP) getModelNameToModelMap();
+    return global.COLLECTION_NAME_TO_MODEL_MAP;
 }

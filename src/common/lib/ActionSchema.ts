@@ -2,10 +2,10 @@ import { ActionError } from "~env/lib/Errors";
 import PlainObjectSchema from "~env/lib/PlainObjectSchema";
 import type { AccessRightFunc, ActionOptions, ActionOptionsPartialMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
 import type { ValidationResult } from "~env/@types/Errors";
-import type { ModelLike } from "~env/@types/ModelClass";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
+import type SchemaBased from "~env/lib/SchemaBased";
 
-export default class ActionSchema<T extends ModelLike> extends PlainObjectSchema<T> implements ActionOptions<T> {
+export default class ActionSchema<T extends typeof SchemaBased> extends PlainObjectSchema<T> implements ActionOptions<T> {
 
     /**
      * @InheritDoc

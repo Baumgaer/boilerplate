@@ -3,10 +3,10 @@ import { baseTypeFuncs, NumberType, StringType } from "~env/utils/schema";
 import { hasOwnProperty } from "~env/utils/utils";
 import type { ObjectSchemaType } from "~env/@types/AttributeSchema";
 import type { IInterfaceType } from "~env/@types/MetadataTypes";
-import type { ModelLike } from "~env/@types/ModelClass";
+import type SchemaBased from "~env/lib/SchemaBased";
 import type { Type } from "~env/utils/schema";
 
-export default abstract class PlainObjectSchema<T extends ModelLike> extends DeepTypedSchema<T> {
+export default abstract class PlainObjectSchema<T extends typeof SchemaBased> extends DeepTypedSchema<T> {
 
     /**
      * @InheritDoc

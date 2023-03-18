@@ -1,11 +1,11 @@
-import MetadataStore from "~common/lib/MetadataStore";
 import ModelClassFactory from "~common/lib/ModelClass";
 import ActionSchema from "~env/lib/ActionSchema";
 import ArgumentSchema from "~env/lib/ArgumentSchema";
 import AttributeSchema from "~env/lib/AttributeSchema";
+import MetadataStore from "~env/lib/MetadataStore";
 import ModelSchema from "~env/lib/ModelSchema";
 import { mergeWith } from "~env/utils/utils";
-import type { ActionOptions, ActionOptionsPartialMetadataJson, ActionOptionsWithMetadataJson } from "~env/@types/ActionSchema";
+import type { ActionOptions, ActionOptionsPartialMetadataJson, ActionOptionsWithMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
 import type { ArgOptions, ArgOptionsPartialMetadataJson, ArgOptionsWithMetadataJson } from "~env/@types/ArgumentSchema";
 import type { AttrOptions, AttrOptionsPartialMetadataJson, AttrOptionsWithMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
 import type { IAttrMetadata, IModelMetadata, IDeepTypedMetadata } from "~env/@types/MetadataTypes";
@@ -81,10 +81,10 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
         // of this constructor
         const theTarget = target.constructor as T;
         const attrName = metadataOptions.name as keyof T;
-        const options = metadataStore.constructSchemaParams<T, "Attribute">("Attribute", attrName, metadataOptions);
+        const options = metadataStore.constructSchemaParams<T, "Attribute">("Attribute", String(attrName), metadataOptions);
         const schema = new AttributeSchema<T>(theTarget, attrName, options);
 
-        metadataStore.setSchema("Attribute", theTarget, attrName, schema);
+        metadataStore.setSchema("Attribute", theTarget, String(attrName), schema);
     };
 }
 
@@ -152,7 +152,13 @@ export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes)
     };
 }
 
-function action<T extends typeof BaseModel>(metadataOptions: ActionOptionsPartialMetadataJson<T>, target: any, methodName: string | symbol, descriptor: TypedPropertyDescriptor<ActionFunction>, defaultMethod: ActionOptions<T>["httpMethod"]) {
+function action<T extends typeof BaseModel>(
+    metadataOptions: ActionOptionsPartialMetadataJson<T>,
+    target: any,
+    methodName: string | symbol,
+    descriptor: TypedPropertyDescriptor<ActionFunction>,
+    defaultMethod: HttpMethods
+) {
     const defaultAccessRight = () => false;
     metadataOptions.httpMethod = metadataOptions.httpMethod ?? defaultMethod;
     metadataOptions.accessRight = metadataOptions.accessRight ?? defaultAccessRight;

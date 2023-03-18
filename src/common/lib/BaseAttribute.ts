@@ -68,7 +68,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
 
     public constructor(owner: InstanceType<T>, name: keyof InstanceType<T>, attributeSchema: AttributeSchema<T>) {
         this.owner = owner;
-        this.unProxyfiedOwner = owner.unProxyfiedModel as InstanceType<T>;
+        this.unProxyfiedOwner = owner.unProxyfiedObject as InstanceType<T>;
         this.name = name;
         this.schema = attributeSchema;
         this.ownerName = owner.className;

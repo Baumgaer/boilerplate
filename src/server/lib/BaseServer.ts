@@ -133,20 +133,15 @@ export default abstract class BaseServer {
         return {};
     }
 
-    protected routeFilter(_route: typeof BaseRoute): boolean {
-        return true;
-    }
-
     private async setupRoutes() {
         const context = require.context("~server/routes/", true, /.+\.ts/, "sync");
         const router = Router({ caseSensitive: true, mergeParams: true });
 
         context.keys().forEach((key) => {
             const routeClass: typeof BaseRoute = context(key).default;
-            if (!routeClass.serverClasses.includes(this.constructor as typeof BaseServer) || !this.routeFilter(routeClass)) return;
 
             const route = new routeClass(this);
-            for (const routeObj of route.routes) {
+            for (const routeObj of route.getRoutes()) {
                 const routerMethod = routeObj.method.toLowerCase() as Lowercase<HttpMethods>;
                 router[routerMethod](routeObj.uri, (req, res, next) => {
                     const descriptor = routeObj.descriptor;

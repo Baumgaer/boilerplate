@@ -2,9 +2,9 @@ import { ParameterError } from "~env/lib/Errors";
 import PlainObjectSchema from "~env/lib/PlainObjectSchema";
 import type { ArgOptionsPartialMetadataJson, ArgOptions } from "~env/@types/ArgumentSchema";
 import type { ValidationResult } from "~env/@types/Errors";
-import type { ModelLike } from "~env/@types/ModelClass";
+import type SchemaBased from "~env/lib/SchemaBased";
 
-export default class ArgumentSchema<T extends ModelLike> extends PlainObjectSchema<T> implements ArgOptions<T> {
+export default class ArgumentSchema<T extends typeof SchemaBased> extends PlainObjectSchema<T> implements ArgOptions<T> {
 
     /**
      * The name of the argument in the schema. Corresponds to the argument

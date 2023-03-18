@@ -1,4 +1,4 @@
 import CommonBaseAction from "~common/lib/BaseAction";
-import type { ModelLike } from "~client/@types/ModelClass";
+import type SchemaBased from "~client/lib/SchemaBased";
 
-export default class BaseAction<T extends ModelLike> extends CommonBaseAction<T> { }
+export default abstract class BaseAction<T extends typeof SchemaBased> extends CommonBaseAction<T> { }

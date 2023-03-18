@@ -1,9 +1,12 @@
-import MetadataStore from "~common/lib/MetadataStore";
 import AttributeSchema from "~env/lib/AttributeSchema";
+import MetadataStore from "~env/lib/MetadataStore";
 import ModelSchema from "~env/lib/ModelSchema";
+import SchemaBased from "~env/lib/SchemaBased";
 import { hasOwnProperty, isObject, isPlainObject, pascalCase, upperFirst } from "~env/utils/utils";
 import type { EmbeddedEntityType, members } from "~env/@types/EmbeddedEntity";
 import type { ModelLike } from "~env/@types/ModelClass";
+
+const metadataStore = new MetadataStore();
 
 export const embeddedEntitySuffix = "EmbeddedEntity";
 
@@ -21,40 +24,40 @@ export function proxyfy<T, EE extends Record<string, any>>(className: string, cl
 }
 
 export function applyMembers<T extends ModelLike>(classType: T, members: members<Record<string, any>>) {
-    const metadataStore = new MetadataStore();
     const attributeSchemas: AttributeSchema<T>[] = [];
     for (const memberKey in members) {
         if (hasOwnProperty(members, memberKey)) {
             const memberType = members[memberKey];
             const attr = new AttributeSchema(classType, memberKey as any, memberType);
             attributeSchemas.push(attr);
-            metadataStore.setSchema("Attribute", classType, memberKey as any, attr);
+            metadataStore.setSchema("Attribute", classType as typeof SchemaBased, memberKey as any, attr);
         }
     }
 
     const modelSchema = new ModelSchema(classType, classType.className, attributeSchemas, [], {});
-    metadataStore.setSchema("Model", classType, classType.className, modelSchema);
+    metadataStore.setSchema("Model", classType as typeof SchemaBased, classType.className, modelSchema);
 }
 
 export function embeddedEntityFactory<T extends Record<string, any>>(className: string, members: members<T>, withProxy: boolean = true) {
 
     const constructedClassName = getClassName(className);
 
-    class EmbeddedEntity {
+    class EmbeddedEntity extends SchemaBased {
 
         public static readonly className: string = constructedClassName;
 
         public static readonly collectionName: string = "";
 
-        public static readonly unProxyfiedModel: typeof EmbeddedEntity = this;
+        public static override readonly unProxyfiedObject: typeof EmbeddedEntity = this;
 
         public readonly className: string = constructedClassName;
 
-        public readonly unProxyfiedModel: typeof this = this;
+        public readonly unProxyfiedObject: typeof this = this;
 
         public readonly collectionName: string = "";
 
         public constructor(params: RealConstructionParams<T>) {
+            super();
             Object.assign(this, params);
         }
 
@@ -68,8 +71,11 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
          * @returns the schema of the model
          */
         public static getSchema(): ModelSchema<typeof EmbeddedEntity> | null {
-            const metadataStore = new MetadataStore();
             return metadataStore.getSchema("Model", Object.getPrototypeOf(this), this.className);
+        }
+
+        public static getActionSchema() {
+            return null;
         }
 
         protected static isInstance(instance: unknown): boolean {
@@ -97,6 +103,10 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
          */
         public getSchema() {
             return (<typeof EmbeddedEntity>this.constructor).getSchema();
+        }
+
+        public getActionSchema() {
+            return null;
         }
 
     }

@@ -23,8 +23,8 @@ import type {
     INamedObject,
     IObjectType
 } from "~env/@types/MetadataTypes";
-import type { ModelLike } from "~env/@types/ModelClass";
 import type { TypeError } from "~env/lib/Errors";
+import type SchemaBased from "~env/lib/SchemaBased";
 import type { ObjectType } from "~env/utils/schema";
 
 /**
@@ -36,7 +36,7 @@ import type { ObjectType } from "~env/utils/schema";
  *
  * @template T The model where the schema of the model belongs to
  */
-export default abstract class DeepTypedSchema<T extends ModelLike> extends Schema<T> implements DeepTypedOptions<T> {
+export default abstract class DeepTypedSchema<T extends typeof SchemaBased> extends Schema<T> implements DeepTypedOptions<T> {
 
     /**
      * Holds the class object which created the schema. This is only a valid

@@ -1,6 +1,6 @@
 import type { InstancesType, SchemasType } from "~env/@types/MetadataStore";
-import type { ModelLike } from "~env/@types/ModelClass";
 import type { TypeNameTypeMap, SchemaTypeNames, SchemaTypes } from "~env/@types/Schema";
+import type SchemaBased from "~env/lib/SchemaBased";
 
 /**
  * This is a singleton store which hold all reflect-metadata data to be type
@@ -14,9 +14,9 @@ export default class MetadataStore {
      */
     private static instance: MetadataStore;
 
-    private schemas?: SchemasType<ModelLike>;
+    private schemas?: SchemasType<typeof SchemaBased>;
 
-    private instances?: InstancesType<ModelLike>;
+    private instances?: InstancesType<typeof SchemaBased>;
 
     public constructor() {
         if (MetadataStore.instance) return MetadataStore.instance;
@@ -26,7 +26,7 @@ export default class MetadataStore {
         return this;
     }
 
-    public setSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], schema: SchemaTypes<T>) {
+    public setSchema<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], schema: SchemaTypes<T>) {
         const schemaName = `${String(name)}:${String(schema.name)}`;
 
         if (!this.schemas) this.schemas = {} as SchemasType<T>;
@@ -37,7 +37,7 @@ export default class MetadataStore {
         Reflect.defineMetadata(`${target.name}:${schemaName}:${type}Definition`, schema, target);
     }
 
-    public getSchema<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["schema"] | null {
+    public getSchema<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["schema"] | null {
         if (!subSchemaName) subSchemaName = name;
 
         const schemaName = `${String(name)}:${String(subSchemaName)}`;
@@ -46,7 +46,7 @@ export default class MetadataStore {
         return Reflect.getMetadata(`${target.name}:${schemaName}:${type}Definition`, target);
     }
 
-    public getSchemas<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T): TypeNameTypeMap<T>[N]["schema"][] {
+    public getSchemas<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T): TypeNameTypeMap<T>[N]["schema"][] {
         const schemas: Record<string, any> = {};
         const metadataKeys: string[] = Reflect.getMetadataKeys(target).slice().reverse();
 
@@ -58,7 +58,7 @@ export default class MetadataStore {
         return Object.values(schemas);
     }
 
-    public constructSchemaParams<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, name: TypeNameTypeMap<T>[N]["nameType"], options: TypeNameTypeMap<T>[N]["options"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]) {
+    public constructSchemaParams<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, name: TypeNameTypeMap<T>[N]["nameType"], options: TypeNameTypeMap<T>[N]["options"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]) {
         if (!subSchemaName) subSchemaName = name;
 
         const newParams = {} as TypeNameTypeMap<T>[N]["options"];
@@ -69,9 +69,9 @@ export default class MetadataStore {
         return newParams;
     }
 
-    public setInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"], instance: TypeNameTypeMap<T>[N]["usingInstance"]) {
+    public setInstance<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"], instance: TypeNameTypeMap<T>[N]["usingInstance"]) {
 
-        if (!this.instances) this.instances = {} as InstancesType<ModelLike>;
+        if (!this.instances) this.instances = {} as InstancesType<typeof SchemaBased>;
         if (!this.instances[type]) this.instances[type] = new WeakMap();
         if (!this.instances[type].has(target)) this.instances[type].set(target, {});
 
@@ -79,11 +79,11 @@ export default class MetadataStore {
         if (instances) Reflect.set(instances, name, instance);
     }
 
-    public getInstance<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["usingInstance"] | null {
+    public getInstance<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["usingInstance"] | null {
         return this.instances?.[type]?.get(target)?.[String(name)] as any || null;
     }
 
-    public getInstances<T extends ModelLike, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {
+    public getInstances<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {
         return Object.values(this.instances?.[type]?.get(target) ?? {}) as TypeNameTypeMap<T>[N]["usingInstance"][];
     }
 }
