@@ -13,7 +13,7 @@ export default abstract class BaseAction<T extends typeof SchemaBased> {
      * The name of the attribute which corresponds by the attribute name in
      * the code or an alias defined in the @Attr() decorator
      */
-    public readonly name: keyof InstanceType<T>;
+    public readonly name: keyof (InstanceType<T> | T);
 
     /**
      * The schema of the attribute which gives more information.

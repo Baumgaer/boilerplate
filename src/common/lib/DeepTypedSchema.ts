@@ -103,7 +103,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
     protected readonly _ctor: T;
 
     public constructor(ctor: T, name: string | keyof T, options: DeepTypedOptionsPartialMetadataJson<T>) {
-        super(ctor, name, options);
+        super(name, options);
         this._ctor = ctor;
     }
 

@@ -10,7 +10,7 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
     /**
      * @InheritDoc
      */
-    declare public readonly name: string;
+    declare public readonly name: keyof T;
 
     /**
      * @InheritDoc
@@ -50,7 +50,7 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
      */
     protected override _constructed: boolean = true;
 
-    public constructor(ctor: T, name: string, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[], descriptor: TypedPropertyDescriptor<ActionFunction>) {
+    public constructor(ctor: T, name: keyof T, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[], descriptor: TypedPropertyDescriptor<ActionFunction>) {
         super(ctor, name, options);
         for (const schema of schemas) this.setArgumentSchema(schema);
         this.setConstants(options);

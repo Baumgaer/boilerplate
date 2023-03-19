@@ -21,10 +21,6 @@ export default class BaseRoute extends CommonBaseRoute {
         this.server = server;
     }
 
-    public override getRoutes() {
-        return [];
-    }
-
     public async handle(train: Train<typeof BaseModel>, routeObject: IMinimumRouteObject) {
         // 1. Check access to route
         // 2. Get Data if ID is given

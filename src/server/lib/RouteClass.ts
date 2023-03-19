@@ -12,9 +12,9 @@ export default function RouteClassFactory<T extends typeof BaseRoute>(ctor: T & 
 
         public static override isRouteClass: boolean = true;
 
-        public static override readonly namespace: string = options.name as string;
+        public static override readonly namespace: string = options.namespace as string;
 
-        public override namespace: string = options.name as string;
+        public override namespace: string = options.namespace as string;
 
         public isRouteClass: boolean = true;
 
@@ -31,7 +31,7 @@ export default function RouteClassFactory<T extends typeof BaseRoute>(ctor: T & 
             for (const key in actionSchemas) {
                 if (hasOwnProperty(actionSchemas, key)) {
                     const action = new RouteAction(proxy, key, Reflect.get(actionSchemas, key));
-                    metadataStore.setInstance("Action", proxy, key, action);
+                    metadataStore.setInstance<typeof BaseRoute, "Action">("Action", proxy, key, action);
                 }
             }
         }

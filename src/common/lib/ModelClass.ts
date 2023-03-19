@@ -242,11 +242,11 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
 
             let action = null;
             if (actionSchema) {
-                action = metadataStore.getInstance("Action", target, actionSchema.name);
+                action = metadataStore.getInstance("Action", target, String(actionSchema.name));
                 if (!action) {
                     const theTarget = target;
                     action = new ModelAction(theTarget, actionSchema.name as any, actionSchema);
-                    metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
+                    metadataStore.setInstance("Action", theTarget, String(actionSchema.name), action);
                 }
             }
 

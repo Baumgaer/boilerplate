@@ -1,5 +1,6 @@
 import SchemaBased from "~env/lib/SchemaBased";
 import type ActionSchema from "~env/lib/ActionSchema";
+import type RouteSchema from "~env/lib/RouteSchema";
 
 export default class BaseRoute extends SchemaBased {
 
@@ -15,7 +16,7 @@ export default class BaseRoute extends SchemaBased {
         // Nothing to do here
     }
 
-    public getSchema(): ActionSchema<typeof BaseRoute> | null {
+    public getSchema(): RouteSchema<typeof BaseRoute> | null {
         throw new Error("Not implemented");
     }
 

@@ -43,7 +43,7 @@ export default abstract class Schema<T> {
      */
     protected abstract schemaType: Type<any> | null;
 
-    public constructor(ctor: T, name: string | keyof T, options: Record<string, any>) {
+    public constructor(name: string | keyof T, options: Record<string, any>) {
         this.name = name;
         this.options = options;
     }

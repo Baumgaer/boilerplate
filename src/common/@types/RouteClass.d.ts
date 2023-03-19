@@ -5,7 +5,7 @@ import type BaseRoute from "~env/lib/BaseRoute";
 export type RouteLike = typeof BaseRoute
 
 export interface RouteOptions<T extends RouteLike> extends ThisType<T> {
-    name?: string
+    namespace?: string
 }
 
 export type RouteOptionsWithMetadataJson<T extends RouteLike> = RouteOptions<T> & { metadataJson: string }

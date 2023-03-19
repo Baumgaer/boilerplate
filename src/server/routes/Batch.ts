@@ -4,7 +4,7 @@ import type { IMinimumRouteObject } from "~server/@types/http";
 import type BaseModel from "~server/lib/BaseModel";
 import type Train from "~server/lib/Train";
 
-@Route({ name: "/batch" })
+@Route({ namespace: "/batch" })
 export default class Models extends BaseRoute {
 
     @Mutation({ name: "/models" })
