@@ -4,6 +4,7 @@ import type { ArgOptionsPartialMetadataJson } from "~env/@types/ArgumentSchema";
 import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
 import type { ModelLike, ModelOptionsPartialMetadataJson } from "~env/@types/ModelClass";
 import type ActionSchema from "~env/lib/ActionSchema";
+import type ArgumentSchema from "~env/lib/ArgumentSchema";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";

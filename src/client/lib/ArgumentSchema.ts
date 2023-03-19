@@ -1,5 +1,5 @@
 import CommonArgumentSchema from "~common/lib/ArgumentSchema";
-import type SchemaBased from "~env/lib/SchemaBased";
+import type SchemaBased from "~client/lib/SchemaBased";
 
 /**
  * @see CommonArgumentSchema

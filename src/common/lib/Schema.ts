@@ -55,7 +55,7 @@ export default abstract class Schema<T> {
      * @returns a resolving promise
      */
     public awaitConstruction() {
-        return new Promise((resolve) => {
+        return new Promise<boolean>((resolve) => {
             const interval = setInterval(() => {
                 if (!this._constructed) return;
                 clearInterval(interval);
