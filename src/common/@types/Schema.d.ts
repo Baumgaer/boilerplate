@@ -3,12 +3,14 @@ import type { ActionOptionsPartialMetadataJson } from "~env/@types/ActionSchema"
 import type { ArgOptionsPartialMetadataJson } from "~env/@types/ArgumentSchema";
 import type { AttrOptionsPartialMetadataJson } from "~env/@types/AttributeSchema";
 import type { ModelLike, ModelOptionsPartialMetadataJson } from "~env/@types/ModelClass";
+import type { RouteLike, RouteOptionsPartialMetadataJson } from "~env/@types/RouteClass";
 import type ActionSchema from "~env/lib/ActionSchema";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
 import type AttributeSchema from "~env/lib/AttributeSchema";
 import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type ModelSchema from "~env/lib/ModelSchema";
+import type RouteSchema from "~env/lib/RouteSchema";
 import type SchemaBased from "~env/lib/SchemaBased";
 
 export interface TypeNameTypeMap<T extends typeof SchemaBased> {
@@ -16,6 +18,12 @@ export interface TypeNameTypeMap<T extends typeof SchemaBased> {
         schema: ModelSchema<T>;
         usingInstance: InstanceType<ModelLike>;
         options: ModelOptionsPartialMetadataJson<T>;
+        nameType: string
+    }
+    Route: {
+        schema: RouteSchema<T>;
+        usingInstance: InstanceType<RouteLike>;
+        options: RouteOptionsPartialMetadataJson<T>;
         nameType: string
     }
     Attribute: {

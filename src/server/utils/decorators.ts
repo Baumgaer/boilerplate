@@ -1,6 +1,7 @@
 import { mergeWith } from "~env/utils/utils";
 import MetadataStore from "~server/lib/MetadataStore";
 import RouteClassFactory from "~server/lib/RouteClass";
+import RouteSchema from "~server/lib/RouteSchema";
 import type { IRouteMetadata } from "~server/@types/MetadataTypes";
 import type { RouteOptionsPartialMetadataJson, RouteOptionsWithMetadataJson, RouteOptions } from "~server/@types/RouteClass";
 import type BaseRoute from "~server/lib/BaseRoute";
@@ -19,11 +20,16 @@ export function Route<T extends typeof BaseRoute>(options: RouteOptions<T> = {})
         const proto: typeof BaseRoute = Object.getPrototypeOf(target);
 
         // @ts-expect-error This is readonly to prevent setting it while normal development
-        proto.namespace = options.name;
+        proto.namespace = options.namespace;
 
         const routeClass = RouteClassFactory(target, options);
 
         const actionSchemas = [...metadataStore.getSchemas("Action", target), ...metadataStore.getSchemas("Action", target.constructor)];
         for (const actionSchema of actionSchemas) actionSchema.setOwner(routeClass);
+
+        const routeSchema = new RouteSchema(routeClass, target.namespace, actionSchemas, options);
+
+        metadataStore.setSchema("Route", target, target.namespace, routeSchema);
+        return routeClass;
     };
 }

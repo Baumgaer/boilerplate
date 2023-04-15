@@ -8,6 +8,15 @@ import type BaseServer from "~server/lib/BaseServer";
 const metadataStore = new MetadataStore();
 
 export default function RouteClassFactory<T extends typeof BaseRoute>(ctor: T & { isRouteClass: boolean }, options: RouteOptions<T>) {
+
+    // Remove RouteClass from prototype chain of ctor to avoid double registration
+    // of proxy and other RouteClass stuff
+    if (ctor.isRouteClass) {
+        const classPrototype = Reflect.getPrototypeOf(ctor);
+        const prototype = classPrototype && Reflect.getPrototypeOf(classPrototype) as typeof ctor | null;
+        if (classPrototype && prototype && prototype.isRouteClass) Reflect.setPrototypeOf(classPrototype, Reflect.getPrototypeOf(prototype));
+    }
+
     return class RouteClass extends ctor {
 
         public static override isRouteClass: boolean = true;

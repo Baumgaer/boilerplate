@@ -5,6 +5,7 @@ import AttributeSchema from "~env/lib/AttributeSchema";
 import MetadataStore from "~env/lib/MetadataStore";
 import ModelSchema from "~env/lib/ModelSchema";
 import { mergeWith } from "~env/utils/utils";
+import type { PartialDeep } from "type-fest";
 import type { ActionOptions, ActionOptionsPartialMetadataJson, ActionOptionsWithMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
 import type { ArgOptions, ArgOptionsPartialMetadataJson, ArgOptionsWithMetadataJson } from "~env/@types/ArgumentSchema";
 import type { AttrOptions, AttrOptionsPartialMetadataJson, AttrOptionsWithMetadataJson, AttrObserverTypes } from "~env/@types/AttributeSchema";
@@ -12,6 +13,7 @@ import type { IAttrMetadata, IModelMetadata, IDeepTypedMetadata } from "~env/@ty
 import type { ModelOptions, ModelOptionsPartialMetadataJson, ModelOptionsWithMetadataJson } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 import type { AttributeError } from "~env/lib/Errors";
+import type SchemaBased from "~env/lib/SchemaBased";
 
 const metadataStore = new MetadataStore();
 
@@ -99,8 +101,8 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
  * @returns a decorator which registers the method as a validator
  */
 export function AttrValidator<T>(attributeName: keyof T) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], true | AttributeError>>) => {
-        Reflect.defineMetadata(`${String(attributeName)}:validator`, descriptor, target);
+    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], true | AttributeError>>) => {
+        Reflect.defineMetadata(`${String(attributeName)}:validator`, descriptor, target as object);
     };
 }
 
@@ -114,8 +116,8 @@ export function AttrValidator<T>(attributeName: keyof T) {
  * @returns a decorator which registers the method as a getter
  */
 export function AttrGetter<T>(attributeName: keyof T) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
-        Reflect.defineMetadata(`${String(attributeName)}:getter`, descriptor, target);
+    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
+        Reflect.defineMetadata(`${String(attributeName)}:getter`, descriptor, target as object);
     };
 }
 
@@ -130,8 +132,8 @@ export function AttrGetter<T>(attributeName: keyof T) {
  * @returns a decorator which registers the method as a setter
  */
 export function AttrSetter<T>(attributeName: keyof T) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], T[typeof attributeName]>>) => {
-        Reflect.defineMetadata(`${String(attributeName)}:setter`, descriptor, target);
+    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], T[typeof attributeName]>>) => {
+        Reflect.defineMetadata(`${String(attributeName)}:setter`, descriptor, target as object);
     };
 }
 
@@ -147,12 +149,12 @@ export function AttrSetter<T>(attributeName: keyof T) {
  * @returns a decorator which registers the method as an observer
  */
 export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
-    return (target: Partial<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<ObserverHookFunction<any>>) => {
-        Reflect.defineMetadata(`${String(attributeName)}:observer:${type}`, descriptor, target);
+    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<ObserverHookFunction<any>>) => {
+        Reflect.defineMetadata(`${String(attributeName)}:observer:${type}`, descriptor, target as object);
     };
 }
 
-function action<T extends typeof BaseModel>(
+function action<T extends typeof SchemaBased>(
     metadataOptions: ActionOptionsPartialMetadataJson<T>,
     target: any,
     methodName: string | symbol,
@@ -179,7 +181,7 @@ function action<T extends typeof BaseModel>(
  * @param options the parameters which control the behavior of the action
  * @returns a decorator which registers the method as a mutation action
  */
-export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
+export function Mutation<T extends typeof SchemaBased>(options: ActionOptions<T> = {}) {
     const metadata: IDeepTypedMetadata = JSON.parse((options as ActionOptionsWithMetadataJson<T>).metadataJson);
     const metadataOptions: ActionOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ActionOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
@@ -197,7 +199,7 @@ export function Mutation<T extends typeof BaseModel>(options: ActionOptions<T> =
  * @param options the parameters which control the behavior of the action
  * @returns a decorator which registers the method as a query action
  */
-export function Query<T extends typeof BaseModel>(options: ActionOptions<T> = {}) {
+export function Query<T extends typeof SchemaBased>(options: ActionOptions<T> = {}) {
     const metadata: IDeepTypedMetadata = JSON.parse((options as ActionOptionsWithMetadataJson<T>).metadataJson);
     const metadataOptions: ActionOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ActionOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
@@ -215,7 +217,7 @@ export function Query<T extends typeof BaseModel>(options: ActionOptions<T> = {}
  * @param options the parameters which control the behavior of the parameter
  * @returns a decorator which registers the parameter as an action parameter
  */
-export function Arg<T extends typeof BaseModel>(options: ArgOptions<T> = {}) {
+export function Arg<T extends typeof SchemaBased>(options: ArgOptions<T> = {}) {
     const metadata: IDeepTypedMetadata = JSON.parse((options as ArgOptionsWithMetadataJson<T>).metadataJson);
     const metadataOptions: ArgOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ArgOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
