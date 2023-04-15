@@ -51,7 +51,11 @@
         "type-coverage:server": "typescript-coverage-report -p ./src/server/tsconfig.json -o ./coverage/type-report/server",
         "type-coverage:test:unit:client": "typescript-coverage-report -p ./tests/unit/client/tsconfig.json -o ./coverage/type-report/tests/unit/client",
         "type-coverage:test:unit:server": "typescript-coverage-report -p ./tests/unit/server/tsconfig.json -o ./coverage/type-report/tests/unit/server",
-        "prepare": "cd dev/eslint-plugin-boilerplate && npm run build && cd ../.. && is-ci || husky install"
+        "//7": "",
+        "prepare": "npm-run-all -s prepare:*",
+        "prepare:eslint-plugin-boilerplate": "cd ./dev/eslint-plugin-boilerplate && npm ci && npm run build",
+        "prepare:typescript-transformer-boilerplate": "cd ./dev/typescript-transformer-boilerplate && npm ci && npm run build",
+        "prepare:husky": "is-ci || husky install"
     },
     "dependencies": {
         "@babel/runtime": "^7.21.0",
