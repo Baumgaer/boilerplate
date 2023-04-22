@@ -6,4 +6,4 @@ export interface IConfiguration {
     tsConfigPath: string;
 }
 
-export type ValidDeclarations = ts.ClassDeclaration | ts.PropertyDeclaration;
+export type ValidDeclaration = ts.ClassDeclaration | ts.PropertyDeclaration;

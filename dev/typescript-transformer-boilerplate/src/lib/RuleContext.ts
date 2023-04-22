@@ -11,6 +11,7 @@ import {
     isClassDeclaration,
     isMethodDeclaration
 } from "../utils/SyntaxKind";
+import { getDecorators, hasDecorator } from "../utils/utils";
 import type { DecoratorNames, IOptions } from "../@types/RuleContext";
 import type { IConfiguration } from "../@types/Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
@@ -28,7 +29,8 @@ export const typeEmittingDecorators = {
 } as const;
 
 export const nonTypeEmittingDecorators = {
-    Model: [{ attachedNodeCheck: isClassDeclaration, resetsMetadata: false, echoType: "model" }]
+    Model: [{ attachedNodeCheck: isClassDeclaration, resetsMetadata: false, echoType: "model" }],
+    Route: [{ attachedNodeCheck: isClassDeclaration, resetsMetadata: true, echoType: "route" }]
 } as const;
 
 export const emittingDecorators = {
@@ -75,7 +77,9 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
             if (Object.prototype.hasOwnProperty.call(emittingDecorators, decoratorName)) {
                 const checkers = emittingDecorators[decoratorName as keyof typeof emittingDecorators];
                 for (const checker of checkers) {
-                    if (checker.attachedNodeCheck(node)) return checker.echoType;
+                    if (checker.attachedNodeCheck(node) && (hasDecorator(node, decoratorName) || !getDecorators(node).length)) {
+                        return checker.echoType;
+                    }
                 }
             }
         }

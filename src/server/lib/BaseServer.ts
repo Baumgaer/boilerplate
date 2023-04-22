@@ -202,7 +202,8 @@ export default abstract class BaseServer {
             await this.setupRoutes();
             console.info("8. Setup finished");
         } catch (error) {
-            console.error(`Error while setting up server: ${error}`);
+            console.error(`Error while setting up server!`);
+            console.error(error);
         }
         this.setupFinished = true;
     }

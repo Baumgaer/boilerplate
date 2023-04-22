@@ -1,6 +1,10 @@
+import { install } from 'source-map-support';
+
+install();
 import transformer from "./lib/Transformer";
 import { Action } from "./rules/Action";
 import { Model } from "./rules/Model";
+import { Route } from "./rules/Route";
 import { TypeAny } from "./rules/Type-Any";
 import { TypeArray } from "./rules/Type-Array";
 import { TypeBoolean } from "./rules/Type-Boolean";
@@ -27,6 +31,7 @@ import type ts from "typescript";
 const rules = [
     TypeParenthesized,
     TypePromise,
+    Route,
     Model,
     Action,
     TypeThis,

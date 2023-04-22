@@ -59,10 +59,20 @@ module.exports = (env, options, returnConfigObject) => {
             __filename: false,  // and __filename return blank or /
         },
         externals: [nodeExternals({
-            allowlist: [
-                "on-change",
-                "normalize-url"
-            ]
+            allowlist: (moduleName) => {
+                const allowedModules = [
+                    "on-change",
+                    "normalize-url",
+                    "file-type",
+                    "strtok3",
+                    "peek-readable",
+                    "token-types"
+                ];
+                for (const allowedModule of allowedModules) {
+                    if (moduleName.includes(allowedModule)) return true;
+                }
+                return false;
+            }
         })], // Need this to avoid error when working with Express
         optimization: {
             splitChunks: false

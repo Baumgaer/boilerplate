@@ -5,10 +5,10 @@ import type BaseModel from "~server/lib/BaseModel";
 import type Train from "~server/lib/Train";
 
 @Route({ namespace: "/batch" })
-export default class Models extends BaseRoute {
+export default class Batch extends BaseRoute {
 
-    @Mutation({ name: "/models" })
-    public async handleModels() {
+    @Mutation({ name: "/batch" })
+    public async handleBatch() {
         // magic
     }
 

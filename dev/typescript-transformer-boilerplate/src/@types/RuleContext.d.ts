@@ -1,6 +1,6 @@
-import type { createRule, typeEmittingDecorators, nonTypeEmittingDecorators } from "../lib/RuleContext";
 import type { MetadataType } from "./MetadataTypes";
 import type { IConfiguration } from "./Transformer";
+import type { createRule, typeEmittingDecorators, nonTypeEmittingDecorators } from "../lib/RuleContext";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 import type * as ts from "typescript";
 

@@ -68,7 +68,7 @@ module.exports = (_env, options, returnConfigObject) => {
         },
         module: {
             rules: [{
-                test: /\.ts$/,
+                test: /\.m?tsx?$/,
                 use: [
                     {
                         loader: "babel-loader",
@@ -77,10 +77,11 @@ module.exports = (_env, options, returnConfigObject) => {
                                 "@babel/preset-env"
                             ],
                             plugins: [
+                                ["@babel/plugin-transform-modules-commonjs", { allowTopLevelThis: true }],
                                 ["@babel/plugin-proposal-decorators", { version: "legacy" }],
                                 "@babel/plugin-proposal-class-properties",
                                 "@babel/plugin-proposal-nullish-coalescing-operator",
-                                "@babel/plugin-proposal-optional-chaining",
+                                "@babel/plugin-proposal-optional-chaining"
                             ],
                             sourceMap: 'inline'
                         }

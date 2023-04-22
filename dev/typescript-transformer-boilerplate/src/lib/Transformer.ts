@@ -3,10 +3,10 @@ import * as path from "path";
 import { merge } from "lodash";
 import * as ts from "typescript";
 import { isIdentifierNode, isDecoratorNode } from "../utils/SyntaxKind";
-import { programFromConfig } from "../utils/utils";
+import { getDecorators, hasDecorator, programFromConfig } from "../utils/utils";
 import { emittingDecorators } from "./RuleContext";
-import type { IConfiguration, ValidDeclarations } from "../@types/Transformer";
 import type { createRule } from "./RuleContext";
+import type { IConfiguration, ValidDeclaration } from "../@types/Transformer";
 import type { PluginConfig } from "ttypescript/lib/PluginCreator";
 
 let program: ts.Program | null = null;
@@ -34,12 +34,10 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
             return [theProgram, theSourceFile as ts.SourceFile];
         }
 
-        function isValidDeclaration(node: ts.Node): node is ValidDeclarations {
+        function isValidDeclaration(node: ts.Node): node is ValidDeclaration {
             return Object.keys(emittingDecorators).some((decoratorName) => {
                 return emittingDecorators[decoratorName as keyof typeof emittingDecorators].some((checker: any) => {
-                    return checker.attachedNodeCheck(node) && ts.canHaveDecorators(node) && ts.getDecorators(node)?.some((decorator) => {
-                        return decorator.expression.getText(decorator.getSourceFile()).includes(decoratorName);
-                    });
+                    return checker.attachedNodeCheck(node) && hasDecorator(node, decoratorName);
                 });
             });
         }
@@ -49,7 +47,9 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                 if (Object.prototype.hasOwnProperty.call(emittingDecorators, decoratorName)) {
                     const checkers = emittingDecorators[decoratorName as keyof typeof emittingDecorators];
                     for (const checker of checkers) {
-                        if (checker.attachedNodeCheck(usedNode)) return { echoType: checker.echoType, resetsMetadata: checker.resetsMetadata, name: usedNode.name?.getText() || "unknown" };
+                        if (checker.attachedNodeCheck(usedNode) && (hasDecorator(usedNode, decoratorName) || !getDecorators(usedNode).length)) {
+                            return { echoType: checker.echoType, resetsMetadata: checker.resetsMetadata, name: usedNode.name?.getText() || "unknown" };
+                        }
                     }
                 }
             }
@@ -112,7 +112,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                 return metadata;
             };
 
-            const metadata = next(node.parent.parent as ValidDeclarations);
+            const metadata = next(node.parent.parent as ValidDeclaration);
             if (!Object.keys(metadata).length) {
                 if (process.env.NODE_ENV !== "production") console.info("skipped!");
                 return node;

@@ -7,7 +7,9 @@ import {
     sys,
     parseConfigFileTextToJson,
     parseJsonConfigFileContent,
-    createProgram
+    createProgram,
+    canHaveDecorators,
+    getDecorators as tsGetDecorators
 } from "typescript";
 import {
     isNode,
@@ -46,6 +48,14 @@ export function getTypeFromNode(checker: ts.TypeChecker, node: ts.Node): TypeRet
     }
     if (isTypeNode(node)) return checker.getTypeFromTypeNode(node);
     return checker.getTypeAtLocation(node);
+}
+
+export function getDecorators(node: ts.Node) {
+    return (canHaveDecorators(node) && tsGetDecorators(node)) || [];
+}
+
+export function hasDecorator(node: ts.Node, name: string) {
+    return getDecorators(node).some((decorator) => decorator.expression.getText(decorator.getSourceFile()).includes(name));
 }
 
 export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Program, node: ts.TypeReferenceNode | ts.NewExpression | ts.Identifier, typeDeclarationName: T): ts.Statement | undefined {

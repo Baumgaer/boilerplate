@@ -1,5 +1,8 @@
 {
     "author": "René Baumgärtner",
+    "dependencies": {
+        "app-root-path": "^3.1.0"
+    },
     "description": "Import with certain structure",
     "devDependencies": {
         "@types/eslint": "^8.4.5",
@@ -15,11 +18,8 @@
     "main": "./dist/index.js",
     "name": "eslint-plugin-boilerplate",
     "scripts": {
-        "build": "tsup src/index.ts --no-splitting --minify"
+        "build": "tsup src/index.ts --no-splitting --minify --sourcemap"
     },
     "type": "commonjs",
-    "version": "1.0.0",
-    "dependencies": {
-        "app-root-path": "^3.1.0"
-    }
+    "version": "1.0.0"
 }
