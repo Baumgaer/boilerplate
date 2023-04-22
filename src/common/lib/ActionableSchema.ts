@@ -28,8 +28,8 @@ export default abstract class ActionableSchema<T extends typeof SchemaBased> ext
         for (const actionSchema of actionSchemas) this.setActionSchema(actionSchema);
     }
 
-    public getActionSchema(name: keyof InstanceType<T>): ActionSchema<T> {
-        return Reflect.get(this.actionSchemas, name);
+    public getActionSchema(name: string): ActionSchema<T> | null {
+        return Reflect.get(this.actionSchemas, name) || null;
     }
 
     public setActionSchema(schema: ActionSchema<T>) {

@@ -142,10 +142,11 @@ export default abstract class BaseServer {
 
             const route = new routeClass(this);
             for (const routeObj of route.getRoutes()) {
-                const routerMethod = routeObj.method.toLowerCase() as Lowercase<HttpMethods>;
-                router[routerMethod](routeObj.uri, (req, res, next) => {
+                console.log("Route:", routeClass.namespace, routeObj.name);
+                const routerMethod = routeObj.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
+                router[routerMethod](routeObj.name, (req, res, next) => {
                     const descriptor = routeObj.descriptor;
-                    const accessCheck = routeObj.accessCheck;
+                    const accessCheck = routeObj.accessRight;
                     const train = new Train(req, res, next);
                     route.handle(train, { descriptor, accessCheck });
                 });

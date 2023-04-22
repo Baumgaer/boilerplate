@@ -360,7 +360,7 @@ export default abstract class BaseModel extends SchemaBased {
         return Model({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
     }
 
-    public isAllowed(actionName: keyof this, user: EnvBaseModel) {
+    public isAllowed(actionName: string, user: EnvBaseModel) {
         const action = this.getActionSchema(String(actionName));
         if (!action) return false;
         return Boolean(action.accessRight?.(user, this));

@@ -10,10 +10,6 @@ import type Train from "~server/lib/Train";
 
 export default class BaseRoute extends CommonBaseRoute {
 
-    public static readonly namespace: string;
-
-    public readonly namespace!: string;
-
     protected server: BaseServer;
 
     public constructor(server: BaseServer) {

@@ -77,7 +77,7 @@ export default class Train<T extends typeof EnvBaseModel> {
         return this.request.originalUrl;
     }
 
-    public isAllowed(actionName: keyof T) {
+    public isAllowed(actionName: string) {
         return Boolean(this.head?.isAllowed(actionName, this.user));
     }
 
