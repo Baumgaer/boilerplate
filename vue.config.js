@@ -27,10 +27,12 @@ module.exports = {
             result.request = result.request.replace(/typeorm/, "typeorm/browser");
         });
 
-        const providePlugin = new webpack.ProvidePlugin({
+        const providePluginConfig = {
             'window.SQL': 'sql.js/dist/sql-wasm.js',
             'window.localforage': 'localforage/dist/localforage.min.js'
-        });
+        };
+        if (process.env.NODE_ENV !== "test") providePluginConfig.process = 'process/browser';
+        const providePlugin = new webpack.ProvidePlugin(providePluginConfig);
 
         if (!config.plugins) {
             config.plugins = [normalModuleReplacementPlugin, providePlugin];
@@ -49,6 +51,15 @@ module.exports = {
         config.resolve.alias["~client"] = [path.resolve(arp.path, "src", "client")];
         config.resolve.alias["~common"] = [path.resolve(arp.path, "src", "common")];
         config.resolve.alias["~env"] = [path.resolve(arp.path, "src", "client")];
+
+        // fallbacks
+        config.resolve.fallback.os = false;
+        config.resolve.fallback.http = false;
+        config.resolve.fallback.https = false;
+        config.resolve.fallback.zlib = false;
+        if (process.env.NODE_ENV !== "test") {
+            config.resolve.fallback['process/browser'] = require.resolve('process/browser');
+        }
 
         if (process.env.NODE_ENV === "test") {
             config.devtool = "inline-cheap-module-source-map";

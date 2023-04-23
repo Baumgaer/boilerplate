@@ -1,4 +1,5 @@
 import * as DataTypes from "~env/lib/DataTypes";
+import Logger from "~env/lib/Logger";
 import Schema from "~env/lib/Schema";
 import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType, toInternalValidationReturnType } from "~env/utils/schema";
 import { isArray } from "~env/utils/utils";
@@ -27,6 +28,7 @@ import type { TypeError } from "~env/lib/Errors";
 import type SchemaBased from "~env/lib/SchemaBased";
 import type { ObjectType } from "~env/utils/schema";
 
+const logger = new Logger("schema");
 /**
  * Provides basic functionality for schemas with nested Types and constraints
  * like "isRequires", "min" or "max". Owner and raw type might be set after
@@ -482,7 +484,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
             if (this.isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
         }
 
-        console.debug(`Created schema type ${this._ctor.name}#${String(this.name)}: ${schemaType._def.typeName}`);
+        logger.debug(`Created schema type ${this._ctor.name}#${String(this.name)}: ${schemaType._def.typeName}`);
         return schemaType;
     }
 

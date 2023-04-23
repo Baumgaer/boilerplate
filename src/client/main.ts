@@ -1,4 +1,5 @@
 import "reflect-metadata";
+import "setimmediate";
 import { IonicVue } from '@ionic/vue';
 import * as Icons from 'ionicons/icons';
 import { DataSource } from "typeorm";

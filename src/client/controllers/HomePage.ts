@@ -6,7 +6,10 @@ import SimpleIcon from "~client/components/SimpleIcon.vue";
 import SimpleItem from "~client/components/SimpleItem.vue";
 import SimpleLabel from "~client/components/SimpleLabel.vue";
 import BaseController from "~client/lib/BaseController";
+import Logger from "~client/lib/Logger";
 import AnotherExample from "~client/models/AnotherExample";
+
+const logger = new Logger("devel");
 
 export default defineComponent({
     name: "home-page",
@@ -20,6 +23,6 @@ export default defineComponent({
     },
 
     mounted() {
-        console.log(this.model, this.model.toObject());
+        logger.raw(this.model, this.model.toObject());
     }
 });

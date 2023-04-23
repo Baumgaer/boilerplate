@@ -1,6 +1,3 @@
-import { install } from 'source-map-support';
-
-install();
 import transformer from "./lib/Transformer";
 import { Action } from "./rules/Action";
 import { Model } from "./rules/Model";

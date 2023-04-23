@@ -13,6 +13,7 @@ import normalizeUrl from "normalize-url";
 import { DataSource } from "typeorm";
 import Configurator from "~env/lib/Configurator";
 import { getModelNameToModelMap } from "~env/utils/schema";
+import Logger from "~server/lib/Logger";
 import Train from "~server/lib/Train";
 import { middleware as i18nMiddleware } from "~server/utils/language";
 import type { Request, Response, NextFunction, Express } from "express";
@@ -23,6 +24,7 @@ import type { HttpMethods } from "~server/@types/http";
 import type BaseRoute from "~server/lib/BaseRoute";
 
 const configurator = new Configurator();
+const logger = new Logger("server");
 
 export default abstract class BaseServer {
 
@@ -42,7 +44,7 @@ export default abstract class BaseServer {
         await this.awaitSetupFinished();
         const { host, port } = configurator.get("server.engine");
         this.server.listen(port, host, undefined, () => {
-            console.info(`Server is running and reachable on http://${host}:${port}`);
+            logger.info(`Server is running and reachable on http://${host}:${port}`);
             process.send?.('ready');
         });
     }
@@ -142,7 +144,7 @@ export default abstract class BaseServer {
 
             const route = new routeClass(this);
             for (const routeObj of route.getRoutes()) {
-                console.log("Route:", routeClass.namespace, routeObj.name);
+                logger.log("Route:", routeClass.namespace, routeObj.name);
                 const routerMethod = routeObj.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
                 router[routerMethod](routeObj.name, (req, res, next) => {
                     const descriptor = routeObj.descriptor;
@@ -156,7 +158,7 @@ export default abstract class BaseServer {
         });
 
         this.app.use("*", (request, _response, next) => {
-            console.info(`${request.ip} ${request.method} NOT FOUND ${request.originalUrl}`);
+            logger.info(`${request.ip} ${request.method} NOT FOUND ${request.originalUrl}`);
             const httpError = new HttpErrors.NotFound();
             next(httpError);
         });
@@ -186,24 +188,23 @@ export default abstract class BaseServer {
 
     private async setup() {
         try {
-            console.info("1. Basic middlewares");
+            logger.info("1. Basic middlewares");
             await this.setupGeneral();
-            console.info("2. Session");
+            logger.info("2. Session");
             await this.setupSession();
-            console.info("3. Basic security");
+            logger.info("3. Basic security");
             await this.setupBasicSecurity();
-            console.info("4. Localization");
+            logger.info("4. Localization");
             await this.setupLocalization();
-            console.info("5. Template engine");
+            logger.info("5. Template engine");
             await this.setupTemplateEngine();
-            console.info("6. Database and mail server connections");
+            logger.info("6. Database and mail server connections");
             await Promise.all([this.setupDatabase(), this.setupEmailConnection()]);
-            console.info("7. Routes");
+            logger.info("7. Routes");
             await this.setupRoutes();
-            console.info("8. Setup finished");
+            logger.info("8. Setup finished");
         } catch (error) {
-            console.error(`Error while setting up server!`);
-            console.error(error);
+            logger.error(`Error while setting up server!`, error);
         }
         this.setupFinished = true;
     }

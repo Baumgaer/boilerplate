@@ -5,7 +5,9 @@
  * /__.__\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!
  */
 export interface IConfig {
+    config: Config;
     databases: Databases;
+    logs: Logs;
     server: Server;
 }
 interface Server {
@@ -37,6 +39,17 @@ interface Session {
     unset: string;
     secretAlgo: string;
 }
+interface Logs {
+    schema: Schema;
+    devel: Schema;
+    server: Schema;
+}
+interface Schema {
+    level: string;
+    fileName: string;
+    color: string;
+    enabled: boolean;
+}
 interface Databases {
     common: Common;
     web: Common;
@@ -54,4 +67,13 @@ interface Common {
     username: string;
     password: string;
     database: string;
+}
+interface Config {
+    logger: Logger;
+}
+interface Logger {
+    logDirectory: string;
+    maxSize: string;
+    maxFiles: number;
+    zippedArchive: boolean;
 }

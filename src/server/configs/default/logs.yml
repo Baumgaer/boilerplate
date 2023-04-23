@@ -1,0 +1,5 @@
+server:
+    level: "INFO"
+    fileName: "server.log"
+    color: "white"
+    enabled: true

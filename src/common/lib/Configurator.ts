@@ -30,7 +30,7 @@ export default class Configurator {
      * @param path the dot separated path to a leave of the configuration
      * @returns the value if the given path if exists and undefined else
      */
-    public get<TPath extends Paths<IConfig>>(path: TPath): Get<IConfig, TPath> {
+    public get<TPath extends Paths<IConfig>>(path: TPath): Get<IConfig, TPath, { strict: true }> {
         return cloneDeep(getValue(this.config, (path as string).split(".")));
     }
 

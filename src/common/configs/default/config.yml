@@ -1,0 +1,5 @@
+logger:
+    logDirectory: ""
+    maxSize: ""
+    maxFiles: 0
+    zippedArchive: false

@@ -1,6 +1,9 @@
 import AnotherCommonExample from "~common/models/AnotherExample";
 import { AttributeError } from "~server/lib/Errors";
+import Logger from "~server/lib/Logger";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model, Query, Arg } from "~server/utils/decorators";
+
+const logger = new Logger("devel");
 
 @Model()
 export default class AnotherExample extends AnotherCommonExample {
@@ -20,7 +23,7 @@ export default class AnotherExample extends AnotherCommonExample {
 
     @Query({ name: "getName", accessRight: () => true })
     public static queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
-        console.log("AnotherExample", this, id, test);
+        logger.raw("AnotherExample", this, id, test);
         return Promise.resolve();
     }
 

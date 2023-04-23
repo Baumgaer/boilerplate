@@ -1,7 +1,9 @@
+import Logger from "~client/lib/Logger";
 import { Attr, Model, Mutation, Query, Arg } from "~client/utils/decorators";
 import CommonExample from "~common/models/Example";
 import type YetAnotherExample from "~client/models/YetAnotherExample";
 
+const logger = new Logger("devel");
 @Model()
 export default class Example extends CommonExample {
 
@@ -16,13 +18,13 @@ export default class Example extends CommonExample {
 
     @Query({ accessRight: () => true })
     public static queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
-        console.log("Example", this, id, test);
+        logger.raw("Example", this, id, test);
         return Promise.resolve();
     }
 
     @Query({ accessRight: () => true })
     public static somethingElse(@Arg() test: string = "testen"): Promise<void> {
-        console.log(test);
+        logger.raw(test);
         return Promise.resolve();
     }
 
@@ -35,7 +37,7 @@ export default class Example extends CommonExample {
 
     @Query({ accessRight: () => true })
     public queryDeletedNames(@Arg() _conditionalDate: Date, @Arg() _conditionalModifiedAt: Date): Promise<Example[]> {
-        console.log(this);
+        logger.raw(this);
         // return (this.constructor as typeof Example).find({ select: ["name"], where: { deletedAt: conditionalDate, modifiedAt: conditionalModifiedAt } });
         return Promise.resolve([this]);
     }

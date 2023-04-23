@@ -3,7 +3,6 @@ const os = require('os');
 const path = require('path');
 const arp = require('app-root-path');
 
-const webpack = require("webpack");
 const TerserPlugin = require('terser-webpack-plugin');
 const TsconfigPathsPlugin = require('tsconfig-paths-webpack-plugin').TsconfigPathsPlugin;
 const ForkTsCheckerWebpackPlugin = require('fork-ts-checker-webpack-plugin');

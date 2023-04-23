@@ -1,0 +1,5 @@
+logger:
+    logDirectory: "var/log"
+    maxSize: "200m"
+    maxFiles: 10
+    zippedArchive: true

@@ -18,7 +18,7 @@
     "main": "./dist/index.js",
     "name": "eslint-plugin-boilerplate",
     "scripts": {
-        "build": "tsup src/index.ts --no-splitting --minify --sourcemap"
+        "build": "tsup src/index.ts --no-splitting --minify"
     },
     "type": "commonjs",
     "version": "1.0.0"

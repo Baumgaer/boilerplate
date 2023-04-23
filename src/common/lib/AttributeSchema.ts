@@ -17,6 +17,7 @@ import {
 import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { embeddedEntityFactory } from "~env/lib/EmbeddedEntity";
 import { AttributeError } from "~env/lib/Errors";
+import Logger from "~env/lib/Logger";
 import { baseTypeFuncs } from "~env/utils/schema";
 import { getModelClassByName, pascalCase, isArray } from "~env/utils/utils";
 import type { RelationOptions, IndexOptions } from "typeorm";
@@ -37,6 +38,8 @@ import type {
     MetadataType
 } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+
+const logger = new Logger("schema");
 
 /**
  * Defines the schema for any attribute by defining
@@ -234,7 +237,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             if (!otherAttributeSchema.isArrayType()) return "OneToMany"; // owner not needed
             return "ManyToMany"; // owner has to be specified
         }
-        console.warn(`Could not determine a relation type for ${this.owner?.className}:${String(this.name)}`);
+        logger.warn(`Could not determine a relation type for ${this.owner?.className}:${String(this.name)}`);
         return null;
     }
 
@@ -406,7 +409,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             // eslint-disable-next-line @typescript-eslint/ban-types
             let usedType: ColumnType | (() => Function | IEmbeddedEntity) = typeName;
             if (this.embeddedEntity) usedType = () => this.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
-            console.debug(`Creating column ${this._ctor.name}#${attrName}: ${usedType} = ${JSON.stringify(options)}`);
+            logger.debug(`Creating column ${this._ctor.name}#${attrName}: ${usedType} = ${JSON.stringify(options)}`);
             Column(usedType as any, options)(proto, attrName);
         }
 
@@ -446,7 +449,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         };
         const relationType = await this.getRelationType();
         if (!relationType) return false;
-        console.debug(`Creating column ${this._ctor.name}#${attributeName}: ${otherModel.name} = ${relationType}#${JSON.stringify(options)}`);
+        logger.debug(`Creating column ${this._ctor.name}#${attributeName}: ${otherModel.name} = ${relationType}#${JSON.stringify(options)}`);
         relationTypes[relationType](proto, attributeName);
         if (relationType === "OneToOne") {
             JoinColumn()(proto, attributeName);

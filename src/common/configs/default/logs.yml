@@ -1,0 +1,17 @@
+# Just an interface. Define here which log channels should be active. Example:
+# schema:
+#   level: ERROR
+#   fileName: schema.log
+#   color: blue
+
+schema:
+    level: "DEBUG"
+    fileName: "schema.log"
+    color: "cyan"
+    enabled: true # Doesn't matter. Schema is controlled by databases logLevel
+
+devel:
+    level: "SILLY"
+    fileName: "devel.log"
+    color: "gray"
+    enabled: false

@@ -5,7 +5,19 @@
  * /__.__\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!
  */
 export interface IConfig {
+    config: Config;
     databases: Databases;
+    logs: Logs;
+}
+interface Logs {
+    schema: Schema;
+    devel: Schema;
+}
+interface Schema {
+    level: string;
+    fileName: string;
+    color: string;
+    enabled: boolean;
 }
 interface Databases {
     common: Common;
@@ -20,4 +32,13 @@ interface Common {
     logging: string[];
     type: string;
     useLocalForage: boolean;
+}
+interface Config {
+    logger: Logger;
+}
+interface Logger {
+    logDirectory: string;
+    maxSize: string;
+    maxFiles: number;
+    zippedArchive: boolean;
 }

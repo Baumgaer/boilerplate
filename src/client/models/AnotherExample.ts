@@ -1,6 +1,9 @@
 import { AttributeError } from "~client/lib/Errors";
+import Logger from "~client/lib/Logger";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model, Query, Arg } from "~client/utils/decorators";
 import AnotherCommonExample from "~common/models/AnotherExample";
+
+const logger = new Logger("devel");
 
 @Model()
 export default class AnotherExample extends AnotherCommonExample {
@@ -20,13 +23,13 @@ export default class AnotherExample extends AnotherCommonExample {
 
     @Query({ name: "getName", accessRight: () => true })
     public static override queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
-        console.log("AnotherExample", this, id, test);
+        logger.raw("AnotherExample", this, id, test);
         return Promise.resolve();
     }
 
     @Query({ name: "testIt2", accessRight: () => true })
     public testIt2(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
-        console.log("AnotherExample", this, id, test);
+        logger.raw("AnotherExample", this, id, test);
         this.name = "test123";
         return Promise.resolve();
     }
@@ -35,7 +38,7 @@ export default class AnotherExample extends AnotherCommonExample {
     public testIt(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
         this.testIt2(id);
         return new Promise<void>((resolve) => {
-            console.log("AnotherExample", this, id, test);
+            logger.raw("AnotherExample", this, id, test);
             setTimeout(() => {
                 this.myUnion = "test";
                 resolve();
