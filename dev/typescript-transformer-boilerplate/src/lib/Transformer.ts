@@ -1,5 +1,6 @@
 import * as fs from "fs";
 import * as path from "path";
+import isCi from "is-ci";
 import { merge } from "lodash";
 import * as ts from "typescript";
 import { isIdentifierNode, isDecoratorNode } from "../utils/SyntaxKind";
@@ -88,7 +89,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                 const { echoType, resetsMetadata, name } = getOutputParameters(usedNode);
                 if (resetsMetadata) metadata = {};
 
-                if (process.env.NODE_ENV !== "production") console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
+                if (process.env.NODE_ENV !== "production" && !isCi) console.info(`${"".padStart(dept, "\t")}Processing ${echoType} ${name}`);
 
                 const matchedRules = [];
                 for (const rule of rules) {
@@ -99,7 +100,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                     const detectedNode = rule.detect(program, sourceFile, usedNode, matchedRules);
                     if (detectedNode) {
                         matchedRules.push(rule);
-                        if (process.env.NODE_ENV !== "production") console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
+                        if (process.env.NODE_ENV !== "production" && !isCi) console.info(`${"".padStart(dept + 1, "\t")}${rule.name} matched`);
 
                         merge(metadata, rule.emitMetadata(usedNode, program, sourceFile, detectedNode) || {});
                         let type = {};
@@ -114,10 +115,10 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
 
             const metadata = next(node.parent.parent as ValidDeclaration);
             if (!Object.keys(metadata).length) {
-                if (process.env.NODE_ENV !== "production") console.info("skipped!");
+                if (process.env.NODE_ENV !== "production" && !isCi) console.info("skipped!");
                 return node;
             }
-            if (process.env.NODE_ENV !== "production") console.debug("Result:", JSON.stringify(metadata), "\n");
+            if (process.env.NODE_ENV !== "production" && !isCi) console.debug("Result:", JSON.stringify(metadata), "\n");
             const result = buildMetadataJson(node, metadata);
             return result;
         }
