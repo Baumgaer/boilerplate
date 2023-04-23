@@ -43,5 +43,5 @@ jobs:
             - name: Run type coverage
               run: npm run type-coverage
 
-            # - name: Run unit tests
-            #   run: npm run test:unit
+            - name: Run unit tests
+              run: npm run test:unit
