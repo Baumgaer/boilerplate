@@ -38,7 +38,7 @@ module.exports = (_env, options, returnConfigObject) => {
             filename: "[name].js"
         },
         context: path.resolve(arp.path),
-        devtool: isDevelopment ? 'inline-source-map' : 'source-map', // use cheap-eval-source-map when sourcemaps are broken
+        devtool: 'source-map',
         cache: {
             type: 'filesystem',
             cacheDirectory: path.resolve(__dirname, '.build'),
@@ -82,7 +82,7 @@ module.exports = (_env, options, returnConfigObject) => {
                                 "@babel/plugin-proposal-nullish-coalescing-operator",
                                 "@babel/plugin-proposal-optional-chaining"
                             ],
-                            sourceMap: 'inline'
+                            sourceMap: false
                         }
                     },
                     {
@@ -91,6 +91,8 @@ module.exports = (_env, options, returnConfigObject) => {
                             compiler: "ttypescript",
                             configFile: TSCONFIG_PATH,
                             context: path.dirname(TSCONFIG_PATH),
+                            happyPackMode: false,
+                            transpileOnly: true
                         }
                     }]
             }, {
