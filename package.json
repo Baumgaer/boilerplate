@@ -171,7 +171,7 @@
         "sass-loader": "^13.2.2",
         "stylelint": "^15.6.0",
         "stylelint-config-clean-order": "^5.0.1",
-        "stylelint-config-standard-scss": "^8.0.0",
+        "stylelint-config-standard-scss": "^9.0.0",
         "thread-loader": "^4.0.1",
         "ts-loader": "^9.4.2",
         "ts-plugin-type-coverage": "^2.25.0",
