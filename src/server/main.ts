@@ -1,3 +1,4 @@
+import "reflect-metadata";
 import BaseServer from "~server/lib/BaseServer";
 
 class Webserver extends BaseServer { }

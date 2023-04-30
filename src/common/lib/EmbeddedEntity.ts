@@ -52,7 +52,7 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
 
         public readonly className: string = constructedClassName;
 
-        public readonly unProxyfiedObject: typeof this = this;
+        public readonly unProxyfiedObject: this = this;
 
         public readonly collectionName: string = "";
 

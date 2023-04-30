@@ -70,22 +70,6 @@ module.exports = (_env, options, returnConfigObject) => {
                 test: /\.m?tsx?$/,
                 use: [
                     {
-                        loader: "babel-loader",
-                        options: {
-                            presets: [
-                                "@babel/preset-env"
-                            ],
-                            plugins: [
-                                ["@babel/plugin-transform-modules-commonjs", { allowTopLevelThis: true }],
-                                ["@babel/plugin-proposal-decorators", { version: "legacy" }],
-                                "@babel/plugin-proposal-class-properties",
-                                "@babel/plugin-proposal-nullish-coalescing-operator",
-                                "@babel/plugin-proposal-optional-chaining"
-                            ],
-                            sourceMap: false
-                        }
-                    },
-                    {
                         loader: 'ts-loader',
                         options: {
                             compiler: "ttypescript",

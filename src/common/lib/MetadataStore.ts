@@ -27,23 +27,24 @@ export default class MetadataStore {
     }
 
     public setSchema<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], schema: SchemaTypes<T>) {
-        const schemaName = `${String(name)}:${String(schema.name)}`;
+        const dotName = String("namespace" in schema ? schema.namespace : schema.name);
+        const schemaName = `${String(name)}__:__${dotName}`;
 
         if (!this.schemas) this.schemas = {} as SchemasType<T>;
         if (!this.schemas[type]) Reflect.set(this.schemas, type, {});
         if (!this.schemas[type][schemaName]) Reflect.set(this.schemas[type], schemaName, []);
 
         this.schemas[type]?.[schemaName].push(schema);
-        Reflect.defineMetadata(`${target.name}:${schemaName}:${type}Definition`, schema, target);
+        Reflect.defineMetadata(`${target.name}__:__${schemaName}__:__${type}Definition`, schema, target);
     }
 
     public getSchema<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T, name: TypeNameTypeMap<T>[N]["nameType"], subSchemaName?: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["schema"] | null {
         if (!subSchemaName) subSchemaName = name;
 
-        const schemaName = `${String(name)}:${String(subSchemaName)}`;
+        const schemaName = `${String(name)}__:__${String(subSchemaName)}`;
         if (this.schemas?.[type]?.[schemaName]?.at(-1)) return this.schemas?.[type]?.[schemaName].at(-1);
 
-        return Reflect.getMetadata(`${target.name}:${schemaName}:${type}Definition`, target);
+        return Reflect.getMetadata(`${target.name}__:__${schemaName}__:__${type}Definition`, target);
     }
 
     public getSchemas<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T): TypeNameTypeMap<T>[N]["schema"][] {
@@ -51,8 +52,8 @@ export default class MetadataStore {
         const metadataKeys: string[] = Reflect.getMetadataKeys(target).slice().reverse();
 
         for (const key of metadataKeys) {
-            const [_targetName, schemaName, subSchemaName, typeDefinitionName] = key.split(":");
-            if (typeDefinitionName === `${type}Definition`) schemas[`${schemaName}:${subSchemaName}`] = Reflect.getMetadata(key, target);
+            const [_targetName, schemaName, subSchemaName, typeDefinitionName] = key.split("__:__");
+            if (typeDefinitionName === `${type}Definition`) schemas[`${schemaName}__:__${subSchemaName}`] = Reflect.getMetadata(key, target);
         }
 
         return Object.values(schemas);
@@ -62,7 +63,7 @@ export default class MetadataStore {
         if (!subSchemaName) subSchemaName = name;
 
         const newParams = {} as TypeNameTypeMap<T>[N]["options"];
-        const schemaName = `${String(name)}:${String(subSchemaName)}`;
+        const schemaName = `${String(name)}__:__${String(subSchemaName)}`;
         this.schemas?.[type]?.[schemaName]?.forEach((schema) => Object.assign(newParams, schema.options));
         Object.assign(newParams, options);
 

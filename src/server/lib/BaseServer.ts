@@ -1,4 +1,3 @@
-import "reflect-metadata";
 import { createHash, randomBytes } from "crypto";
 import { createServer } from "http";
 import compression from "compression";
@@ -144,13 +143,10 @@ export default abstract class BaseServer {
 
             const route = new routeClass(this);
             for (const routeObj of route.getRoutes()) {
-                logger.log("Route:", routeClass.namespace, routeObj.name);
                 const routerMethod = routeObj.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
                 router[routerMethod](routeObj.name, (req, res, next) => {
-                    const descriptor = routeObj.descriptor;
-                    const accessCheck = routeObj.accessRight;
                     const train = new Train(req, res, next);
-                    route.handle(train, { descriptor, accessCheck });
+                    route.handle(train, routeObj);
                 });
             }
 

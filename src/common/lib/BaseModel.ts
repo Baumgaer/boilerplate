@@ -100,7 +100,7 @@ export default abstract class BaseModel extends SchemaBased {
     /**
      * @see BaseModel.unProxyfiedObject
      */
-    public readonly unProxyfiedObject!: typeof this;
+    public readonly unProxyfiedObject!: this;
 
     /**
      * The id of the model until it has no official id from the server

@@ -3,7 +3,7 @@ import { fileTypeFromBuffer } from "file-type";
 import CommonBaseRoute from "~common/lib/BaseRoute";
 import { Forbidden, InternalServerError, NotAcceptable, NotFound } from "~server/lib/Errors";
 import { isValue } from "~server/utils/utils";
-import type { IMinimumRouteObject } from "~server/@types/http";
+import type ActionSchema from "~server/lib/ActionSchema";
 import type BaseModel from "~server/lib/BaseModel";
 import type BaseServer from "~server/lib/BaseServer";
 import type Train from "~server/lib/Train";
@@ -17,7 +17,7 @@ export default class BaseRoute extends CommonBaseRoute {
         this.server = server;
     }
 
-    public async handle(train: Train<typeof BaseModel>, routeObject: IMinimumRouteObject) {
+    public async handle<T extends typeof BaseRoute>(train: Train<typeof BaseModel>, schema: ActionSchema<T>) {
         // 1. Check access to route
         // 2. Get Data if ID is given
         // 3. Check access to asked data
@@ -27,10 +27,10 @@ export default class BaseRoute extends CommonBaseRoute {
         //      - Update existing objects (if allowed for each attribute)
         //      - delete removed objects (if allowed)
         // 6. Commit changes to database
-        if (!routeObject.accessCheck(train)) return train.next(new Forbidden());
+        if (!schema.accessRight(train.user, train)) return train.next(new Forbidden());
         try {
-            if (!routeObject.descriptor.value) return train.next(new NotFound());
-            const result = await routeObject.descriptor.value.call(this, train);
+            if (!schema.descriptor.value) return train.next(new NotFound());
+            const result = await schema.descriptor.value.call(this, train);
             const response = train.getOriginalResponse();
             if (!isValue(result)) {
                 // Nothing was returned, so we assume, that the content is empty

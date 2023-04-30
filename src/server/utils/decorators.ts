@@ -24,7 +24,7 @@ export function Route<T extends typeof BaseRoute>(options: RouteOptions<T> = {})
 
         const routeClass = RouteClassFactory(target, options);
 
-        const actionSchemas = [...metadataStore.getSchemas("Action", target), ...metadataStore.getSchemas("Action", target.constructor)];
+        const actionSchemas = metadataStore.getSchemas("Action", target);
         for (const actionSchema of actionSchemas) actionSchema.setOwner(routeClass);
 
         const routeSchema = new RouteSchema(routeClass, target.namespace, actionSchemas, options);

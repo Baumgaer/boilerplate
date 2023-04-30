@@ -6,6 +6,8 @@ import type { LazyType, NeverType } from "~env/utils/schema";
 
 export default class RouteSchema<T extends RouteLike> extends ActionableSchema<T> {
 
+    declare public readonly name: never;
+
     public readonly namespace: string;
 
     /**

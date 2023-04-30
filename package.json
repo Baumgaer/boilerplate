@@ -10,7 +10,7 @@
     },
     "bin": "bin/index.js",
     "scripts": {
-        "start": "nodemon -w ./dist/server --delay --exec \"node --inspect --enable-source-maps\" ./dist/server/server.js",
+        "start": "nodemon ./dist/server/server.js",
         "start:dev": "nodemon -w ./dist/server --delay --exec \"node --inspect --enable-source-maps\" ./dist/server/server.js",
         "dev": "npm-run-all -p dev:!(app)",
         "dev:server": "npm run compile:build:client:config && concurrently \"npm run compile:dev:server:config\" \"webpack --mode development --watch --config webpack.config.server.js\"",
