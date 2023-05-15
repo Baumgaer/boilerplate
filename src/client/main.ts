@@ -42,12 +42,18 @@ export default async function main(params?: IMain) {
     const modelClasses = Object.values(getModelNameToModelMap());
     await Promise.all(modelClasses.map((modelClass) => modelClass.getSchema()?.awaitConstruction()));
 
-    await new DataSource(Object.assign(configurator.get("databases.web") as DataSourceOptions, {
+    const dataSource = await new DataSource(Object.assign(configurator.get("databases.web") as DataSourceOptions, {
         entities: modelClasses,
         sqlJsConfig: {
             locateFile: () => sqlWasm.href
         }
     }, params?.dataSourceOptions ?? {})).initialize();
+
+    for (const modelClass of modelClasses) {
+        const repository = dataSource?.getRepository(modelClass);
+        if (!repository) throw new Error(`Could not get repository for ${modelClass.className}`);
+        modelClass.useRepository(repository);
+    }
 
     const app = createApp(App).use(IonicVue).use(router);
     params?.appExtension?.(app);

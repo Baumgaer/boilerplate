@@ -1,8 +1,10 @@
-import { ActionError } from "~env/lib/Errors";
+import { ActionError, TypeError, ParameterError } from "~env/lib/Errors";
 import PlainObjectSchema from "~env/lib/PlainObjectSchema";
+import { isPlainObject } from "~env/utils/utils";
 import type { AccessRightFunc, ActionOptions, ActionOptionsPartialMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
+import type { BaseError } from "~env/lib/Errors";
 import type SchemaBased from "~env/lib/SchemaBased";
 
 export default class ActionSchema<T extends typeof SchemaBased> extends PlainObjectSchema<T> implements ActionOptions<T> {
@@ -89,6 +91,22 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
      */
     public validate(value: unknown): ValidationResult {
         return this.internalValidation(value, ActionError);
+    }
+
+    public validateArgumentSchemas(args: unknown): ValidationResult {
+        if (!isPlainObject(args)) return { success: false, errors: [new TypeError("", "type", [])] };
+        const errors: BaseError[] = [];
+        for (const argName of Object.keys(args as object)) {
+            const argumentSchema = this.argumentSchemas[argName as keyof InstanceType<T>];
+            if (!argumentSchema) {
+                errors.push(new ParameterError(argName, "inexistent", [], (args as Record<string, any>)[argName]));
+            } else {
+                const validationResult = argumentSchema.validate((args as Record<string, any>)[argName]);
+                if (!validationResult.success) errors.push(...validationResult.errors);
+            }
+        }
+
+        return { success: !errors.length, errors };
     }
 
     /**

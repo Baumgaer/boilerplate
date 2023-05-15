@@ -16,11 +16,11 @@ export default class Train<T extends typeof EnvBaseModel> {
 
     private _user: any | null;
 
-    public constructor(request: Request, response: Response, next: NextFunction, object?: InstanceType<T>[]) {
+    public constructor(request: Request, response: Response, next: NextFunction, objects?: InstanceType<T>[]) {
         this.request = request;
         this.response = response;
         this.nextFunction = next;
-        this.tail = object ?? [];
+        this.tail = objects ?? [];
         this.head = this.tail.shift() ?? null;
     }
 
@@ -87,6 +87,13 @@ export default class Train<T extends typeof EnvBaseModel> {
 
     public resetUser() {
         this._user = null;
+    }
+
+    public setHead(object: InstanceType<T>) {
+        const objectIndex = this.tail.findIndex((obj) => obj === object);
+        if (objectIndex > -1) {
+            this.head = this.tail.splice(objectIndex, 1)[0];
+        } else this.head = object;
     }
 
     public isFresh(): boolean {

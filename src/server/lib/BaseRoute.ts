@@ -1,7 +1,8 @@
 import fs from "fs";
 import { fileTypeFromBuffer } from "file-type";
+import { isHttpError } from "http-errors";
 import CommonBaseRoute from "~common/lib/BaseRoute";
-import { Forbidden, InternalServerError, NotAcceptable, NotFound } from "~server/lib/Errors";
+import { BaseError, Forbidden, InternalServerError, NotAcceptable, NotFound } from "~server/lib/Errors";
 import { isValue } from "~server/utils/utils";
 import type ActionSchema from "~server/lib/ActionSchema";
 import type BaseModel from "~server/lib/BaseModel";
@@ -18,19 +19,17 @@ export default class BaseRoute extends CommonBaseRoute {
     }
 
     public async handle<T extends typeof BaseRoute>(train: Train<typeof BaseModel>, schema: ActionSchema<T>) {
-        // 1. Check access to route
-        // 2. Get Data if ID is given
-        // 3. Check access to asked data
-        // 4. Check if action exists
-        // 5. Process request Data (changes) in given action
-        //      - Create new Objects (if allowed)
-        //      - Update existing objects (if allowed for each attribute)
-        //      - delete removed objects (if allowed)
-        // 6. Commit changes to database
-        if (!schema.accessRight(train.user, train)) return train.next(new Forbidden());
         try {
-            if (!schema.descriptor.value) return train.next(new NotFound());
-            const result = await schema.descriptor.value.call(this, train);
+            if (!schema.accessRight(train.user, train)) throw new Forbidden();
+            if (!schema.descriptor.value) throw new NotFound();
+
+            const validationResult = schema.validateArgumentSchemas(Object.assign({}, train.params));
+            if (!validationResult.success) throw new AggregateError(validationResult.errors);
+
+            const orderedParameters = schema.orderParameters(train.params);
+            orderedParameters[0] = train;
+            const result = await schema.descriptor.value.call(this, ...orderedParameters);
+
             const response = train.getOriginalResponse();
             if (!isValue(result)) {
                 // Nothing was returned, so we assume, that the content is empty
@@ -70,8 +69,12 @@ export default class BaseRoute extends CommonBaseRoute {
                 train.next(new InternalServerError(`Unacceptable result: ${JSON.stringify(result)}`));
             }
         } catch (error) {
-            if (error instanceof Error) return train.next(error);
-            train.next(new InternalServerError());
+            if (error instanceof BaseError || error instanceof AggregateError || isHttpError(error)) {
+                const originalResponse = train.getOriginalResponse();
+                if (error instanceof BaseError || isHttpError(error)) originalResponse.status(error.status);
+                if (error instanceof AggregateError) originalResponse.status(500);
+                originalResponse.send("errors" in error ? error.errors : error);
+            } else train.next(new InternalServerError());
         }
 
     }

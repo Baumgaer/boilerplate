@@ -48,7 +48,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
      * It also creates the attributes and sets the unProxyfiedObject in the
      * models instance.
      */
-    class ModelClass extends ctor {
+    abstract class ModelClass extends ctor {
 
         /**
          * Identifies a model as a model class. This is needed because we are

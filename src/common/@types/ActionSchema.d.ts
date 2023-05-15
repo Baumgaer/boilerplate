@@ -4,7 +4,7 @@ import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IDeepTypedMetadata } from "~env/@types/MetadataTypes";
 import type SchemaBased from "~env/lib/SchemaBased";
 
-export type AccessRightFunc = (user: any, object: any) => boolean;
+export type AccessRightFunc = (user?: any, object?: any) => boolean;
 export type HttpMethods = "GET" | "POST" | "PUT" | "PATCH" | "OPTIONS" | "DELETE";
 
 export interface ActionOptions<T extends typeof SchemaBased> extends DeepTypedOptions<T> {

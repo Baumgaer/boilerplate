@@ -4,6 +4,7 @@ import MetadataStore from "~env/lib/MetadataStore";
 import SchemaBased from "~env/lib/SchemaBased";
 import { Attr, AttrObserver } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject, isEqual } from "~env/utils/utils";
+import type { Repository, SaveOptions } from "typeorm";
 import type { IExecutedAction } from "~env/@types/ActionSchema";
 import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type BaseAction from "~env/lib/BaseAction";
@@ -42,6 +43,8 @@ export default abstract class BaseModel extends SchemaBased {
      * changes and also gives the ability to improve performance.
      */
     public static override readonly unProxyfiedObject: typeof BaseModel;
+
+    protected static repository: Repository<EnvBaseModel>;
 
     /**
      * The ID field in the database to be able to identify each model doubtless.
@@ -111,6 +114,14 @@ export default abstract class BaseModel extends SchemaBased {
 
     public constructor(_params?: ConstructionParams<BaseModel>) {
         super();
+    }
+
+    public static async getById<T extends EnvBaseModel>(_id: UUID): Promise<T | null> {
+        throw new Error("Not implemented");
+    }
+
+    public static useRepository(repository: Repository<EnvBaseModel>) {
+        this.repository = repository;
     }
 
     /**
@@ -401,5 +412,7 @@ export default abstract class BaseModel extends SchemaBased {
     private getExecutedAction<K extends keyof IExecutedAction>(key: K, value: IExecutedAction[K]) {
         return this.executedActions.filter((executedAction) => isEqual(executedAction[key], value));
     }
+
+    public abstract save(options?: SaveOptions): Promise<this & EnvBaseModel>;
 
 }

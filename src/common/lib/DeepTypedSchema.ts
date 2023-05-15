@@ -29,6 +29,7 @@ import type SchemaBased from "~env/lib/SchemaBased";
 import type { ObjectType } from "~env/utils/schema";
 
 const logger = new Logger("schema");
+
 /**
  * Provides basic functionality for schemas with nested Types and constraints
  * like "isRequires", "min" or "max". Owner and raw type might be set after
@@ -362,7 +363,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
     }
 
     /**
-     * Sets all given constraints on thi schema and decides which behavior
+     * Sets all given constraints on this schema and decides which behavior
      * (lazy or eager) will be applied and wether this attribute will cascade
      * or not.
      *

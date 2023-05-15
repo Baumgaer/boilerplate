@@ -87,6 +87,12 @@ export default abstract class BaseServer {
         this.dataSource = await new DataSource(Object.assign(configurator.get("databases.server") as DataSourceOptions, {
             entities: modelClasses
         })).initialize();
+
+        for (const modelClass of modelClasses) {
+            const repository = this.dataSource?.getRepository(modelClass);
+            if (!repository) throw new Error(`Could not get repository for ${modelClass.className}`);
+            modelClass.useRepository(repository);
+        }
     }
 
     protected tearDownDatabase() {
@@ -142,11 +148,11 @@ export default abstract class BaseServer {
             const routeClass: typeof BaseRoute = context(key).default;
 
             const route = new routeClass(this);
-            for (const routeObj of route.getRoutes()) {
-                const routerMethod = routeObj.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
-                router[routerMethod](routeObj.name, (req, res, next) => {
+            for (const actionSchema of route.getRoutes()) {
+                const routerMethod = actionSchema.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
+                router[routerMethod](actionSchema.name, (req, res, next) => {
                     const train = new Train(req, res, next);
-                    route.handle(train, routeObj);
+                    route.handle(train, actionSchema);
                 });
             }
 

@@ -11,7 +11,7 @@
     "bin": "bin/index.js",
     "scripts": {
         "start": "nodemon ./dist/server/server.js",
-        "start:dev": "nodemon -w ./dist/server --delay --exec \"node --inspect --enable-source-maps\" ./dist/server/server.js",
+        "start:dev": "nodemon -w ./dist/server --delay --exec --inspect --enable-source-maps ./dist/server/server.js",
         "dev": "npm-run-all -p dev:!(app)",
         "dev:server": "npm run compile:build:client:config && concurrently \"npm run compile:dev:server:config\" \"webpack --mode development --watch --config webpack.config.server.js\"",
         "dev:web": "npm run compile:build:client:config && concurrently \"npm run compile:dev:client:config\" \"vue-cli-service serve --env development --deep-monitoring --source-map-support\"",
