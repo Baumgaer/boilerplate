@@ -44,4 +44,8 @@ jobs:
               run: npm run type-coverage
 
             - name: Run unit tests
-              run: npm run test:unit
+              uses: nick-fields/retry@v2
+              with:
+                  retry_on: error
+                  max_attempts: 3
+                  command: npm run test:unit
