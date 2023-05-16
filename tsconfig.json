@@ -1,9 +1,4 @@
 {
-    "buildOptions": {
-        "dry": true,
-        "incremental": true,
-        "force": true
-    },
     "compilerOptions": {
         "target": "esnext",
         "module": "esnext",

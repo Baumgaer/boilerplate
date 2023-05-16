@@ -34,7 +34,7 @@ export const Model = createRule({
             }
             let questionMark = "";
             if (node.questionToken || node.initializer) questionMark = "?";
-            return `${comment}    ${node.name.getText(sourceFile)}${questionMark}: ${node.type?.getText(sourceFile)};`;
+            return `${comment}    ${node.name.getText()}${questionMark}: ${node.type?.getText()};`;
         }
 
         function createImports(propertiesText: string) {
@@ -89,7 +89,7 @@ export const Model = createRule({
             return [name, importString];
         }
 
-        const name = `${node.name?.getText(sourceFile)}Params`;
+        const name = `${node.name?.getText()}Params`;
         const heritage = getHeritage();
         const properties = node.members.filter(isPropertyDeclaration).filter(node => hasDecorator(node, "Attr")).map(extractInterfaceText).filter(text => Boolean(text));
 
@@ -100,9 +100,8 @@ export const Model = createRule({
             extendsImport = `import type ${heritage[0]} from ${heritage[1]};\n\n`;
         }
 
-        const rules = "/* eslint-disable @typescript-eslint/no-empty-interface */\n/* eslint-disable import/order */\n/* eslint-disable import/default */\n";
         const HINT = `/*\n *   / \\     THIS FILE IS AUTO GENERATED!\n *  / | \\    DO NOT ADD CONTENT HERE!\n * /__.__\\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!\n */\n`;
-        const constParams = `${rules}${HINT}${createImports(properties.join(""))}${extendsImport}export default interface ${name}${extendsString} {\n${properties.join("\n")}\n}`;
+        const constParams = `${HINT}${createImports(properties.join(""))}${extendsImport}export default interface ${name}${extendsString} {\n${properties.join("\n")}\n}`;
 
         let pathCorrection = "";
         if (isCommonModel) pathCorrection = "/../common";
