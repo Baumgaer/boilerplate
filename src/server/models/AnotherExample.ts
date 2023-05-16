@@ -2,6 +2,7 @@ import AnotherCommonExample from "~common/models/AnotherExample";
 import { AttributeError } from "~server/lib/Errors";
 import Logger from "~server/lib/Logger";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model, Query, Arg } from "~server/utils/decorators";
+import type AnotherExampleParams from "~server/interfaces/models/AnotherExample";
 
 const logger = new Logger("devel");
 
@@ -17,7 +18,7 @@ export default class AnotherExample extends AnotherCommonExample {
     @Attr()
     public anotherExampleClient!: Lazy<number[]>;
 
-    public constructor(params?: ConstructionParams<AnotherExample>) {
+    public constructor(params?: AnotherExampleParams) {
         super(params);
     }
 
