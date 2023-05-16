@@ -107,7 +107,10 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                         type = rule.emitType(usedNode, program, sourceFile, detectedNode, (node: ts.Node) => next(node, dept + 2, metadata));
                         if (echoType === "type") {
                             return type;
-                        } else merge(metadata, { type });
+                        } else {
+                            rule.emitDeclarationFiles(usedNode, program, sourceFile, detectedNode);
+                            merge(metadata, { type });
+                        }
                     }
                 }
                 return metadata;

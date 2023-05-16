@@ -5,7 +5,9 @@ import { getExtendedTestModelArgs } from "~env/TestUtils";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 
-const args = getExtendedTestModelArgs({ aString: "lolHaha" });
+const args = getExtendedTestModelArgs({ aString: "lolHaha" } as const);
+// @ts-expect-error Date makes it hard to compare
+delete args.aDate;
 const testModel = new TestModel(Object.assign({}, args, { oneToOne: new TestMyTestModel({ name: "TestMyTestModel" }) }));
 
 export default function (_environment = "common") {
@@ -65,7 +67,7 @@ export default function (_environment = "common") {
         });
 
         it("should not have changes", () => {
-            const newTestModel = new TestModel(getExtendedTestModelArgs({ id: v4() }));
+            const newTestModel = new TestModel(getExtendedTestModelArgs({ id: v4() as UUID }));
             expect(Object.keys(newTestModel.getChanges()).length).to.be.equal(0);
         });
     });

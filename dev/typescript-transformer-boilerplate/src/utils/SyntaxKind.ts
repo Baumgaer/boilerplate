@@ -145,6 +145,10 @@ export function isVoidKeyword(node?: ts.Node): node is ts.VoidExpression {
     return Boolean(node && (node.kind & SyntaxKind.VoidKeyword) === SyntaxKind.VoidKeyword);
 }
 
+export function isOverrideKeyword(node?: ts.Node): node is ts.OverrideKeyword {
+    return Boolean(node && (node.kind & SyntaxKind.OverrideKeyword) === SyntaxKind.OverrideKeyword);
+}
+
 export function isPromiseTypeNode(checker: ts.TypeChecker, node?: ts.Node) {
     if (!node || !isTypeNode(node) || !isTypeReferenceNode(node)) return false;
     const symbol = checker.getSymbolAtLocation(node.typeName);

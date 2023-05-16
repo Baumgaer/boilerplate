@@ -8,6 +8,7 @@ import SimpleLabel from "~client/components/SimpleLabel.vue";
 import BaseController from "~client/lib/BaseController";
 import Logger from "~client/lib/Logger";
 import AnotherExample from "~client/models/AnotherExample";
+import YetAnotherExample from "~client/models/YetAnotherExample";
 
 const logger = new Logger("devel");
 
@@ -18,7 +19,7 @@ export default defineComponent({
 
     data() {
         return {
-            model: new AnotherExample({ name: "waddehaddeduddeda", anotherExampleClient: [1, 2, 3] })
+            model: new AnotherExample({ name: "waddehaddeduddeda", anotherExampleClient: [1, 2, 3], manyToOneRelation: new YetAnotherExample({ name: "another name" }) })
         };
     },
 

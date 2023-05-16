@@ -17,4 +17,5 @@ export interface IOptions<T extends DecoratorNames, D extends ts.Node> {
     detect(this: PluginConfig & IConfiguration, ...params: [...base: BaseParams<ts.Node>, matchedRules: ReturnType<typeof createRule<T>>[]]): D | false;
     emitMetadata?(this: PluginConfig & IConfiguration, ...params: BaseParams<D>): Record<string, any> | void;
     emitType?(this: PluginConfig & IConfiguration, ...params: [...base: BaseParams<D>, next: NextFunction]): T extends TypeEmittingDecoratorNames ? MetadataType : void;
+    emitDeclarationFiles?(this: PluginConfig & IConfiguration, ...params: BaseParams<D>): Record<string, string>
 }

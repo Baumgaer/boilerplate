@@ -35,7 +35,7 @@ export interface ActionDefinition<T extends typeof SchemaBased> {
     args: ArgOptions<T>[];
 }
 
-export type ActionOptionsWithMetadataJson<T extends typeof SchemaBased> = ActionOptions<T> & { metadataJson: string }
+export type ActionOptionsWithMetadataJson<T extends typeof SchemaBased> = ActionOptions<T> & { metadataJson: string };
 export type ActionOptionsPartialMetadataJson<T extends typeof SchemaBased> = IDeepTypedMetadata & SetOptional<ActionOptionsWithMetadataJson<T>, "metadataJson">;
 
 export interface IExecutedAction {

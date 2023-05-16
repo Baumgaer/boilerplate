@@ -1,12 +1,13 @@
 import { v4 as UUidV4 } from "uuid";
-import { Model } from "~env/lib/DataTypes";
+import { Model as ModelType } from "~env/lib/DataTypes";
 import MetadataStore from "~env/lib/MetadataStore";
 import SchemaBased from "~env/lib/SchemaBased";
-import { Attr, AttrObserver } from "~env/utils/decorators";
+import { Attr, AttrObserver, Model } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject, isEqual } from "~env/utils/utils";
 import type { Repository, SaveOptions } from "typeorm";
 import type { IExecutedAction } from "~env/@types/ActionSchema";
 import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
+import type BaseModelParams from "~env/interfaces/lib/BaseModel";
 import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
@@ -19,6 +20,7 @@ const metadataStore = new MetadataStore();
  * should have. It also provides some basic methods for data conversion and
  * handling attributes or schemas.
  */
+@Model()
 export default abstract class BaseModel extends SchemaBased {
 
     /**
@@ -112,7 +114,7 @@ export default abstract class BaseModel extends SchemaBased {
 
     private executedActions: IExecutedAction[] = [];
 
-    public constructor(_params?: ConstructionParams<BaseModel>) {
+    public constructor(_params?: BaseModelParams) {
         super();
     }
 
@@ -368,13 +370,17 @@ export default abstract class BaseModel extends SchemaBased {
     }
 
     public validate(obj = this.getValidationObject()) {
-        return Model({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
+        return ModelType({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
     }
 
     public isAllowed(actionName: string, user: EnvBaseModel) {
         const action = this.getActionSchema(String(actionName));
         if (!action) return false;
         return Boolean(action.accessRight?.(user, this));
+    }
+
+    public save(_options?: SaveOptions): Promise<this & EnvBaseModel> {
+        throw new Error("Not implemented");
     }
 
     /**
@@ -412,7 +418,5 @@ export default abstract class BaseModel extends SchemaBased {
     private getExecutedAction<K extends keyof IExecutedAction>(key: K, value: IExecutedAction[K]) {
         return this.executedActions.filter((executedAction) => isEqual(executedAction[key], value));
     }
-
-    public abstract save(options?: SaveOptions): Promise<this & EnvBaseModel>;
 
 }

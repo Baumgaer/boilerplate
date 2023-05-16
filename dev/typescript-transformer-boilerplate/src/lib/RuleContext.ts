@@ -1,4 +1,7 @@
+import { dirname } from "path";
+import { writeFileSync } from "fs-extra";
 import { camelCase, merge, capitalize } from "lodash";
+import { mkdirpSync } from "mkdirp";
 import { canHaveModifiers, getModifiers } from "typescript";
 import {
     isAbstractKeyword,
@@ -70,6 +73,16 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
         const methodName = `emitType${capitalize(echoType) as PascalCase<typeof echoType>}` as const;
         if (methodName in this) return (Reflect.get(this, methodName) as any).call(this, ...params);
         return this.emitTypeDefault(...params);
+    }
+
+    public emitDeclarationFiles(declarationNode: ts.Node, ...params: Parameters<Required<IOptions<T, D>>["emitDeclarationFiles"]>) {
+        const result = this.options.emitDeclarationFiles?.call(this.config, ...params);
+        if (!result) return;
+
+        for (const [filePath, content] of Object.entries(result)) {
+            mkdirpSync(dirname(filePath));
+            writeFileSync(filePath, content, { encoding: "utf-8" });
+        }
     }
 
     private getEchoType(node: ts.Node) {

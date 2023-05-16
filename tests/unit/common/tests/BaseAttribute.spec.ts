@@ -11,7 +11,7 @@ const testModel = new TestModel();
 export default function (_environment = "common") {
     describe('BaseAttribute', () => {
         it("should get the current date", () => {
-            expect(testModel.aDate.toISOString().split(".")[0]).to.be.equal(new Date().toISOString().split(".")[0]);
+            expect(testModel.aDate?.toISOString().split(".")[0]).to.be.equal(new Date().toISOString().split(".")[0]);
             expect(testModel.getterCount).to.be.equal(2);  // Counting the initial undefined value
         });
 

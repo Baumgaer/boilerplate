@@ -40,7 +40,7 @@ export interface DeepTypedOptions<T extends typeof SchemaBased> extends IInjecte
     primary?: boolean;
 }
 
-export type DeepTypedOptionsWithMetadataJson<T extends typeof SchemaBased> = DeepTypedOptions<T> & { metadataJson: string }
+export type DeepTypedOptionsWithMetadataJson<T extends typeof SchemaBased> = DeepTypedOptions<T> & { metadataJson: string };
 export type DeepTypedOptionsPartialMetadataJson<T extends typeof SchemaBased> = IDeepTypedMetadata & SetOptional<DeepTypedOptionsWithMetadataJson<T>, "metadataJson">;
-export type ObjectSchemaType = ZodLazy<ZodObject<ZodRawShape>> | ZodObject<ZodRawShape> | ZodNever
+export type ObjectSchemaType = ZodLazy<ZodObject<ZodRawShape>> | ZodObject<ZodRawShape> | ZodNever;
 export type SchemaTypes = ZodTypeAny;

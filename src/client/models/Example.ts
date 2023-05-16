@@ -1,6 +1,7 @@
 import Logger from "~client/lib/Logger";
 import { Attr, Model, Mutation, Query, Arg } from "~client/utils/decorators";
 import CommonExample from "~common/models/Example";
+import type ExampleParams from "~client/interfaces/models/Example";
 import type YetAnotherExample from "~client/models/YetAnotherExample";
 
 const logger = new Logger("devel");
@@ -15,6 +16,10 @@ export default class Example extends CommonExample {
 
     @Attr({ relationColumn: "oneToManyRelation" })
     public manyToOneRelation!: YetAnotherExample;
+
+    public constructor(params?: ExampleParams) {
+        super(params);
+    }
 
     @Query({ accessRight: () => true })
     public static queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {

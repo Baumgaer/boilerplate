@@ -17,5 +17,5 @@ export interface ArgOptions<T extends typeof SchemaBased> extends DeepTypedOptio
     index?: number;
 }
 
-export type ArgOptionsWithMetadataJson<T extends typeof SchemaBased> = ArgOptions<T> & { metadataJson: string }
+export type ArgOptionsWithMetadataJson<T extends typeof SchemaBased> = ArgOptions<T> & { metadataJson: string };
 export type ArgOptionsPartialMetadataJson<T extends typeof SchemaBased> = IDeepTypedMetadata & SetOptional<ArgOptionsWithMetadataJson<T>, "metadataJson">;

@@ -383,6 +383,7 @@ describe('decorators', () => {
                         null,
                         new Date(),
                         new TestMyTestModel({ name: randGen.generateString() }),
+                        // @ts-expect-error This must be an invalid initialization
                         new TestMyTesterModel({ name: randGen.generateString() }),
                         randGen.generateString(),
                         randGen.generateNumber(),

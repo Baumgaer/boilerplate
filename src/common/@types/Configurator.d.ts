@@ -6,4 +6,4 @@ export type Paths<T, D extends number = 10> = [D] extends [never] ? never : T ex
     { [K in keyof T]-?: K extends string | number ?
         `${K}` | Join<K, Paths<T[K], Prev[D]>>
         : never
-    }[keyof T] : ""
+    }[keyof T] : "";

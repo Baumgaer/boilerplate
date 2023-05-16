@@ -1,9 +1,11 @@
 import CommonBaseModel from "~common/lib/BaseModel";
+import { Model } from "~server/utils/decorators";
 import type { SaveOptions } from "typeorm";
 
 /**
  * @see CommonBaseModel
  */
+@Model()
 export default abstract class BaseModel extends CommonBaseModel {
 
     public constructor(params?: ConstructionParams<BaseModel>) {
@@ -20,7 +22,7 @@ export default abstract class BaseModel extends CommonBaseModel {
         }
     }
 
-    public save(options?: SaveOptions): Promise<this & BaseModel> {
+    public override save(options?: SaveOptions): Promise<this & BaseModel> {
         return (this.constructor as typeof BaseModel).repository.save(this, options);
     }
 

@@ -145,7 +145,8 @@
         "no-debugger": "off",
         "no-trailing-spaces": "error",
         "no-use-before-define": "off",
-        "semi": [
+        "semi": "off",
+        "@typescript-eslint/semi": [
             "error",
             "always"
         ],

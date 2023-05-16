@@ -371,6 +371,7 @@ export default function (environment = "common") {
                         null,
                         new Date(),
                         new TestMyTestModel({ name: randGen.generateString() }),
+                        // @ts-expect-error this must be an invalid initialization
                         new TestMyTesterModel({ name: randGen.generateString() }),
                         randGen.generateString(),
                         randGen.generateNumber(),

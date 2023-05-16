@@ -86,9 +86,9 @@ export interface IEmbeddedEntity {
     static className: string;
 }
 
-export type SchemaNameByModelClass<T> = keyof ConstructionParams<InstanceType<T>>
-export type AttrOptionsWithMetadataJson<T extends ModelLike> = AttrOptions<T> & { metadataJson: string }
+export type SchemaNameByModelClass<T> = keyof ConstructionParams<InstanceType<T>>;
+export type AttrOptionsWithMetadataJson<T extends ModelLike> = AttrOptions<T> & { metadataJson: string };
 export type AttrOptionsPartialMetadataJson<T extends ModelLike> = IAttrMetadata & SetOptional<AttrOptionsWithMetadataJson<T>, "metadataJson">;
-export type AttrObserverTypes = "add" | "remove" | "change"
+export type AttrObserverTypes = "add" | "remove" | "change";
 
-export type ChangeMethodsArgs<V> = [(string | symbol)[], V, V]
+export type ChangeMethodsArgs<V> = [(string | symbol)[], V, V];
