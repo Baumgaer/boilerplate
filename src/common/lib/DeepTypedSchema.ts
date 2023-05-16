@@ -357,9 +357,11 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
     protected checkSubTypes(arrayLikeType: MetadataType, checkFunc: ((type?: MetadataType) => boolean), includeIntersections: boolean = false): boolean {
         let intersectionResult = false;
         let unionResult = false;
+        let arrayResult = false;
         if (includeIntersections && this.isIntersectionType(arrayLikeType)) intersectionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
         if (this.isUnionType(arrayLikeType)) unionResult = arrayLikeType.subTypes.every(checkFunc.bind(this));
-        return unionResult || intersectionResult;
+        if (this.isArrayType(arrayLikeType) && !this.isTupleType(arrayLikeType)) arrayResult = checkFunc(arrayLikeType.subType);
+        return unionResult || intersectionResult || arrayResult;
     }
 
     /**
