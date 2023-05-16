@@ -1,6 +1,7 @@
 import CommonBaseModel from "~common/lib/BaseModel";
 import { Model } from "~server/utils/decorators";
 import type { SaveOptions } from "typeorm";
+import type BaseModelParams from "~server/interfaces/lib/BaseModel";
 
 /**
  * @see CommonBaseModel
@@ -8,7 +9,7 @@ import type { SaveOptions } from "typeorm";
 @Model()
 export default abstract class BaseModel extends CommonBaseModel {
 
-    public constructor(params?: ConstructionParams<BaseModel>) {
+    public constructor(params?: BaseModelParams) {
         super(params);
     }
 
