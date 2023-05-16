@@ -20,7 +20,7 @@ const metadataStore = new MetadataStore();
  * should have. It also provides some basic methods for data conversion and
  * handling attributes or schemas.
  */
-@Model()
+@Model({ isAbstract: false })
 export default abstract class BaseModel extends SchemaBased {
 
     /**

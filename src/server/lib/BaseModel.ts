@@ -6,7 +6,7 @@ import type BaseModelParams from "~server/interfaces/lib/BaseModel";
 /**
  * @see CommonBaseModel
  */
-@Model()
+@Model({ isAbstract: false })
 export default abstract class BaseModel extends CommonBaseModel {
 
     public constructor(params?: BaseModelParams) {

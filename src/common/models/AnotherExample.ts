@@ -7,7 +7,7 @@ import type YetAnotherExample from "~env/models/YetAnotherExample";
 const logger = new Logger("devel");
 
 @Model()
-export default abstract class AnotherExample extends Example {
+export default class AnotherExample extends Example {
 
     @Attr()
     public anotherExampleCommon: number[] = [];

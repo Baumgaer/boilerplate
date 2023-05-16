@@ -7,7 +7,7 @@ import type Example from "~client/models/Example";
 export default class YetAnotherExample extends CommonYetAnotherExample {
 
     @Attr({ relationColumn: "manyToOneRelation", isRelationOwner: true })
-    public oneToManyRelation: Example[] = [];
+    public oneToManyRelation?: Example[];
 
     public constructor(params?: YetAnotherExampleParams) {
         super(params);

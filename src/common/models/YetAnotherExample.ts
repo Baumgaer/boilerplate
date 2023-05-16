@@ -5,7 +5,7 @@ import type YetAnotherExampleParams from "~env/interfaces/models/YetAnotherExamp
 import type AnotherExample from "~env/models/AnotherExample";
 
 @Model()
-export default abstract class YetAnotherExample extends BaseModel {
+export default class YetAnotherExample extends BaseModel {
 
     @Attr({ isRelationOwner: true })
     public oneToOneRelation?: AnotherExample;

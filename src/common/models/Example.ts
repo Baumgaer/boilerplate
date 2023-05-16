@@ -3,7 +3,7 @@ import { Attr, Model } from "~env/utils/decorators";
 import type ExampleParams from "~env/interfaces/models/Example";
 
 @Model()
-export default abstract class Example extends BaseModel {
+export default class Example extends BaseModel {
 
     @Attr()
     public exampleCommon: number = 1;
