@@ -48,4 +48,5 @@ jobs:
               with:
                   retry_on: error
                   max_attempts: 3
+                  timeout_minutes: 60
                   command: npm run test:unit
