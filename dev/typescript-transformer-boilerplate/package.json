@@ -6,16 +6,16 @@
         "lodash": "^4.17.21",
         "minimatch": "^5.1.1",
         "tsutils": "^3.21.0",
-        "typescript": "^4.9.4"
+        "typescript": "^4.9.5"
     },
     "description": "Import with certain structure",
     "devDependencies": {
         "@types/is-ci": "^3.0.0",
-        "@types/lodash": "^4.14.188",
-        "@types/node": "^18.7.1",
-        "tsup": "^6.2.1",
+        "@types/lodash": "^4.14.194",
+        "@types/node": "^20.1.5",
+        "tsup": "^6.7.0",
         "ttypescript": "^1.5.13",
-        "type-fest": "^3.2.0"
+        "type-fest": "^3.10.0"
     },
     "files": [
         "dist/**"
