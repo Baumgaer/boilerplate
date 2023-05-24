@@ -17,6 +17,9 @@ export default class Example extends CommonExample {
     @Attr({ relationColumn: "oneToManyRelation" })
     public manyToOneRelation!: YetAnotherExample;
 
+    @Attr()
+    protected manyToOneRelationId?: UUID;
+
     public constructor(params?: ExampleParams) {
         super(params);
     }

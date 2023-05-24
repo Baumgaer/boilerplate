@@ -16,7 +16,7 @@ export type { SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema"
 /**
  * All attribute field names of typeorm which are allowed to use in column options
  */
-export type allowedAttrFields = "cascade" | "createForeignKeyConstraints" | "deferrable" | "orphanedRowAction" | "persistence";
+export type allowedAttrFields = "createForeignKeyConstraints" | "deferrable" | "orphanedRowAction" | "persistence";
 
 /**
  * All column options combined to one object

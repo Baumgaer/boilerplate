@@ -65,6 +65,12 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
     public isLazy: boolean = false;
 
     /**
+     * Indicates if an attribute should always be loaded from database when the
+     * entity is loaded.
+     */
+    public isEager: boolean = false;
+
+    /**
      * @InheritDoc
      */
     public primary?: DeepTypedOptions<T>["primary"];
@@ -366,8 +372,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
 
     /**
      * Sets all given constraints on this schema and decides which behavior
-     * (lazy or eager) will be applied and wether this attribute will cascade
-     * or not.
+     * (lazy or eager) will be applied and so on.
      *
      * @param options an object with constraints to set on this attribute schema
      */
@@ -376,6 +381,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
 
         this.isRequired = Boolean(options.isRequired);
         this.isLazy = Boolean(options.isLazy);
+        this.isEager = Boolean(options.isEager);
         this.primary = Boolean(options.primary);
 
         this.min = options.min;

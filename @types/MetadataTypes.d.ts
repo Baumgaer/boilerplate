@@ -1,6 +1,6 @@
 import type { ColumnType } from "typeorm";
 
-export type CombinedDataType<T> = T | IUnionOrIntersectionType<T>
+export type CombinedDataType<T> = T | IUnionOrIntersectionType<T>;
 
 export type LiteralTypes = string | number | bigint | boolean | undefined | symbol | null;
 export type LiteralTypeNames = "String" | "Number" | "Bigint" | "Boolean" | "Undefined" | "Symbol" | "Null";
@@ -17,7 +17,7 @@ export interface IUnresolvedType {
 
 export interface IOptionalType {
     isOptional: boolean;
-    subType: MetadataType
+    subType: MetadataType;
 }
 
 export interface IIdentifiedType<T extends string> {
@@ -56,7 +56,7 @@ export interface IArrayType<T = MetadataType> extends IObjectType {
 
 export interface ITupleType<T = MetadataType> extends Omit<IArrayType<T>, "subType"> {
     isTuple: true;
-    subTypes: T[]
+    subTypes: T[];
 }
 
 export interface IInterfaceType extends IObjectType {
@@ -93,6 +93,7 @@ export interface IDeepTypedMetadata {
     name: string;
     isRequired: boolean;
     isLazy: boolean;
+    isEager: boolean;
 }
 
 export interface IAttrMetadata extends IDeepTypedMetadata {

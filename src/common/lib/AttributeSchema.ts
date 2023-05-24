@@ -85,11 +85,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     public isImmutable!: boolean;
 
     /**
-     * @see AllColumnOptions["eager"]
-     */
-    public isEager!: boolean;
-
-    /**
      * @InheritDoc
      */
     public isCreationDate!: boolean;
@@ -124,11 +119,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * If true, the column will be used as the relation column
      */
     public isRelationOwner!: boolean;
-
-    /**
-     * @InheritDoc
-     */
-    public cascade: AttrOptions<T>["cascade"];
 
     /**
      * @InheritDoc
@@ -323,9 +313,8 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     }
 
     /**
-     * Sets all given constraints on thi schema and decides which behavior
-     * (lazy or eager) will be applied and wether this attribute will cascade
-     * or not.
+     * Sets all given constraints on this schema and decides which behavior
+     * (lazy or eager) will be applied and so on
      *
      * @param options an object with constraints to set on this attribute schema
      */
@@ -345,11 +334,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         this.orphanedRowAction = options.orphanedRowAction ?? "delete";
         this.isRelationOwner = Boolean(options.isRelationOwner);
         this.relationColumn = options.relationColumn;
-
-        if (!this.isRelationOwner) {
-            this.isEager = !this.isLazy;
-            this.cascade = options.cascade ?? true;
-        } else this.cascade = options.cascade ?? false;
 
         if (options.index && typeof options.index !== "boolean") {
             this.indexOptions = options.index;
@@ -383,7 +367,6 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         const defaultOptions: AllColumnOptions = {
             lazy: this.isLazy,
             eager: this.isEager,
-            cascade: this.cascade,
             createForeignKeyConstraints: this.createForeignKeyConstraints,
             nullable: !this.isRequired,
             orphanedRowAction: this.orphanedRowAction,
@@ -451,9 +434,9 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         if (!relationType) return false;
         logger.debug(`Creating column ${this._ctor.name}#${attributeName}: ${otherModel.name} = ${relationType}#${JSON.stringify(options)}`);
         relationTypes[relationType](proto, attributeName);
-        if (relationType === "OneToOne") {
+        if (["OneToOne", "ManyToOne"].includes(relationType)) {
             JoinColumn()(proto, attributeName);
-        } else if (this.isRelationOwner) JoinTable()(proto, attributeName);
+        } else if (this.isRelationOwner && relationType === "ManyToMany") JoinTable()(proto, attributeName);
         return true;
     }
 
