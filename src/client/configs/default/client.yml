@@ -1,0 +1,3 @@
+cors:
+    enable: true
+    policy: "same-origin"

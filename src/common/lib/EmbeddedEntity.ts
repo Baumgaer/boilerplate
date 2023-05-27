@@ -1,7 +1,7 @@
 import AttributeSchema from "~env/lib/AttributeSchema";
 import MetadataStore from "~env/lib/MetadataStore";
 import ModelSchema from "~env/lib/ModelSchema";
-import SchemaBased from "~env/lib/SchemaBased";
+import ModelSchemaBased from "~env/lib/ModelSchemaBased";
 import { hasOwnProperty, isObject, isPlainObject, pascalCase, upperFirst } from "~env/utils/utils";
 import type { EmbeddedEntityType, members } from "~env/@types/EmbeddedEntity";
 import type { ModelLike } from "~env/@types/ModelClass";
@@ -42,22 +42,40 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
 
     const constructedClassName = getClassName(className);
 
-    class EmbeddedEntity extends SchemaBased {
+    class EmbeddedEntity extends ModelSchemaBased {
 
-        public static readonly className: string = constructedClassName;
+        /**
+         * @inheritdoc
+         */
+        public static override readonly className: string = constructedClassName;
 
-        public static readonly collectionName: string = "";
+        /**
+         * @inheritdoc
+         */
+        public static override readonly collectionName: string = "";
 
+        /**
+         * @inheritdoc
+         */
         public static override readonly unProxyfiedObject: typeof EmbeddedEntity = this;
 
-        public readonly className: string = constructedClassName;
+        /**
+         * @inheritdoc
+         */
+        public override readonly className: string = constructedClassName;
 
-        public readonly unProxyfiedObject: this = this;
+        /**
+         * @inheritdoc
+         */
+        public override readonly unProxyfiedObject: this = this;
 
-        public readonly collectionName: string = "";
+        /**
+         * @inheritdoc
+         */
+        public override readonly collectionName: string = "";
 
         public constructor(params: RealConstructionParams<T>) {
-            super();
+            super(params);
             Object.assign(this, params);
         }
 
@@ -66,16 +84,17 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
         }
 
         /**
-         * Looks for the schema of the current instance and returns it
-         *
-         * @returns the schema of the model
+         * @inheritdoc
          */
-        public static getSchema(): ModelSchema<typeof EmbeddedEntity> | null {
-            return metadataStore.getSchema("Model", Object.getPrototypeOf(this), this.className);
+        public static override getSchema(): ModelSchema<typeof EmbeddedEntity> | null {
+            return super.getSchema("Model", this.className);
         }
 
-        public static getActionSchema() {
-            return null;
+        /**
+         * @inheritdoc
+         */
+        public static override getActionSchema(name: string) {
+            return super.getActionSchema(name);
         }
 
         protected static isInstance(instance: unknown): boolean {
@@ -90,23 +109,18 @@ export function embeddedEntityFactory<T extends Record<string, any>>(className: 
             });
         }
 
-        public isNew() {
-            return true;
-        }
-
-        public getId() {
-            return "";
+        /**
+         * @inheritdoc
+         */
+        public override getSchema(): ModelSchema<typeof EmbeddedEntity> | null {
+            return (this.constructor as typeof EmbeddedEntity).getSchema();
         }
 
         /**
-         * @see BaseModel.getSchema
+         * @inheritdoc
          */
-        public getSchema() {
-            return (<typeof EmbeddedEntity>this.constructor).getSchema();
-        }
-
-        public getActionSchema() {
-            return null;
+        public override getActionSchema(name: string) {
+            return super.getActionSchema(name);
         }
 
     }

@@ -1,18 +1,15 @@
-import { v4 as UUidV4 } from "uuid";
 import { Model as ModelType } from "~env/lib/DataTypes";
-import MetadataStore from "~env/lib/MetadataStore";
-import SchemaBased from "~env/lib/SchemaBased";
-import { Attr, AttrObserver, Model } from "~env/utils/decorators";
-import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject, isEqual } from "~env/utils/utils";
+import ModelSchemaBased from "~env/lib/ModelSchemaBased";
+import { Attr, Model } from "~env/utils/decorators";
+import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
 import type { Repository, SaveOptions } from "typeorm";
-import type { IExecutedAction } from "~env/@types/ActionSchema";
 import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type BaseModelParams from "~env/interfaces/lib/BaseModel";
+import type ActionSchema from "~env/lib/ActionSchema";
 import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
-
-const metadataStore = new MetadataStore();
+import type ModelSchema from "~env/lib/ModelSchema";
 
 /**
  * This class should be a parent of each other model. It wraps the BaseEntity
@@ -21,23 +18,7 @@ const metadataStore = new MetadataStore();
  * handling attributes or schemas.
  */
 @Model({ isAbstract: false })
-export default abstract class BaseModel extends SchemaBased {
-
-    /**
-     * The name of the class after compile time. This will be set by the
-     * @Model() decorator which will receive this value by a developer or
-     * by the reflectionTransformer.
-     */
-    public static readonly className: string;
-
-    /**
-     * The name of the collection where the model is stored in after compile time.
-     * This will be set by the @Model() decorator which will receive this value
-     * by a developer or by the reflectionTransformer. The naming strategy is
-     * to add an "s" at the end because we assume that a collection always
-     * contains several models of this type.
-     */
-    public static readonly collectionName: string;
+export default abstract class BaseModel extends ModelSchemaBased {
 
     /**
      * This gives access to the model (instance | class) without proxy around.
@@ -93,29 +74,12 @@ export default abstract class BaseModel extends SchemaBased {
     public readonly isBaseModel: boolean = true;
 
     /**
-     * @see BaseModel.className
-     */
-    public readonly className!: string;
-
-    /**
-     * @see BaseModel.collectionName
-     */
-    public readonly collectionName!: string;
-
-    /**
-     * @see BaseModel.unProxyfiedObject
-     */
-    public readonly unProxyfiedObject!: this;
-
-    /**
      * The id of the model until it has no official id from the server
      */
     public dummyId: string = "";
 
-    private executedActions: IExecutedAction[] = [];
-
-    public constructor(_params?: BaseModelParams) {
-        super();
+    public constructor(params?: BaseModelParams) {
+        super(params);
     }
 
     public static async getById<T extends EnvBaseModel>(_id: UUID): Promise<T | null> {
@@ -127,45 +91,17 @@ export default abstract class BaseModel extends SchemaBased {
     }
 
     /**
-     * Looks for the schema of the current instance and returns it
-     *
-     * @returns the schema of the model
+     * @inheritdoc
      */
-    public static getSchema() {
-        return metadataStore.getSchema("Model", Object.getPrototypeOf(this), this.className);
+    public static override getSchema() {
+        return super.getSchema("Model", this.className);
     }
 
     /**
-     * Looks for the attribute given by the name and returns its schema
-     *
-     * @param this current this context
-     * @param name the name of the attribute
-     * @returns the schema of the attribute given by name
+     * @inheritdoc
      */
-    public static getAttributeSchema(name: string) {
-        return this.getSchema()?.getAttributeSchema(name) || null;
-    }
-
-    /**
-     * Looks for the attribute given by the name and returns its schema
-     *
-     * @param this current this context
-     * @param name the name of the attribute
-     * @returns the schema of the attribute given by name
-     */
-    public static getActionSchema(name: string) {
-        return this.getSchema()?.getActionSchema(name) || null;
-    }
-
-    /**
-     * Removes the dummy id when the model is saved and got a real id
-     *
-     * @param value the given id
-     */
-    @AttrObserver("id", "change")
-    protected onIdChange(value: string): void {
-        if (!value) return;
-        this.dummyId = "";
+    public static override getActionSchema(name: string): ActionSchema<typeof EnvBaseModel> | null {
+        return super.getActionSchema(name);
     }
 
     /**
@@ -187,7 +123,7 @@ export default abstract class BaseModel extends SchemaBased {
      *
      * @returns true if the model is still new and false else
      */
-    public isNew(): boolean {
+    public override isNew(): boolean {
         return Boolean(!this.id && this.dummyId);
     }
 
@@ -196,8 +132,8 @@ export default abstract class BaseModel extends SchemaBased {
      *
      * @returns dummyId if exists and id else
      */
-    public getId() {
-        return this.dummyId || this.id || "";
+    public override getId() {
+        return this.id || this.dummyId || super.getId();
     }
 
     /**
@@ -236,72 +172,22 @@ export default abstract class BaseModel extends SchemaBased {
     /**
      * @see BaseModel.getSchema
      */
-    public getSchema() {
-        return (<typeof BaseModel>this.constructor).getSchema();
+    public override getSchema(): ModelSchema<typeof EnvBaseModel> | null {
+        return super.getSchema("Model", this.className);
     }
 
     /**
-     * @see BaseModel.getAttributeSchema
+     * @inheritdoc
      */
-    public getAttributeSchema(name: string) {
-        return this.getSchema()?.getAttributeSchema(name) || null;
+    public override getActionSchema(name: string): ActionSchema<typeof EnvBaseModel> | null {
+        return super.getActionSchema(name);
     }
 
     /**
-     * @see BaseModel.getAttributeSchema
+     * @inheritdoc
      */
-    public getActionSchema(name: string) {
-        return this.getSchema()?.getActionSchema(name) || null;
-    }
-
-    /**
-     * returns the attributes instance identified by the current model
-     * instance and the given name.
-     *
-     * @param this current this context
-     * @param name the name of the attribute
-     * @returns the unique initialized attribute owned by this model instance and identified by the given name
-     */
-    public getAttribute(name: string): BaseAttribute<typeof EnvBaseModel> | null {
-        return metadataStore.getInstance<typeof EnvBaseModel, "Attribute">("Attribute", this as unknown as EnvBaseModel, String(name)) || null;
-    }
-
-    /**
-     * returns the actin instance identified by the current model instance
-     * and the given name
-     *
-     * @param this current this context
-     * @param name the name of the action
-     * @returns the unique initialized action owned by this model instance and identified by the given name
-     */
-    public getAction(name: keyof this): BaseAction<typeof EnvBaseModel> | null {
-        return metadataStore.getInstance<typeof EnvBaseModel, "Action">("Action", this as unknown as EnvBaseModel, String(name)) || null;
-    }
-
-    public addExecutedAction(name: string, args: Record<string, any>) {
-        this.executedActions.push({ name, args, id: UUidV4() });
-    }
-
-    public getExecutedActionsByName(name: string) {
-        return this.getExecutedAction("name", name);
-    }
-
-    public getExecutedActionsById(id: string) {
-        return this.getExecutedAction("id", id);
-    }
-
-    public getExecutedActionsByArgs(args: Record<string, any>) {
-        return this.getExecutedAction("args", args);
-    }
-
-    /**
-     * collects all attributes of this model instance and returns them.
-     *
-     * @param this current this context
-     * @returns array of all attributes
-     */
-    public getAttributes() {
-        return metadataStore.getInstances("Attribute", this);
+    public override getAction(name: string): BaseAction<typeof EnvBaseModel> | null {
+        return super.getAction(name);
     }
 
     /**
@@ -363,6 +249,7 @@ export default abstract class BaseModel extends SchemaBased {
         for (const attributeName in changes) {
             if (hasOwnProperty(changes, attributeName)) {
                 const attributeChanges = changes[attributeName];
+                if (!attributeChanges) continue;
                 const attribute = this.getAttribute(attributeName);
                 if (attribute) attribute.applyChanges(attributeChanges);
             }
@@ -370,7 +257,10 @@ export default abstract class BaseModel extends SchemaBased {
     }
 
     public validate(obj = this.getValidationObject()) {
-        return ModelType({ name: this.className, getAttribute: (name) => this.getAttribute(name) }).validate(obj);
+        return ModelType({
+            name: this.className,
+            getAttribute: (name) => this.getAttribute(name) as BaseAttribute<typeof EnvBaseModel> | null
+        }).validate(obj);
     }
 
     public isAllowed(actionName: string, user: EnvBaseModel) {
@@ -379,8 +269,9 @@ export default abstract class BaseModel extends SchemaBased {
         return Boolean(action.accessRight?.(user, this));
     }
 
-    public save(_options?: SaveOptions): Promise<this & EnvBaseModel> {
-        throw new Error("Not implemented");
+    public async save(options?: SaveOptions): Promise<(this & EnvBaseModel) | null> {
+        if (!this.hasChanges()) return null;
+        return (this.constructor as typeof BaseModel).repository.save(this, options);
     }
 
     /**
@@ -413,10 +304,6 @@ export default abstract class BaseModel extends SchemaBased {
         if (this.isNew()) entries = this.getAttributes().map((attribute) => [attribute.name, attribute.owner[attribute.name]]);
         if (this.hasChanges()) entries = Object.keys(this.getChanges()).map((attributeName) => [attributeName, Reflect.get(this, attributeName)]);
         return Object.fromEntries(entries.filter((entry) => !this.getAttribute(entry[0])?.schema.isInternal));
-    }
-
-    private getExecutedAction<K extends keyof IExecutedAction>(key: K, value: IExecutedAction[K]) {
-        return this.executedActions.filter((executedAction) => isEqual(executedAction[key], value));
     }
 
 }

@@ -1,12 +1,12 @@
+import ActionableSchemaBased from "~env/lib/ActionableSchemaBased";
 import MetadataStore from "~env/lib/MetadataStore";
-import SchemaBased from "~env/lib/SchemaBased";
-import type ActionSchema from "~env/lib/ActionSchema";
+import type { HttpMethods } from "~env/@types/http";
 import type EnvBaseRoute from "~env/lib/BaseRoute";
 import type RouteSchema from "~env/lib/RouteSchema";
 
 const metadataStore = new MetadataStore();
 
-export default class BaseRoute extends SchemaBased {
+export default class BaseRoute extends ActionableSchemaBased {
 
     public static override readonly unProxyfiedObject: typeof BaseRoute;
 
@@ -19,9 +19,8 @@ export default class BaseRoute extends SchemaBased {
      */
     public readonly unProxyfiedObject!: typeof this;
 
-    public constructor(..._args: any[]) {
-        super();
-        // Nothing to do here
+    public constructor(...args: any[]) {
+        super(...args);
     }
 
     /**
@@ -29,16 +28,25 @@ export default class BaseRoute extends SchemaBased {
      *
      * @returns the schema of the model
      */
-    public static getSchema() {
-        return metadataStore.getSchema("Route", Object.getPrototypeOf(this), this.namespace);
+    public static override getSchema() {
+        return super.getSchema("Route", this.namespace);
     }
 
-    public getSchema(): RouteSchema<typeof EnvBaseRoute> | null {
-        return (<typeof EnvBaseRoute>this.constructor).getSchema();
+    public static override getActionSchema(name: string, method?: HttpMethods) {
+        return super.getActionSchema(name, method);
     }
 
-    public getActionSchema(name: string): ActionSchema<typeof EnvBaseRoute> | null {
-        return this.getSchema()?.getActionSchema(name) || null;
+    public override getSchema(): RouteSchema<typeof EnvBaseRoute> | null {
+        return super.getSchema("Route", this.namespace);
+    }
+
+    public override getActionSchema(name: string, method: HttpMethods = "GET") {
+        return super.getActionSchema(name, method);
+    }
+
+    public override getAction(name: string, method: HttpMethods = "GET") {
+        name = `${method}__:__${name}`;
+        return metadataStore.getInstance<any, "Action">("Action", this, name) || null;
     }
 
     public getRoutes() {

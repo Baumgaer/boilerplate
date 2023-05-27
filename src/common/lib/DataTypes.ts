@@ -4,7 +4,6 @@ import { isObject, isPlainObject, hasOwnProperty } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { getAttributeForValidation } from "~env/@types/BaseModel";
 import type { ValidationResult } from "~env/@types/Errors";
-// import type { ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars

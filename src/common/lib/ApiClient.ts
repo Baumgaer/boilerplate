@@ -1,5 +1,8 @@
+import Configurator from "~env/lib/Configurator";
 import { isArray } from "~env/utils/utils";
-import type { RequestParams, MethodParams, TargetComponents } from "~common/@types/ApiClient";
+import type { RequestParams, MethodParams, TargetComponents } from "~env/@types/ApiClient";
+
+const configurator = new Configurator();
 
 export default class ApiClient {
 
@@ -33,9 +36,14 @@ export default class ApiClient {
         return this.request({ target, method: "OPTIONS", headers, data });
     }
 
+    public static batch({ parameters, headers, data }: Omit<MethodParams, "collectionName" | "actionName" | "id">) {
+        const target = this.buildTarget({ actionName: "batch", collectionName: "batch", id: "", parameters });
+        return this.request({ target, method: "post", headers, data });
+    }
+
     protected static async request({ method = "GET", data = {}, headers = {}, target = "" }: RequestParams) {
-        const defaultHeaders = { redirect: 'follow', mode: 'cors', Accept: "application/json", "Content-Type": "application/json" } as RequestInit;
-        const fetchObject = { method, headers: Object.assign(headers, defaultHeaders) };
+        const defaultHeaders = { redirect: 'follow', mode: 'cors', Accept: "application/json", "Content-Type": "application/json" } satisfies RequestInit["headers"];
+        const fetchObject = { method, headers: Object.assign({}, defaultHeaders, headers), credentials: "include", keepalive: true, mode: this.getRequestMode() } satisfies RequestInit;
 
         // HEAD and GET doesn't allow body, so apply body only when method is different
         if (!["GET", "HEAD"].includes(method) && Object.keys(data).length) Object.assign(fetchObject, { body: JSON.stringify(data) });
@@ -63,7 +71,11 @@ export default class ApiClient {
         throw new Error("Not implemented");
     }
 
-    private static buildTarget({ collectionName, actionName, id, parameters = [] }: TargetComponents) {
+    protected static getRequestMode() {
+        return configurator.get("common.cors.enable") ? configurator.get("common.cors.policy") as RequestMode : "no-cors";
+    }
+
+    protected static buildTarget({ collectionName, actionName, id, parameters = [] }: TargetComponents) {
         let target = `${collectionName}`;
         if (id) target += `/${id}`;
         target += `/${actionName}`;

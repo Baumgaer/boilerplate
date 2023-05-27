@@ -13,5 +13,5 @@ export interface TargetComponents {
 }
 
 export interface MethodParams extends Omit<RequestParams, "target" | "method">, TargetComponents {
-    data?: Record<string, any>;
+    data?: Record<string, any> | Record<string, any>[];
 }

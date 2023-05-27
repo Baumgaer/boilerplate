@@ -1,8 +1,10 @@
 import { expect } from "chai";
 import { v4 } from "uuid";
 import ApiClient from "~env/lib/ApiClient";
+import Configurator from "~env/lib/Configurator";
 import TestModel from "~env/models/TestModel";
 
+const configurator = new Configurator();
 const testModel = new TestModel();
 
 export default function (_environment = "common") {
@@ -24,10 +26,12 @@ export default function (_environment = "common") {
 
             const target = ApiClient.lastRequestParams?.target;
             const method = ApiClient.lastRequestParams?.method;
+            const baseUrl = configurator.get("config.serverFQDN");
+
             expect(method).to.be.equal("GET");
-            expect(target).to.include(`testModels/${uuid}/testQueryAction`);
-            expect(target).to.include(`param1="test"`);
-            expect(target).to.include(`param2={"prop1":"test"}`);
+            expect(target).to.include(`${baseUrl}/testModels/${uuid}/testQueryAction`);
+            expect(target).to.include(`param1=%22test%22`);
+            expect(target).to.include(`param2={%22prop1%22:%22test%22}`);
         });
 
         it("shouldn't send a GET request", () => {

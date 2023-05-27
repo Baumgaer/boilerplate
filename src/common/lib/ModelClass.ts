@@ -95,7 +95,9 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             Object.assign(proxy, this.mergeProperties(proxy, args?.[0]));
             // If this is an initialization of an existing model, we don't
             // want to have the changes
-            if (args?.[0]?.id) proxy.removeChanges();
+            if (args?.[0]?.id) {
+                proxy.removeChanges();
+            } else this.addExecutedAction("create", { params: args?.[0] ?? {} });
             return proxy;
         }
 

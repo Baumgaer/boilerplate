@@ -132,7 +132,7 @@ export default abstract class BaseServer {
 
     protected async setupBasicSecurity() {
         this.app.use(hpp());
-        this.app.use(csurf());
+        if (configurator.get("server.csrf.enable")) this.app.use(csurf());
         this.app.use(this.setupHelmet.bind(this));
     }
 
@@ -178,13 +178,11 @@ export default abstract class BaseServer {
         all.push(...hashes);
         const directives = this.setupCsp(cspNonce);
 
+        const corsPolicy = configurator.get("server.cors.policy") as "same-origin" | "same-site" | "cross-origin" | undefined;
         helmet({
             hidePoweredBy: true,
-            contentSecurityPolicy: {
-                directives: Object.assign({
-                    defaultSrc: all.slice()
-                }, directives)
-            }
+            crossOriginResourcePolicy: configurator.get("server.cors.enable") ? { policy: corsPolicy } : false,
+            contentSecurityPolicy: configurator.get("server.csp.enable") ? { directives: Object.assign({ defaultSrc: all.slice() }, directives) } : false
         })(request, response, next);
     }
 

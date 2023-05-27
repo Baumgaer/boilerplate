@@ -5,6 +5,7 @@
  * /__.__\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!
  */
 export interface IConfig {
+    common: Common;
     config: Config;
     databases: Databases;
     logs: Logs;
@@ -14,8 +15,14 @@ interface Server {
     session: Session;
     engine: Engine;
     csp: Csp;
+    csrf: Csrf;
+    cors: Cors;
+}
+interface Csrf {
+    enable: boolean;
 }
 interface Csp {
+    enable: boolean;
     includeSelf: boolean;
     length: number;
     nonceAlgo: string;
@@ -51,11 +58,11 @@ interface Schema {
     enabled: boolean;
 }
 interface Databases {
-    common: Common;
-    web: Common;
-    server: Common;
+    common: Common2;
+    web: Common2;
+    server: Common2;
 }
-interface Common {
+interface Common2 {
     synchronize: boolean;
     autoSave: boolean;
     location: string;
@@ -70,10 +77,18 @@ interface Common {
 }
 interface Config {
     logger: Logger;
+    serverFQDN: string;
 }
 interface Logger {
     logDirectory: string;
     maxSize: string;
     maxFiles: number;
     zippedArchive: boolean;
+}
+interface Common {
+    cors: Cors;
+}
+interface Cors {
+    enable: boolean;
+    policy: string;
 }

@@ -3,3 +3,5 @@ logger:
     maxSize: ""
     maxFiles: 0
     zippedArchive: false
+
+serverFQDN: ""

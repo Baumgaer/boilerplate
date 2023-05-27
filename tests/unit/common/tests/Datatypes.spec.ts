@@ -7,6 +7,8 @@ import { ZodLazy, ZodNever, ZodObject } from "zod";
 import { Varchar, NumberRange, TextRange, Email, UUID, Model } from "~common/lib/DataTypes";
 import { getExtendedTestModelArgs } from "~env/TestUtils";
 import TestModel from "~env/models/TestModel";
+import type BaseAttribute from "~env/lib/BaseAttribute";
+import type BaseModel from "~env/lib/BaseModel";
 
 export default function (_environment = "common") {
     describe('Datatypes', () => {
@@ -109,7 +111,10 @@ export default function (_environment = "common") {
             expect(staticModel.validate(Object.assign({}, args, { aNumber: 24 })).success).to.be.false;
 
             const testModel = new TestModel(Object.assign({}, args));
-            const model = Model({ name: "TestModel", getAttribute: (name) => testModel.getAttribute(name) });
+            const model = Model({
+                name: "TestModel",
+                getAttribute: (name) => testModel.getAttribute(name) as BaseAttribute<typeof BaseModel> | null
+            });
             const schemaType = model.schemaType as ZodLazy<ZodObject<any>>;
 
             expect(schemaType).to.be.an.instanceOf(ZodLazy);

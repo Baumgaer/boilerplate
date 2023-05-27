@@ -5,8 +5,9 @@
  * /__.__\   THIS WILL BE OVERWRITTEN DURING NEXT GENERATION!
  */
 export interface IConfig {
-    test: Test;
     config: Config;
+    test: Test;
+    common: Common;
     databases: Databases;
     logs: Logs;
 }
@@ -21,25 +22,23 @@ interface Schema {
     enabled: boolean;
 }
 interface Databases {
-    common: Common;
-    web: Common;
-    server: Common;
+    common: Common2;
+    web: Common2;
+    server: Common2;
 }
-interface Common {
+interface Common2 {
     synchronize: boolean;
     autoSave: boolean;
     location: string;
     logger: string;
     logging: string[];
 }
-interface Config {
-    logger: Logger;
+interface Common {
+    cors: Cors;
 }
-interface Logger {
-    logDirectory: string;
-    maxSize: string;
-    maxFiles: number;
-    zippedArchive: boolean;
+interface Cors {
+    enable: boolean;
+    policy: string;
 }
 interface Test {
     string: string;
@@ -59,4 +58,7 @@ interface TestObject {
     test2: string;
     test3: string;
     test4: number[];
+}
+interface Config {
+    serverFQDN: string;
 }

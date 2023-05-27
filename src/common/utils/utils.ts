@@ -97,9 +97,9 @@ export function resolveProxy(value: any): typeof value {
  * @param key the key to check for
  * @returns true if has own property and false else
  */
-export function hasOwnProperty(value?: object, key?: string): key is keyof typeof value {
-    if (!isObjectLike(value) || !key) return false;
-    return Object.prototype.hasOwnProperty.call(value, key);
+export function hasOwnProperty<TObj extends Record<string, any>>(value: TObj, key: unknown): key is keyof TObj {
+    if (!isObjectLike(value) || !key || !["string", "symbol", "number"].includes(typeof key)) return false;
+    return Object.prototype.hasOwnProperty.call(value, key as string);
 }
 
 /**

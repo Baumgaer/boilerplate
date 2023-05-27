@@ -17,7 +17,15 @@ engine:
     useQueryStringLibrary: true
 
 csp:
+    enable: true
     includeSelf: true
     length: 32
     nonceAlgo: "sha512"
     hashes: []
+
+csrf:
+    enable: true
+
+cors:
+    enable: true
+    policy: "same-origin"

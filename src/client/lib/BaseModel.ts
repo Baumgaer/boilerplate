@@ -1,4 +1,5 @@
 import { reactive } from "vue";
+import ApiClient from "~client/lib/ApiClient";
 import { Model } from "~client/utils/decorators";
 import CommonBaseModel from "~common/lib/BaseModel";
 import type { SaveOptions } from "typeorm";
@@ -14,8 +15,13 @@ export default abstract class BaseModel extends CommonBaseModel {
         super(params);
     }
 
-    public override save(options?: SaveOptions): Promise<this & BaseModel> {
-        return (this.constructor as typeof BaseModel).repository.save(this, options);
+    public override async save(options?: SaveOptions): Promise<(this & BaseModel) | null> {
+        const result = await super.save(options);
+        if (!result) return null;
+
+        const executedActions = this.getExecutedActions();
+        if (executedActions.length) await ApiClient.batch({ data: executedActions });
+        return result;
     }
 
     /**

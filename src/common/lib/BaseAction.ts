@@ -13,7 +13,7 @@ export default abstract class BaseAction<T extends typeof SchemaBased> {
      * The name of the attribute which corresponds by the attribute name in
      * the code or an alias defined in the @Attr() decorator
      */
-    public readonly name: keyof (InstanceType<T> | T);
+    public readonly name: string;
 
     /**
      * The schema of the attribute which gives more information.
@@ -27,11 +27,11 @@ export default abstract class BaseAction<T extends typeof SchemaBased> {
      */
     protected readonly unProxyfiedOwner: T | InstanceType<T>;
 
-    public constructor(owner: T | InstanceType<T>, name: keyof (InstanceType<T> | T), attributeSchema: ActionSchema<T>) {
+    public constructor(owner: T | InstanceType<T>, name: string, schema: ActionSchema<T>) {
         this.owner = owner;
         this.unProxyfiedOwner = owner.unProxyfiedObject as T | InstanceType<T>;
         this.name = name;
-        this.schema = attributeSchema;
+        this.schema = schema;
     }
 
     public get() {
