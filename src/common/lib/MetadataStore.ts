@@ -1,4 +1,4 @@
-import type { InstancesType, SchemasType } from "~env/@types/MetadataStore";
+import type { FilterFunction, InstancesType, SchemasType } from "~env/@types/MetadataStore";
 import type { TypeNameTypeMap, SchemaTypeNames, SchemaTypes } from "~env/@types/Schema";
 import type SchemaBased from "~env/lib/SchemaBased";
 
@@ -47,13 +47,13 @@ export default class MetadataStore {
         return Reflect.getMetadata(`${target.name}__:__${schemaName}__:__${type}Definition`, target);
     }
 
-    public getSchemas<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T): TypeNameTypeMap<T>[N]["schema"][] {
+    public getSchemas<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T, filter: FilterFunction = () => true): TypeNameTypeMap<T>[N]["schema"][] {
         const schemas: Record<string, any> = {};
         const metadataKeys: string[] = Reflect.getMetadataKeys(target).slice().reverse();
 
         for (const key of metadataKeys) {
-            const [_targetName, schemaName, subSchemaName, typeDefinitionName] = key.split("__:__");
-            if (typeDefinitionName === `${type}Definition`) schemas[`${schemaName}__:__${subSchemaName}`] = Reflect.getMetadata(key, target);
+            const [targetName, schemaName, subSchemaName, typeDefinitionName] = key.split("__:__");
+            if (typeDefinitionName === `${type}Definition` && filter(targetName, schemaName, subSchemaName, typeDefinitionName)) schemas[`${schemaName}__:__${subSchemaName}`] = Reflect.getMetadata(key, target);
         }
 
         return Object.values(schemas);

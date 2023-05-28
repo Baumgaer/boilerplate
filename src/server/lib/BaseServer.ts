@@ -148,11 +148,11 @@ export default abstract class BaseServer {
             const routeClass: typeof BaseRoute = context(key).default;
 
             const route = new routeClass(this);
-            for (const actionSchema of route.getRoutes()) {
-                const routerMethod = actionSchema.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
-                router[routerMethod](actionSchema.name, (req, res, next) => {
+            for (const routeAction of route.getActions()) {
+                const routerMethod = routeAction.httpMethod.toLowerCase() as Lowercase<HttpMethods>;
+                router[routerMethod](routeAction.name, (req, res, next) => {
                     const train = new Train(req, res, next);
-                    route.handle(train, actionSchema);
+                    route.handle(train, routeAction);
                 });
             }
 

@@ -60,7 +60,7 @@ export default abstract class ActionableSchemaBased extends SchemaBased {
     }
 
     public getActions() {
-        return metadataStore.getInstances("Action", this);
+        return metadataStore.getInstances<any, "Action">("Action", this);
     }
 
     public addExecutedAction(name: string, args: Record<string, any>) {

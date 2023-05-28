@@ -2,11 +2,11 @@ import fs from "fs";
 import { fileTypeFromBuffer } from "file-type";
 import { isHttpError } from "http-errors";
 import CommonBaseRoute from "~common/lib/BaseRoute";
-import { BaseError, Forbidden, InternalServerError, NotAcceptable, NotFound } from "~server/lib/Errors";
+import { BaseError, InternalServerError, NotAcceptable } from "~server/lib/Errors";
 import { isValue } from "~server/utils/utils";
-import type ActionSchema from "~server/lib/ActionSchema";
 import type BaseModel from "~server/lib/BaseModel";
 import type BaseServer from "~server/lib/BaseServer";
+import type RouteAction from "~server/lib/RouteAction";
 import type Train from "~server/lib/Train";
 
 export default class BaseRoute extends CommonBaseRoute {
@@ -18,17 +18,11 @@ export default class BaseRoute extends CommonBaseRoute {
         this.server = server;
     }
 
-    public async handle<T extends typeof BaseRoute>(train: Train<typeof BaseModel>, schema: ActionSchema<T>) {
+    public async handle<T extends typeof BaseRoute>(train: Train<typeof BaseModel>, action: RouteAction<T>) {
         try {
-            if (!schema.accessRight(train.user, train)) throw new Forbidden();
-            if (!schema.descriptor.value) throw new NotFound();
-
-            const validationResult = schema.validateArgumentSchemas(Object.assign({}, train.params));
-            if (!validationResult.success) throw new AggregateError(validationResult.errors);
-
-            const orderedParameters = schema.orderParameters(train.params);
+            const orderedParameters = action.schema.orderParameters(train.params);
             orderedParameters[0] = train;
-            const result = await schema.descriptor.value.call(this, ...orderedParameters);
+            const result = await action.get()(...orderedParameters);
 
             const response = train.getOriginalResponse();
             if (!isValue(result)) {

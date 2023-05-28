@@ -38,6 +38,6 @@ export default abstract class BaseAction<T extends typeof SchemaBased> {
         return (...args: any[]) => this.call(this.owner, ...args);
     }
 
-    public abstract call(thisArg: T | InstanceType<T>, ...args: any[]): void;
+    public abstract call(thisArg: T | InstanceType<T>, ...args: any[]): Promise<any>;
 
 }

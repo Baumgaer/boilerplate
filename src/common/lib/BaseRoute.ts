@@ -2,6 +2,7 @@ import ActionableSchemaBased from "~env/lib/ActionableSchemaBased";
 import MetadataStore from "~env/lib/MetadataStore";
 import type { HttpMethods } from "~env/@types/http";
 import type EnvBaseRoute from "~env/lib/BaseRoute";
+import type RouteAction from "~env/lib/RouteAction";
 import type RouteSchema from "~env/lib/RouteSchema";
 
 const metadataStore = new MetadataStore();
@@ -46,7 +47,11 @@ export default class BaseRoute extends ActionableSchemaBased {
 
     public override getAction(name: string, method: HttpMethods = "GET") {
         name = `${method}__:__${name}`;
-        return metadataStore.getInstance<any, "Action">("Action", this, name) || null;
+        return metadataStore.getInstance<any, "Action">("Action", this, name) as RouteAction<typeof EnvBaseRoute> || null;
+    }
+
+    public override getActions() {
+        return super.getActions() as RouteAction<typeof EnvBaseRoute>[];
     }
 
     public getRoutes() {

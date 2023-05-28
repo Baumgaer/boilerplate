@@ -39,9 +39,6 @@ export default class Models extends CommonModels {
         let body = {} as Record<string, any>;
         if (isPlainObject(train.body)) body = train.body;
 
-        const validationResult = actionSchema.validateArgumentSchemas(Object.assign({}, train.query, body));
-        if (!validationResult.success) throw new AggregateError(validationResult.errors);
-
         const orderedParameters = actionSchema.orderParameters(train.params, train.query, body);
         const result = await actionSchema.descriptor.value.call(model, ...orderedParameters);
 

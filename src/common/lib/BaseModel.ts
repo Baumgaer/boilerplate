@@ -2,11 +2,11 @@ import { Model as ModelType } from "~env/lib/DataTypes";
 import ModelSchemaBased from "~env/lib/ModelSchemaBased";
 import { Attr, Model } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
+import type ModelAction from "./ModelAction";
 import type { Repository, SaveOptions } from "typeorm";
 import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type BaseModelParams from "~env/interfaces/lib/BaseModel";
 import type ActionSchema from "~env/lib/ActionSchema";
-import type BaseAction from "~env/lib/BaseAction";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
 import type ModelSchema from "~env/lib/ModelSchema";
@@ -186,8 +186,12 @@ export default abstract class BaseModel extends ModelSchemaBased {
     /**
      * @inheritdoc
      */
-    public override getAction(name: string): BaseAction<typeof EnvBaseModel> | null {
-        return super.getAction(name);
+    public override getAction(name: string) {
+        return super.getAction(name) as ModelAction<typeof EnvBaseModel> | null;
+    }
+
+    public override getActions() {
+        return super.getActions() as ModelAction<typeof EnvBaseModel>[];
     }
 
     /**

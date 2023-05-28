@@ -1,6 +1,5 @@
-import { ActionError, TypeError, ParameterError } from "~env/lib/Errors";
+import { ActionError } from "~env/lib/Errors";
 import PlainObjectSchema from "~env/lib/PlainObjectSchema";
-import { isPlainObject } from "~env/utils/utils";
 import type { AccessRightFunc, ActionOptions, ActionOptionsPartialMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
@@ -12,7 +11,7 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
     /**
      * @InheritDoc
      */
-    declare public readonly name: keyof T;
+    declare public readonly name: string;
 
     /**
      * @InheritDoc
@@ -52,7 +51,7 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
      */
     protected override _constructed: boolean = true;
 
-    public constructor(ctor: T, name: keyof T, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[], descriptor: TypedPropertyDescriptor<ActionFunction>) {
+    public constructor(ctor: T, name: string, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[], descriptor: TypedPropertyDescriptor<ActionFunction>) {
         super(ctor, name, options);
         for (const schema of schemas) this.setArgumentSchema(schema);
         this.setConstants(options);
@@ -93,17 +92,12 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
         return this.internalValidation(value, ActionError);
     }
 
-    public validateArgumentSchemas(args: unknown): ValidationResult {
-        if (!isPlainObject(args)) return { success: false, errors: [new TypeError("", "type", [])] };
+    public validateArguments(args: any[]): ValidationResult {
         const errors: BaseError[] = [];
-        for (const argName of Object.keys(args as object)) {
-            const argumentSchema = this.argumentSchemas[argName as keyof InstanceType<T>];
-            if (!argumentSchema) {
-                errors.push(new ParameterError(argName, "inexistent", [], (args as Record<string, any>)[argName]));
-            } else {
-                const validationResult = argumentSchema.validate((args as Record<string, any>)[argName]);
-                if (!validationResult.success) errors.push(...validationResult.errors);
-            }
+
+        for (const argumentSchema of Object.values(this.argumentSchemas)) {
+            const validationResult = argumentSchema.validate(args[argumentSchema.index ?? 0]);
+            if (!validationResult.success) errors.push(...validationResult.errors);
         }
 
         return { success: !errors.length, errors };

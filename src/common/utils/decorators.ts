@@ -167,7 +167,7 @@ function action<T extends typeof SchemaBased>(
 
     const theTarget = (target.constructor.prototype === target ? target.constructor : target) as T;
     const options = metadataStore.constructSchemaParams<T, "Action">("Action", String(methodName), metadataOptions);
-    const argumentSchemas = metadataStore.getSchemas("Argument", target.constructor);
+    const argumentSchemas = metadataStore.getSchemas("Argument", theTarget, (targetName, schemaName) => targetName === theTarget.name && schemaName === methodName);
     const schema = new ActionSchema(theTarget, options.name, options, argumentSchemas, descriptor);
 
     metadataStore.setSchema("Action", theTarget, String(methodName), schema);

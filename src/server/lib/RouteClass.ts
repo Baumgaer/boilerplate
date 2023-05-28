@@ -41,9 +41,9 @@ export default function RouteClassFactory<T extends typeof BaseRoute>(ctor: T & 
 
             for (const key in actionSchemas) {
                 if (hasOwnProperty(actionSchemas, key)) {
-                    const action = new RouteAction(proxy, key, actionSchemas[key], actionSchemas[key].httpMethod);
-                    const name = `${actionSchemas[key].httpMethod}__:__${key}`;
-                    metadataStore.setInstance<typeof BaseRoute, "Action">("Action", proxy, name, action);
+                    const { name, httpMethod } = actionSchemas[key];
+                    const action = new RouteAction(proxy, name, actionSchemas[key], httpMethod);
+                    metadataStore.setInstance<typeof BaseRoute, "Action">("Action", proxy, key, action);
                 }
             }
         }
