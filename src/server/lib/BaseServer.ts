@@ -4,6 +4,7 @@ import compression from "compression";
 import cors from "cors";
 import csurf from "csurf";
 import express, { json, urlencoded /*static as expressStatic */, Router } from "express";
+import { queryParser } from "express-query-parser";
 import expressSession from "express-session";
 import helmet from "helmet";
 import hpp from "hpp";
@@ -64,6 +65,7 @@ export default abstract class BaseServer {
 
         this.app.use(json({ limit: maximumRequestBodySize }));
         this.app.use(urlencoded({ extended: Boolean(useQueryStringLibrary), limit: maximumRequestBodySize }));
+        this.app.use(queryParser({ parseBoolean: true, parseNull: true, parseNumber: true, parseUndefined: true }));
         this.app.use(compression());
 
         if (enableETag) this.app.enable('etag');

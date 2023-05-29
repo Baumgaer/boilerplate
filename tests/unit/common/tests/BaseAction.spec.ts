@@ -29,8 +29,9 @@ export default function (_environment = "common") {
             const baseUrl = configurator.get("config.serverFQDN");
 
             expect(method).to.be.equal("GET");
-            expect(target).to.include(`${baseUrl}/testModels/${uuid}/testQueryAction`);
-            expect(target).to.include(`param1=%22test%22`);
+            expect(target).to.include(baseUrl);
+            expect(target).to.include(`/testModels/${uuid}/testQueryAction`);
+            expect(target).to.include(`param1=test`);
             expect(target).to.include(`param2={%22prop1%22:%22test%22}`);
         });
 

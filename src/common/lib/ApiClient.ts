@@ -77,10 +77,23 @@ export default class ApiClient {
         return configurator.get("common.cors.enable") ? configurator.get("common.cors.policy") as RequestMode : "no-cors";
     }
 
-    protected static buildTarget({ prefix = "", collectionName, actionName, id, parameters = [] }: TargetComponents) {
-        const urlPath = path.normalize(path.join(prefix || "", collectionName || "", id || "", actionName || ""));
-        const searchParams = new URLSearchParams(parameters).toString();
-        const target = `${urlPath}${searchParams ? `?${searchParams}` : ""}`;
+    protected static buildTarget({ prefix = "", collectionName, actionName, id, parameters = [["aString", "lalala"], ["aNumber", 1], ["anObject", { test: 1, testen: "2" }]] }: TargetComponents) {
+        let target = path.normalize(path.join(prefix || "", collectionName || "", id || "", actionName || ""));
+        if (parameters.length) {
+            target += `?${parameters.map((parameter) => {
+                const key = String(parameter[0]);
+                let value = "";
+                try {
+                    if (typeof parameter[1] !== "string") {
+                        value = JSON.stringify(parameter[1]);
+                    } else value = parameter[1];
+                } catch (error) {
+                    console.log(error);
+                    value = String(parameter[1]);
+                }
+                return `${key}=${value}`;
+            }).join("&")}`;
+        }
         return target;
     }
 }
