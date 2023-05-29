@@ -16,11 +16,12 @@ export default abstract class BaseModel extends CommonBaseModel {
     }
 
     public override async save(options?: SaveOptions): Promise<(this & BaseModel) | null> {
+        const id = !this.isNew() ? this.getId() : "";
         const result = await super.save(options);
         if (!result) return null;
 
         const executedActions = this.getExecutedActions();
-        if (executedActions.length) await ApiClient.batch({ data: { batch: executedActions } });
+        if (executedActions.length) await ApiClient.batch({ collectionName: this.collectionName, id, data: { batch: executedActions } });
         return result;
     }
 

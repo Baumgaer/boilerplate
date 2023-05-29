@@ -62,8 +62,8 @@ export default abstract class ActionableSchemaBased extends SchemaBased {
         return metadataStore.getInstances<any, "Action">("Action", this);
     }
 
-    public addExecutedAction(name: string, args: Record<string, any>, id?: UUID) {
-        this.executedActions.push({ name, id, args });
+    public addExecutedAction(name: string, args: Record<string, any>) {
+        this.executedActions.push({ name, args });
     }
 
     public getExecutedActions() {

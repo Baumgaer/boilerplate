@@ -6,6 +6,7 @@ export interface RequestParams {
 }
 
 export interface TargetComponents {
+    prefix?: string;
     collectionName: string;
     id: string;
     actionName: string;

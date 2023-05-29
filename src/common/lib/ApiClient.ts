@@ -1,5 +1,7 @@
+import path from "path";
 import Configurator from "~env/lib/Configurator";
 import { isArray } from "~env/utils/utils";
+import type { SetOptional } from "type-fest";
 import type { RequestParams, MethodParams, TargetComponents } from "~env/@types/ApiClient";
 
 const configurator = new Configurator();
@@ -7,37 +9,37 @@ const configurator = new Configurator();
 export default class ApiClient {
 
     public static get({ collectionName, actionName, id, parameters, headers }: Omit<MethodParams, "data">) {
-        const target = this.buildTarget({ actionName, collectionName, id, parameters });
+        const target = this.buildTarget({ prefix: "models", actionName, collectionName, id, parameters });
         return this.request({ target, method: "GET", headers });
     }
 
     public static post({ collectionName, actionName, id, parameters, headers, data }: MethodParams) {
-        const target = this.buildTarget({ actionName, collectionName, id, parameters });
+        const target = this.buildTarget({ prefix: "models", actionName, collectionName, id, parameters });
         return this.request({ target, method: "POST", headers, data });
     }
 
     public static put({ collectionName, actionName, id, parameters, headers, data }: MethodParams) {
-        const target = this.buildTarget({ actionName, collectionName, id, parameters });
+        const target = this.buildTarget({ prefix: "models", actionName, collectionName, id, parameters });
         return this.request({ target, method: "PUT", headers, data });
     }
 
     public static patch({ collectionName, actionName, id, parameters, headers, data }: MethodParams) {
-        const target = this.buildTarget({ actionName, collectionName, id, parameters });
+        const target = this.buildTarget({ prefix: "models", actionName, collectionName, id, parameters });
         return this.request({ target, method: "PATCH", headers, data });
     }
 
     public static delete({ collectionName, actionName, id, parameters, headers, data }: MethodParams) {
-        const target = this.buildTarget({ actionName, collectionName, id, parameters });
+        const target = this.buildTarget({ prefix: "models", actionName, collectionName, id, parameters });
         return this.request({ target, method: "DELETE", headers, data });
     }
 
     public static options({ collectionName, actionName, id, parameters, headers, data }: MethodParams) {
-        const target = this.buildTarget({ actionName, collectionName, id, parameters });
+        const target = this.buildTarget({ prefix: "models", actionName, collectionName, id, parameters });
         return this.request({ target, method: "OPTIONS", headers, data });
     }
 
-    public static batch({ parameters, headers, data }: Omit<MethodParams, "collectionName" | "actionName" | "id">) {
-        const target = this.buildTarget({ actionName: "batch", collectionName: "batch", id: "", parameters });
+    public static batch({ collectionName, id = "", parameters, headers, data }: SetOptional<Omit<MethodParams, "actionName">, "id">) {
+        const target = this.buildTarget({ prefix: "batch", actionName: "", collectionName, id, parameters });
         return this.request({ target, method: "post", headers, data });
     }
 
@@ -75,22 +77,10 @@ export default class ApiClient {
         return configurator.get("common.cors.enable") ? configurator.get("common.cors.policy") as RequestMode : "no-cors";
     }
 
-    protected static buildTarget({ collectionName, actionName, id, parameters = [] }: TargetComponents) {
-        let target = `${collectionName}`;
-        if (id) target += `/${id}`;
-        target += `/${actionName}`;
-        if (parameters.length) {
-            target += `?${parameters.map((parameter) => {
-                const key = String(parameter[0]);
-                let value = "";
-                try {
-                    value = JSON.stringify(parameter[1]);
-                } catch (error) {
-                    value = String(parameter[1]);
-                }
-                return `${key}=${value}`;
-            }).join("&")}`;
-        }
+    protected static buildTarget({ prefix = "", collectionName, actionName, id, parameters = [] }: TargetComponents) {
+        const urlPath = path.normalize(path.join(prefix || "", collectionName || "", id || "", actionName || ""));
+        const searchParams = new URLSearchParams(parameters).toString();
+        const target = `${urlPath}${searchParams ? `?${searchParams}` : ""}`;
         return target;
     }
 }

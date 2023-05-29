@@ -200,11 +200,6 @@ export default abstract class BaseModel extends ModelSchemaBased {
         return super.getActions() as ModelAction<typeof EnvBaseModel>[];
     }
 
-    public override addExecutedAction(name: string, args: Record<string, any>): void {
-        const id = !this.isNew() ? this.getId() : undefined;
-        super.addExecutedAction(name, args, id);
-    }
-
     /**
      * Iterates over all attributes and checks them for changes.
      *
