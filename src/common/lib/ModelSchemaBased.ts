@@ -49,7 +49,7 @@ export default abstract class ModelSchemaBased extends AttributeSchemaBased {
         return true;
     }
 
-    public getId() {
-        return "";
+    public getId(): UUID {
+        return "" as UUID;
     }
 }

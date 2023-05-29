@@ -42,8 +42,8 @@ export default class ApiClient {
     }
 
     protected static async request({ method = "GET", data = {}, headers = {}, target = "" }: RequestParams) {
-        const defaultHeaders = { redirect: 'follow', mode: 'cors', Accept: "application/json", "Content-Type": "application/json" } satisfies RequestInit["headers"];
-        const fetchObject = { method, headers: Object.assign({}, defaultHeaders, headers), credentials: "include", keepalive: true, mode: this.getRequestMode() } satisfies RequestInit;
+        const defaultHeaders = { redirect: 'follow', mode: 'cors', Accept: "application/json; charset=utf-8", "Content-Type": "application/json; charset=utf-8" } satisfies RequestInit["headers"];
+        const fetchObject = { method, headers: Object.assign({}, defaultHeaders, headers), keepalive: true, mode: this.getRequestMode() } satisfies RequestInit;
 
         // HEAD and GET doesn't allow body, so apply body only when method is different
         if (!["GET", "HEAD"].includes(method) && Object.keys(data).length) Object.assign(fetchObject, { body: JSON.stringify(data) });

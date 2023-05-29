@@ -3,7 +3,7 @@ import { fileTypeFromBuffer } from "file-type";
 import { isHttpError } from "http-errors";
 import CommonBaseRoute from "~common/lib/BaseRoute";
 import { BaseError, InternalServerError, NotAcceptable } from "~server/lib/Errors";
-import { isValue } from "~server/utils/utils";
+import { isValue, isPlainObject } from "~server/utils/utils";
 import type BaseModel from "~server/lib/BaseModel";
 import type BaseServer from "~server/lib/BaseServer";
 import type RouteAction from "~server/lib/RouteAction";
@@ -20,7 +20,10 @@ export default class BaseRoute extends CommonBaseRoute {
 
     public async handle<T extends typeof BaseRoute>(train: Train<typeof BaseModel>, action: RouteAction<T>) {
         try {
-            const orderedParameters = action.schema.orderParameters(train.params);
+            const body = isPlainObject(train.body) ? train.body : {} as Record<string, any>;
+            const params = isPlainObject(train.params) ? train.params : {};
+            const query = isPlainObject(train.query) ? train.query : {};
+            const orderedParameters = action.schema.orderParameters(params, query, body);
             orderedParameters[0] = train;
             const result = await action.get()(...orderedParameters);
 

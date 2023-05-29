@@ -16,7 +16,15 @@ interface Server {
     engine: Engine;
     csp: Csp;
     csrf: Csrf;
-    cors: Cors;
+    cors: Cors2;
+}
+interface Cors2 {
+    enable: boolean;
+    policy: string;
+    allowForeignCredentials: boolean;
+    allowedMethods: string[];
+    allowedHeaders: string[];
+    allowedOrigins: string[];
 }
 interface Csrf {
     enable: boolean;

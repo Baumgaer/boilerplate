@@ -1,4 +1,3 @@
-import { v4 as UUidV4 } from "uuid";
 import MetadataStore from "~env/lib/MetadataStore";
 import SchemaBased from "~env/lib/SchemaBased";
 import { isEqual } from "~env/utils/utils";
@@ -63,8 +62,8 @@ export default abstract class ActionableSchemaBased extends SchemaBased {
         return metadataStore.getInstances<any, "Action">("Action", this);
     }
 
-    public addExecutedAction(name: string, args: Record<string, any>) {
-        this.executedActions.push({ name, args, id: UUidV4() });
+    public addExecutedAction(name: string, args: Record<string, any>, id?: UUID) {
+        this.executedActions.push({ name, id, args });
     }
 
     public getExecutedActions() {

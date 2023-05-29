@@ -20,7 +20,7 @@ export default abstract class BaseModel extends CommonBaseModel {
         if (!result) return null;
 
         const executedActions = this.getExecutedActions();
-        if (executedActions.length) await ApiClient.batch({ data: executedActions });
+        if (executedActions.length) await ApiClient.batch({ data: { batch: executedActions } });
         return result;
     }
 

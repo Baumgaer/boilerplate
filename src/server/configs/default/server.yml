@@ -29,3 +29,21 @@ csrf:
 cors:
     enable: true
     policy: "same-origin"
+    allowForeignCredentials: false
+    allowedMethods:
+        - "GET"
+        - "HEAD"
+        - "PUT"
+        - "PATCH"
+        - "POST"
+        - "DELETE"
+    allowedHeaders:
+        - "content-type"
+        - "redirect"
+        - "mode"
+    allowedOrigins:
+        - "capacitor://localhost"
+        - "ionic://localhost"
+        - "http://localhost"
+        - "http://localhost:8080"
+        - "http://localhost:8100"

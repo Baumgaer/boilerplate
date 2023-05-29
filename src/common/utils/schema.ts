@@ -95,7 +95,7 @@ export function toInternalValidationReturnType(result: SafeParseReturnType<any, 
         } else if (issue.code.startsWith("invalid") && !issue.code.endsWith("type")) {
             kind = "format";
         } else kind = "type";
-        errors.push(new errorClass("Error while validating type", kind, issue.path));
+        errors.push(new errorClass(issue.message, kind, issue.path));
     }
 
     if (errors.length) return { success: false, errors };

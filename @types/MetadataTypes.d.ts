@@ -5,7 +5,7 @@ export type CombinedDataType<T> = T | IUnionOrIntersectionType<T>;
 export type LiteralTypes = string | number | bigint | boolean | undefined | symbol | null;
 export type LiteralTypeNames = "String" | "Number" | "Bigint" | "Boolean" | "Undefined" | "Symbol" | "Null";
 
-export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType<string> | ICustomType | IPrimitiveType | ILiteralType | IObjectType | IThisType | INamedObject | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType;
+export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType<string> | ICustomType | IPrimitiveType | ILiteralType | IObjectType | IThisType | INamedObject | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType | IRecordType;
 
 export interface IMixedType {
     isMixed: boolean;
@@ -62,6 +62,11 @@ export interface ITupleType<T = MetadataType> extends Omit<IArrayType<T>, "subTy
 export interface IInterfaceType extends IObjectType {
     isInterface: boolean;
     members: Record<string, IAttrMetadata>;
+}
+
+export interface IRecordType extends IObjectType {
+    isRecord: boolean;
+    typeArguments: [MetadataType, MetadataType];
 }
 
 export interface IModelType extends IIdentifiedType<string>, IObjectType {

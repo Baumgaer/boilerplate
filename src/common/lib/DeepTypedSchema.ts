@@ -22,7 +22,8 @@ import type {
     IUnionType,
     IUnresolvedType,
     INamedObject,
-    IObjectType
+    IObjectType,
+    IRecordType
 } from "~env/@types/MetadataTypes";
 import type { TypeError } from "~env/lib/Errors";
 import type SchemaBased from "~env/lib/SchemaBased";
@@ -307,15 +308,37 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
     }
 
     /**
+     * Determines if this attribute is an record type. This does NOT include index signatures
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is an record type else false
+     */
+    public isRecordType(altType?: MetadataType): altType is IRecordType {
+        const type = altType || this.rawType;
+        return Boolean("isObjectType" in type && "isRecord" in type && type.isObjectType && type.isRecord);
+    }
+
+    /**
      * Determines if this attribute contains somehow an unresolved type.
      * This includes unions of unresolved types too.
      *
      * @param [altType] A type which should be checked if not given the internal type is used
-     * @returns true if it is a model type else false
+     * @returns true if it is an unresolved type else false
      */
     public isUnresolvedType(altType?: MetadataType): altType is CombinedDataType<IMixedType | IUnresolvedType> {
         const type = altType || this.rawType;
-        return "isMixed" in type && type.isMixed || "isUnresolved" in type && type.isUnresolved || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
+        return "isUnresolved" in type && type.isUnresolved || this.checkSubTypes(type, this.isUnresolvedType.bind(this));
+    }
+
+    /**
+     * Determines if this attribute contains an any type.
+     *
+     * @param [altType] A type which should be checked if not given the internal type is used
+     * @returns true if it is an any type else false
+     */
+    public isAnyType(altType?: MetadataType): altType is CombinedDataType<IMixedType | IUnresolvedType> {
+        const type = altType || this.rawType;
+        return "isMixed" in type && type.isMixed && "isUnresolved" in type && !type.isUnresolved;
     }
 
     /**
@@ -458,6 +481,8 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
             }
         } else if (this.isDateType()) {
             schemaType = baseTypeFuncs.date();
+        } else if (this.isRecordType(type)) {
+            schemaType = baseTypeFuncs.record(this.buildSchemaType(type.typeArguments[1], false));
         } else if (this.isPlainObjectType(type)) {
             schemaType = this.buildPlainObjectSchemaType(type, applySettings);
         } else if (this.isNullType(type)) {
@@ -473,7 +498,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
             schemaType = baseTypeFuncs.number();
         } else if (this.isBooleanType(type)) {
             schemaType = baseTypeFuncs.boolean();
-        }
+        } else if (this.isAnyType(type)) schemaType = baseTypeFuncs.any();
 
         if (applySettings) {
             let min = -Infinity;

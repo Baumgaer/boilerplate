@@ -113,6 +113,10 @@ export function isPropertySignature(node?: ts.Node): node is ts.PropertySignatur
     return isNode("PropertySignature", node);
 }
 
+export function isAnyKeyword(node?: ts.Node): node is ts.DefaultKeyword {
+    return Boolean(node && (node.kind & SyntaxKind.AnyKeyword) === SyntaxKind.AnyKeyword);
+}
+
 export function isDefaultKeyword(node?: ts.Node): node is ts.DefaultKeyword {
     return Boolean(node && (node.kind & SyntaxKind.DefaultKeyword) === SyntaxKind.DefaultKeyword);
 }

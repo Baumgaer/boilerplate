@@ -76,14 +76,20 @@ export default abstract class BaseModel extends ModelSchemaBased {
     /**
      * The id of the model until it has no official id from the server
      */
-    public dummyId: string = "";
+    public dummyId!: UUID;
 
     public constructor(params?: BaseModelParams) {
         super(params);
     }
 
-    public static async getById<T extends EnvBaseModel>(_id: UUID): Promise<T | null> {
-        throw new Error("Not implemented");
+    public static async getById<T extends EnvBaseModel>(id: UUID): Promise<T | null> {
+        if (!id) return null;
+        try {
+            const model = await this.repository.findOne({ where: { id }, withDeleted: true }) as T | null;
+            return model;
+        } catch (error) {
+            return null;
+        }
     }
 
     public static useRepository(repository: Repository<EnvBaseModel>) {
@@ -192,6 +198,11 @@ export default abstract class BaseModel extends ModelSchemaBased {
 
     public override getActions() {
         return super.getActions() as ModelAction<typeof EnvBaseModel>[];
+    }
+
+    public override addExecutedAction(name: string, args: Record<string, any>): void {
+        const id = !this.isNew() ? this.getId() : undefined;
+        super.addExecutedAction(name, args, id);
     }
 
     /**

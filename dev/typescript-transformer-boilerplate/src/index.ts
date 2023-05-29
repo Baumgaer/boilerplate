@@ -1,6 +1,7 @@
 import transformer from "./lib/Transformer";
 import { Action } from "./rules/Action";
 import { Model } from "./rules/Model";
+import { TypeRecord } from "./rules/Record";
 import { Route } from "./rules/Route";
 import { TypeAny } from "./rules/Type-Any";
 import { TypeArray } from "./rules/Type-Array";
@@ -40,6 +41,7 @@ const rules = [
     TypeLiteral,
     TypeDate,
     TypeModel,
+    TypeRecord,
     TypeInterface,
     TypeUnion,
     TypeIntersection,

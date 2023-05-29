@@ -39,8 +39,7 @@ export type ActionOptionsWithMetadataJson<T extends typeof SchemaBased> = Action
 export type ActionOptionsPartialMetadataJson<T extends typeof SchemaBased> = IDeepTypedMetadata & SetOptional<ActionOptionsWithMetadataJson<T>, "metadataJson">;
 
 export interface IExecutedAction {
-    id: string;
-    csrfToken?: string;
+    id?: string;
     name: string;
     args: Record<string, any>;
 }

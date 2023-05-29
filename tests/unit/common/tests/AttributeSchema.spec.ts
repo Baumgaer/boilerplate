@@ -211,8 +211,14 @@ export default function (environment = "common") {
 
         it(`should be an unresolved type`, () => {
             const schema = TestModel.getAttributeSchema("anArray");
-            expect(schema?.isUnresolvedType({ isUnresolved: true })).to.be.true;
-            expect(schema?.isUnresolvedType({ isMixed: true })).to.be.true;
+            expect(schema?.isUnresolvedType({ isUnresolved: true, isMixed: true })).to.be.true;
+            expect(schema?.isUnresolvedType({ isMixed: true, isUnresolved: false })).to.be.false;
+        });
+
+        it(`should be an any type`, () => {
+            const schema = TestModel.getAttributeSchema("anArray");
+            expect(schema?.isAnyType({ isUnresolved: true, isMixed: true })).to.be.false;
+            expect(schema?.isAnyType({ isMixed: true, isUnresolved: false })).to.be.true;
         });
 
         it(`should be a generated column`, () => {
