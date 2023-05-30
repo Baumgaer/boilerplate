@@ -197,23 +197,25 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @returns the value of the asked attribute or property
          */
         private get(target: this, propertyName: string | symbol, receiver: this) {
+            // HINT: Because the attributes and actions are stored on the proxy
+            // instance and not on the model instance, we have to get the those
+            // from the receiver which is equal to the proxy
+
             // because we manipulate the constructor name on the fly, we need to
             // return that manipulating proxy (see below) to ensure that behavior
             if (propertyName === "constructor") return constructorProxy;
 
-            const attributeSchemas = this.getSchema()?.attributeSchemas;
-            const stringProperty = propertyName.toString();
+            const stringProperty = String(propertyName);
 
             // Do not use receiver.getAction(stringProperty) because of recursion error
             const action = metadataStore.getInstance("Action", receiver, stringProperty)?.get();
             if (action) return action;
 
-            if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.get(target, propertyName);
-            // Because the attribute is stored on the model instance and not on
-            // the proxy, we have to get the attribute from the receiver which
-            // is equal to the unProxyfiedObject
             // Do not use receiver.getAttribute(stringProperty) because of recursion error
-            return metadataStore.getInstance("Attribute", receiver, stringProperty)?.get();
+            const attribute = metadataStore.getInstance("Attribute", receiver, stringProperty);
+            if (attribute) return attribute.get();
+
+            return Reflect.get(target, propertyName);
         }
 
         /**
@@ -229,14 +231,15 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @returns the value of the asked attribute or property
          */
         private set(target: this, propertyName: string | symbol, value: any, receiver: this) {
-            const attributeSchemas = this.getSchema()?.attributeSchemas;
-            const stringProperty = propertyName.toString();
-            if (!attributeSchemas || !hasOwnProperty(attributeSchemas, stringProperty)) return Reflect.set(target, propertyName, value);
-            // Because the attribute is stored on the model instance and not on
-            // the proxy, we have to get the attribute from the receiver which
-            // is equal to the unProxyfiedObject
+            // HINT: Because the attributes and actions are stored on the proxy
+            // instance and not on the model instance, we have to get the those
+            // from the receiver which is equal to the proxy
+
             // Do not use receiver.getAttribute(stringProperty) because of recursion error
-            return metadataStore.getInstance("Attribute", receiver, stringProperty)?.set(value) ?? false;
+            const attribute = metadataStore.getInstance("Attribute", receiver, String(propertyName));
+            if (attribute) return attribute.set(value);
+
+            return Reflect.set(target, propertyName, value);
         }
 
     }
@@ -253,11 +256,12 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             let action = null;
             if (actionSchema) {
                 // Do not use receiver.getAction(stringProperty) because of recursion error
-                action = metadataStore.getInstance("Action", target, String(actionSchema.name));
+                action = metadataStore.getInstance("Action", target, actionSchema.name);
                 if (!action) {
                     const theTarget = target;
                     action = new ModelAction(theTarget, actionSchema.name as any, actionSchema);
-                    metadataStore.setInstance("Action", theTarget, String(actionSchema.name), action);
+                    metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
+                    metadataStore.setInstance("Action", theTarget, `internal_${actionSchema.internalName}`, action);
                 }
             }
 

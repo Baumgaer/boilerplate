@@ -13,8 +13,8 @@ export default class BaseRoute extends CommonBaseRoute {
 
     protected server: BaseServer;
 
-    public constructor(server: BaseServer) {
-        super(server);
+    public constructor(server: BaseServer, ...args: any[]) {
+        super(server, ...args);
         this.server = server;
     }
 
