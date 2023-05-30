@@ -4,10 +4,18 @@ import { Forbidden, NotFound } from "~server/lib/Errors";
 import { Route, Query, Mutation, Arg } from "~server/utils/decorators";
 import { getCollectionNameToModelMap } from "~server/utils/schema";
 import { isPlainObject } from "~server/utils/utils";
+import type BaseServer from "~server/lib/BaseServer";
 import type Train from "~server/lib/Train";
 
 @Route({ namespace: "/models/:collection" })
 export default class Models extends CommonModels {
+
+    protected saveResult: boolean;
+
+    public constructor(server: BaseServer, saveResult: boolean = true) {
+        super(server);
+        this.saveResult = saveResult;
+    }
 
     @Query({ name: "/:id/:action", accessRight: () => true })
     public async handleInstanceQuery(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg() action: string, @Arg({ primary: true }) id: UUID) {
@@ -42,8 +50,10 @@ export default class Models extends CommonModels {
         const orderedParameters = actionSchema.orderParameters(train.params, train.query, body);
         const result = await actionSchema.descriptor.value.call(model, ...orderedParameters);
 
-        if (result instanceof BaseModel) result.save();
-        if (model instanceof BaseModel) model.save();
+        if (this.saveResult) {
+            if (result instanceof BaseModel) result.save();
+            if (model instanceof BaseModel) model.save();
+        }
 
         return result;
     }

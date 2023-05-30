@@ -1,6 +1,6 @@
 import Logger from "~env/lib/Logger";
 import Example from "~env/models/Example";
-import { Attr, AttrObserver, Model } from "~env/utils/decorators";
+import { Attr, AttrObserver, Model, Mutation } from "~env/utils/decorators";
 import type AnotherExampleParams from "~env/interfaces/models/AnotherExample";
 import type YetAnotherExample from "~env/models/YetAnotherExample";
 
@@ -17,6 +17,11 @@ export default class AnotherExample extends Example {
 
     public constructor(params?: AnotherExampleParams) {
         super(params);
+    }
+
+    @Mutation({ name: "lol" })
+    public async testMutation() {
+        console.log("lalala");
     }
 
     @AttrObserver("anotherExampleCommon", "add")

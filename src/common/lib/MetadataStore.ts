@@ -81,7 +81,9 @@ export default class MetadataStore {
     }
 
     public getInstance<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>, name: TypeNameTypeMap<T>[N]["nameType"]): TypeNameTypeMap<T>[N]["usingInstance"] | null {
-        return this.instances?.[type]?.get(target)?.[String(name)] as any || null;
+        const namedInstance = this.instances?.[type]?.get(target)?.[String(name)] as any;
+        const internalInstance = this.instances?.[type]?.get(target)?.[`internal_${String(name)}`];
+        return namedInstance ?? internalInstance ?? null;
     }
 
     public getInstances<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {

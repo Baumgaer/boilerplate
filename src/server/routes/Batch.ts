@@ -1,11 +1,20 @@
 import BaseRoute from "~server/lib/BaseRoute";
+import Models from "~server/routes/Models";
 import { Route, Mutation, Query, Arg } from "~server/utils/decorators";
 import type { IExecutedAction } from "~server/@types/ActionSchema";
 import type BaseModel from "~server/lib/BaseModel";
+import type BaseServer from "~server/lib/BaseServer";
 import type Train from "~server/lib/Train";
 
 @Route({ namespace: "/batch/:collection" })
 export default class Batch extends BaseRoute {
+
+    protected modelsRoute: Models;
+
+    public constructor(server: BaseServer) {
+        super(server);
+        this.modelsRoute = new Models(server);
+    }
 
     @Query({ name: "/:id", accessRight: () => true })
     public async handleInstanceQuery(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg({ primary: true }) id: UUID, @Arg() batch: IExecutedAction[]) {
