@@ -30,8 +30,8 @@ export default class ArgumentSchema<T extends typeof SchemaBased> extends PlainO
      */
     protected override _constructed: boolean = true;
 
-    public constructor(ctor: T, name: string, options: ArgOptionsPartialMetadataJson<T>) {
-        super(ctor, name, options);
+    public constructor(ctor: T, name: string, internalName: string, options: ArgOptionsPartialMetadataJson<T>) {
+        super(ctor, name, internalName, options);
         this.setConstants(options);
     }
 

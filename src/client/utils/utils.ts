@@ -22,7 +22,8 @@ export {
     resolveProxy,
     setValue,
     union,
-    upperFirst
+    upperFirst,
+    uniq
 } from "~common/utils/utils";
 
 export function getEnvironment() {

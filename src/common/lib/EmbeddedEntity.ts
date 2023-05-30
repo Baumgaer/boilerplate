@@ -28,9 +28,9 @@ export function applyMembers<T extends ModelLike>(classType: T, members: members
     for (const memberKey in members) {
         if (hasOwnProperty(members, memberKey)) {
             const memberType = members[memberKey];
-            const attr = new AttributeSchema(classType, memberKey as any, memberType);
+            const attr = new AttributeSchema(classType, memberKey, memberKey, memberType);
             attributeSchemas.push(attr);
-            metadataStore.setSchema("Attribute", classType, memberKey as any, attr);
+            metadataStore.setSchema("Attribute", classType, memberKey, attr);
         }
     }
 

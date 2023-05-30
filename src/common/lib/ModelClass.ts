@@ -149,11 +149,13 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @param proxy the proxy which should recognize all changes of the attributes
          */
         private createAttributes(proxy: this) {
-            const attributeSchemas = this.getSchema()?.attributeSchemas || {};
+            const attributeSchemas = this.getSchema()?.attributeSchemas;
+            if (!attributeSchemas) return;
             for (const key in attributeSchemas) {
                 if (hasOwnProperty(attributeSchemas, key)) {
-                    const attribute = new (attributes[upperFirst(key)] || BaseAttribute)(proxy, key, Reflect.get(attributeSchemas, key));
+                    const attribute = new (attributes[upperFirst(key)] || BaseAttribute)(proxy, key, attributeSchemas[key]);
                     metadataStore.setInstance<ModelLike, "Attribute">("Attribute", proxy, key, attribute);
+                    metadataStore.setInstance<ModelLike, "Attribute">("Attribute", proxy, `internal_${attributeSchemas[key].internalName}`, attribute);
                 }
             }
         }
@@ -164,11 +166,13 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
          * @param proxy the proxy on which the action should bew invoked
          */
         private createActions(proxy: this) {
-            const actionSchemas = this.getSchema()?.actionSchemas || {};
+            const actionSchemas = this.getSchema()?.actionSchemas;
+            if (!actionSchemas) return;
             for (const key in actionSchemas) {
                 if (hasOwnProperty(actionSchemas, key)) {
-                    const action = new ModelAction<typeof BaseModel>(proxy, key, Reflect.get(actionSchemas, key));
+                    const action = new ModelAction<typeof BaseModel>(proxy, key, actionSchemas[key]);
                     metadataStore.setInstance<typeof BaseModel, "Action">("Action", proxy, key, action);
+                    metadataStore.setInstance<typeof BaseModel, "Action">("Action", proxy, `internal_${actionSchemas[key].internalName}`, action);
                 }
             }
         }
@@ -200,6 +204,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             const attributeSchemas = this.getSchema()?.attributeSchemas;
             const stringProperty = propertyName.toString();
 
+            // Do not use receiver.getAction(stringProperty) because of recursion error
             const action = metadataStore.getInstance("Action", receiver, stringProperty)?.get();
             if (action) return action;
 
@@ -207,6 +212,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedObject
+            // Do not use receiver.getAttribute(stringProperty) because of recursion error
             return metadataStore.getInstance("Attribute", receiver, stringProperty)?.get();
         }
 
@@ -229,6 +235,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // Because the attribute is stored on the model instance and not on
             // the proxy, we have to get the attribute from the receiver which
             // is equal to the unProxyfiedObject
+            // Do not use receiver.getAttribute(stringProperty) because of recursion error
             return metadataStore.getInstance("Attribute", receiver, stringProperty)?.set(value) ?? false;
         }
 
@@ -240,10 +247,12 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     // eslint-disable-next-line prefer-const
     constructorProxy = new Proxy(ModelClass, {
         get(target, property) {
+            // Do not use receiver.getAction(stringProperty) because of recursion error
             const actionSchema = metadataStore.getSchema("Action", target, String(property));
 
             let action = null;
             if (actionSchema) {
+                // Do not use receiver.getAction(stringProperty) because of recursion error
                 action = metadataStore.getInstance("Action", target, String(actionSchema.name));
                 if (!action) {
                     const theTarget = target;

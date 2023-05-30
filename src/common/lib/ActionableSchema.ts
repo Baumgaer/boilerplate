@@ -21,8 +21,8 @@ export default abstract class ActionableSchema<T extends typeof SchemaBased> ext
      */
     public readonly actionSchemas: Readonly<Record<keyof InstanceType<T>, ActionSchema<T>>> = {} as Readonly<Record<keyof InstanceType<T>, ActionSchema<T>>>;
 
-    public constructor(ctor: T, name: string, actionSchemas: ActionSchema<T>[], options: Record<string, any>) {
-        super(name, options);
+    public constructor(ctor: T, name: string, internalName: string, actionSchemas: ActionSchema<T>[], options: Record<string, any>) {
+        super(name, internalName, options);
         this.owner = ctor;
 
         for (const actionSchema of actionSchemas) this.setActionSchema(actionSchema);

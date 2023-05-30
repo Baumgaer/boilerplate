@@ -162,8 +162,8 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     // @ts-ignore this is necessary because TypeScript seems to have problems with recursive definitions
     private embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
 
-    public constructor(ctor: T, name: keyof T, options: AttrOptionsPartialMetadataJson<T>) {
-        super(ctor, name, options);
+    public constructor(ctor: T, name: keyof T, internalName: string, options: AttrOptionsPartialMetadataJson<T>) {
+        super(ctor, name, internalName, options);
         this.setConstants(options);
         this.buildSchema(options.type);
     }

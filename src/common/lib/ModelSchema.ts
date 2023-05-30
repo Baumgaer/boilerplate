@@ -53,7 +53,7 @@ export default class ModelSchema<T extends ModelLike> extends ActionableSchema<T
     protected override schemaType: LazyType<ObjectType<any>> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
     public constructor(ctor: T, name: string, attributeSchemas: AttributeSchema<T>[], actionSchemas: ActionSchema<T>[], options: ModelOptions<T>) {
-        super(ctor, name, actionSchemas, options);
+        super(ctor, name, ctor.name, actionSchemas, options);
         this.collectionName = options.collectionName as string;
         this.isAbstract = options.isAbstract as boolean;
 

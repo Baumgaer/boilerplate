@@ -51,8 +51,8 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
      */
     protected override _constructed: boolean = true;
 
-    public constructor(ctor: T, name: string, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[], descriptor: TypedPropertyDescriptor<ActionFunction>) {
-        super(ctor, name, options);
+    public constructor(ctor: T, name: string, internalName: string, options: ActionOptionsPartialMetadataJson<T>, schemas: ArgumentSchema<T>[], descriptor: TypedPropertyDescriptor<ActionFunction>) {
+        super(ctor, name, internalName, options);
         for (const schema of schemas) this.setArgumentSchema(schema);
         this.setConstants(options);
         this.descriptor = descriptor;

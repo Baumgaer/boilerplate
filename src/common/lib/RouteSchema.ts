@@ -22,7 +22,7 @@ export default class RouteSchema<T extends RouteLike> extends ActionableSchema<T
     protected override schemaType: LazyType<NeverType> = baseTypeFuncs.lazy(this.buildSchemaType.bind(this));
 
     public constructor(ctor: T, name: string, actionSchemas: ActionSchema<T>[], options: RouteOptions<T>) {
-        super(ctor, name, actionSchemas, options);
+        super(ctor, name, ctor.name, actionSchemas, options);
         this.namespace = options.namespace as string;
     }
 

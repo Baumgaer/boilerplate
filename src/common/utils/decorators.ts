@@ -75,7 +75,7 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
     const metadataOptions: AttrOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as AttrOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
 
-    return (target) => {
+    return (target, propertyName) => {
         // We need to use the constructor to have the correct class type for
         // the AttributeSchema. This has to be corrected when the property
         // decorators of third party tools are used later on. In this case we
@@ -84,7 +84,7 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
         const theTarget = (target.constructor.prototype === target ? target.constructor : target) as T;
         const attrName = metadataOptions.name as keyof T;
         const options = metadataStore.constructSchemaParams<T, "Attribute">("Attribute", String(attrName), metadataOptions);
-        const schema = new AttributeSchema<T>(theTarget, attrName, options);
+        const schema = new AttributeSchema<T>(theTarget, attrName, String(propertyName), options);
 
         metadataStore.setSchema("Attribute", theTarget, String(attrName), schema);
     };
@@ -168,7 +168,7 @@ function action<T extends typeof SchemaBased>(
     const theTarget = (target.constructor.prototype === target ? target.constructor : target) as T;
     const options = metadataStore.constructSchemaParams<T, "Action">("Action", String(methodName), metadataOptions);
     const argumentSchemas = metadataStore.getSchemas("Argument", theTarget, (targetName, schemaName) => targetName === theTarget.name && schemaName === methodName);
-    const schema = new ActionSchema(theTarget, options.name, options, argumentSchemas, descriptor);
+    const schema = new ActionSchema(theTarget, options.name, String(methodName), options, argumentSchemas, descriptor);
 
     metadataStore.setSchema("Action", theTarget, String(methodName), schema);
 }
@@ -228,7 +228,7 @@ export function Arg<T extends typeof SchemaBased>(options: ArgOptions<T> = {}) {
         const theTarget = (target.constructor.prototype === target ? target.constructor : target) as T;
         const options = metadataStore.constructSchemaParams("Argument", String(methodName), metadataOptions, metadataOptions.name);
         const argumentName = options.name;
-        const schema = new ArgumentSchema(theTarget, argumentName, options);
+        const schema = new ArgumentSchema(theTarget, argumentName, String(methodName), options);
 
         // Use method name for argument name in metadata store to distinguish between
         // arguments with same name in different methods

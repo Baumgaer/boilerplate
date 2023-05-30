@@ -21,6 +21,8 @@ export default abstract class Schema<T> {
      */
     public readonly name: string | keyof T;
 
+    public readonly internalName: string;
+
     /**
     * The options which initializes the schema
     */
@@ -43,8 +45,9 @@ export default abstract class Schema<T> {
      */
     protected abstract schemaType: Type<any> | null;
 
-    public constructor(name: string | keyof T, options: Record<string, any>) {
+    public constructor(name: string | keyof T, internalName: string, options: Record<string, any>) {
         this.name = name;
+        this.internalName = internalName;
         this.options = options;
     }
 

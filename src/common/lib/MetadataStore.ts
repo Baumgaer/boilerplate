@@ -1,3 +1,4 @@
+import { uniq } from "~env/utils/utils";
 import type { FilterFunction, InstancesType, SchemasType } from "~env/@types/MetadataStore";
 import type { TypeNameTypeMap, SchemaTypeNames, SchemaTypes } from "~env/@types/Schema";
 import type SchemaBased from "~env/lib/SchemaBased";
@@ -87,6 +88,6 @@ export default class MetadataStore {
     }
 
     public getInstances<T extends typeof SchemaBased, N extends SchemaTypeNames<T>>(type: N, target: T | InstanceType<T>): TypeNameTypeMap<T>[N]["usingInstance"][] {
-        return Object.values(this.instances?.[type]?.get(target) ?? {}) as TypeNameTypeMap<T>[N]["usingInstance"][];
+        return uniq(Object.values(this.instances?.[type]?.get(target) ?? {})) as TypeNameTypeMap<T>[N]["usingInstance"][];
     }
 }
