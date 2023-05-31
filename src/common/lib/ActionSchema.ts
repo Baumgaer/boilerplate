@@ -1,7 +1,8 @@
 import { ActionError } from "~env/lib/Errors";
 import PlainObjectSchema from "~env/lib/PlainObjectSchema";
-import type { AccessRightFunc, ActionOptions, ActionOptionsPartialMetadataJson, HttpMethods } from "~env/@types/ActionSchema";
+import type { AccessRightFunc, ActionOptions, ActionOptionsPartialMetadataJson } from "~env/@types/ActionSchema";
 import type { ValidationResult } from "~env/@types/Errors";
+import type { HttpMethods } from "~env/@types/http";
 import type ArgumentSchema from "~env/lib/ArgumentSchema";
 import type { BaseError } from "~env/lib/Errors";
 import type SchemaBased from "~env/lib/SchemaBased";

@@ -7,25 +7,26 @@ import type { ValidationResult } from "~env/@types/Errors";
 import type BaseModel from "~env/lib/BaseModel";
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function Varchar<_TMin extends number, TMax extends number>(params: { max?: TMax } = {}) {
+export function Varchar<_TMin extends number, TMax extends number>(params: { name?: string, max?: TMax } = {}) {
     const max = Math.min(params.max ?? 65535, 65535);
+    const name = params.name ?? "";
     const schemaType = baseTypeFuncs.string().min(0).max(max);
 
     return {
         schemaType,
-        validate: (value: unknown) => toInternalValidationReturnType(schemaType.safeParse(value)),
+        validate: (value: unknown) => toInternalValidationReturnType(name, value, schemaType.safeParse(value)),
         guard: (value: unknown): value is Varchar<TMax> => schemaType.safeParse(value).success,
         cast: (value: unknown) => String(value).slice(0, max) as Varchar<TMax>
     };
 }
 
-export function NumberRange<TMin extends number, TMax extends number>(params: { min?: TMin, max?: TMax } = {}) {
-    const { min = -Infinity, max = Infinity } = params;
+export function NumberRange<TMin extends number, TMax extends number>(params: { name?: string, min?: TMin, max?: TMax } = {}) {
+    const { min = -Infinity, max = Infinity, name = "" } = params;
     const schemaType = baseTypeFuncs.number().gte(min).lte(max);
 
     return {
         schemaType,
-        validate: (value: unknown) => toInternalValidationReturnType(schemaType.safeParse(value)),
+        validate: (value: unknown) => toInternalValidationReturnType(name, value, schemaType.safeParse(value)),
         guard: (value: unknown): value is NumberRange<TMin, TMax> => schemaType.safeParse(value).success,
         cast: (value: unknown) => {
             const number = Number(value);
@@ -35,13 +36,13 @@ export function NumberRange<TMin extends number, TMax extends number>(params: { 
     };
 }
 
-export function TextRange<TMin extends number, TMax extends number>(params: { min?: TMin, max?: TMax } = {}) {
-    const { min = 0, max = Infinity } = params;
+export function TextRange<TMin extends number, TMax extends number>(params: { name?: string, min?: TMin, max?: TMax } = {}) {
+    const { min = 0, max = Infinity, name = "" } = params;
     const schemaType = baseTypeFuncs.string().min(min).max(max);
 
     return {
         schemaType,
-        validate: (value: unknown) => toInternalValidationReturnType(schemaType.safeParse(value)),
+        validate: (value: unknown) => toInternalValidationReturnType(name, value, schemaType.safeParse(value)),
         guard: (value: unknown): value is TextRange<TMin, TMax> => schemaType.safeParse(value).success,
         cast: (value: unknown) => {
             const text = String(value);
@@ -52,43 +53,45 @@ export function TextRange<TMin extends number, TMax extends number>(params: { mi
     };
 }
 
-export function Email() {
+export function Email(params: { name?: string } = {}) {
+    const name = params.name ?? "";
     const schemaType = baseTypeFuncs.string().email();
 
     return {
         schemaType,
-        validate: (value: unknown) => toInternalValidationReturnType(schemaType.safeParse(value)),
+        validate: (value: unknown) => toInternalValidationReturnType(name, value, schemaType.safeParse(value)),
         guard: (value: unknown): value is Email => schemaType.safeParse(value).success,
         cast: (value: unknown) => {
             const result = schemaType.safeParse(value);
             if (result.success) return value as Email;
-            return AggregateError(toInternalValidationReturnType(result).errors);
+            return AggregateError(toInternalValidationReturnType(name, value, result).errors);
         }
     };
 }
 
-export function UUID() {
+export function UUID(params: { name?: string } = {}) {
+    const name = params.name ?? "";
     const schemaType = baseTypeFuncs.string().uuid();
 
     return {
         schemaType,
-        validate: (value: unknown) => toInternalValidationReturnType(schemaType.safeParse(value)),
+        validate: (value: unknown) => toInternalValidationReturnType(name, value, schemaType.safeParse(value)),
         guard: (value: unknown): value is UUID => schemaType.safeParse(value).success,
         cast: (value: unknown) => {
             const result = schemaType.safeParse(value);
             if (result.success) return value as UUID;
-            return AggregateError(toInternalValidationReturnType(result).errors);
+            return AggregateError(toInternalValidationReturnType(name, value, result).errors);
         }
     };
 }
 
 export function Model(params: { name?: string, getAttribute?: getAttributeForValidation<typeof BaseModel> } = {}) {
-    const { name, getAttribute } = params;
+    const { name = "", getAttribute } = params;
     const schemaType = baseTypeFuncs.never();
 
     const funcs = {
         get schemaType() {
-            if (!name || !(name in global.MODEL_NAME_TO_MODEL_MAP)) return schemaType;
+            if (!(name in global.MODEL_NAME_TO_MODEL_MAP)) return schemaType;
             return global.MODEL_NAME_TO_MODEL_MAP[name].getSchema()?.getSchemaType() || schemaType;
         },
         validate: (value: unknown): ValidationResult => {
@@ -117,11 +120,11 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             return { success: true, errors: [] };
         },
         guard: <T extends BaseModel>(value: unknown): value is T => {
-            if (!name || !(name in global.MODEL_NAME_TO_MODEL_MAP) || !isObject(value)) return false;
+            if (!(name in global.MODEL_NAME_TO_MODEL_MAP) || !isObject(value)) return false;
             return value instanceof global.MODEL_NAME_TO_MODEL_MAP[name];
         },
         cast: <T extends BaseModel>(value: unknown) => {
-            if (!name || !(name in global.MODEL_NAME_TO_MODEL_MAP)) return new AggregateError([new BaseError("unknown model name")]);
+            if (!(name in global.MODEL_NAME_TO_MODEL_MAP)) return new AggregateError([new BaseError("unknown model name")]);
             const result = funcs.validate(value);
             if (result.success) {
                 if (isPlainObject(value)) return new (global.MODEL_NAME_TO_MODEL_MAP[name] as unknown as Constructor<T>)(value);

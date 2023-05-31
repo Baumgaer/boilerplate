@@ -1,7 +1,8 @@
+import * as DataTypes from "~env/lib/DataTypes";
 import DeepTypedSchema from "~env/lib/DeepTypedSchema";
 import { baseTypeFuncs, NumberType, StringType } from "~env/utils/schema";
 import { hasOwnProperty } from "~env/utils/utils";
-import type { ObjectSchemaType } from "~env/@types/AttributeSchema";
+import type { ObjectSchemaType, SchemaTypes } from "~env/@types/AttributeSchema";
 import type { IInterfaceType } from "~env/@types/MetadataTypes";
 import type SchemaBased from "~env/lib/SchemaBased";
 import type { Type } from "~env/utils/schema";
@@ -24,23 +25,29 @@ export default abstract class PlainObjectSchema<T extends typeof SchemaBased> ex
         for (const key in type.members) {
             if (hasOwnProperty(type.members, key)) {
                 const member = type.members[key];
-                let schemaType = this.buildSchemaType(member.type, false);
 
-                let min = -Infinity;
+                const required = Reflect.get(member, "required");
+                const isLazy = Reflect.get(member, "isLazy");
+                const max = Reflect.get(member, "max") ?? Infinity;
+
+                let min = Reflect.get(member, "min") ?? -Infinity;
                 if (this.isStringType(member.type)) min = 0;
-                if (this.min !== undefined) min = this.min;
+
+                let schemaType: SchemaTypes = baseTypeFuncs.never();
+                if ("validator" in member && typeof member.validator === "string" && Reflect.get(DataTypes, member.validator)) {
+                    schemaType = Reflect.get(DataTypes, member.validator)({ min, max }).schemaType;
+                } else schemaType = this.buildSchemaType(member.type, false);
+
                 if (schemaType instanceof NumberType) {
                     schemaType.gte(min);
                 } else if (schemaType instanceof StringType) schemaType.min(min);
 
-                let max = Infinity;
-                if (this.max !== undefined) max = this.max;
                 if (schemaType instanceof NumberType) {
                     schemaType.lte(max);
                 } else if (schemaType instanceof StringType) schemaType.max(max);
 
-                if (!Reflect.get(member.type, "required")) schemaType = baseTypeFuncs.optional(schemaType);
-                if (Reflect.get(member.type, "isLazy")) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
+                if (!required) schemaType = baseTypeFuncs.optional(schemaType);
+                if (isLazy) schemaType = schemaType.or(baseTypeFuncs.promise(schemaType));
 
                 members[member.name] = schemaType;
             }

@@ -12,7 +12,14 @@ export default class ModelAction<T extends typeof BaseModel> extends CommonModel
                 // If this is an instance of a model, just collect all executed
                 // actions to enable sending a batch
                 if (this.schema.httpMethod !== "GET") {
-                    thisArg.addExecutedAction(String(this.name), Object.fromEntries(parameters));
+                    let id: UUID | undefined;
+                    let dummyId: UUID = "" as UUID;
+                    if (thisArg.isBaseModel) {
+                        id = thisArg.id;
+                        dummyId = thisArg.dummyId;
+                    }
+
+                    thisArg.addExecutedAction({ id, dummyId, name: this.name, collection: thisArg.collectionName, args: Object.fromEntries(parameters) });
                 } else ApiClient.get({ collectionName: thisArg.collectionName, actionName: String(this.name), parameters, id });
             } else {
                 // Otherwise we have to send the action immediately because

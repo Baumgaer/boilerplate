@@ -434,7 +434,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
         const DataType = this.validator && DataTypes[this.validator];
         if (DataType) {
             result = DataType({ min: this.min, max: this.max, name: this.getTypeIdentifier(), getAttribute: () => this as any }).validate(value);
-        } else result = toInternalValidationReturnType(this.getSchemaType().safeParse(value), errorClass);
+        } else result = toInternalValidationReturnType(String(this.name), value, this.getSchemaType().safeParse(value), errorClass);
 
         return result;
     }

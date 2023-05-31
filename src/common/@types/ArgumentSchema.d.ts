@@ -15,6 +15,14 @@ export interface ArgOptions<T extends typeof SchemaBased> extends DeepTypedOptio
      * This will be injected automatically by the transformer.
      */
     index?: number;
+
+    /**
+     * Determines if the argument should be passed in as whole "body",
+     * whole "query" or "match" name (default).
+     * If "body" or "query" is given, the corresponding object will be passed in
+     * as a clone.
+     */
+    kind?: "body" | "query" | "match";
 }
 
 export type ArgOptionsWithMetadataJson<T extends typeof SchemaBased> = ArgOptions<T> & { metadataJson: string };

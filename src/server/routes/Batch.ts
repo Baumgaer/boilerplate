@@ -6,38 +6,49 @@ import type BaseModel from "~server/lib/BaseModel";
 import type BaseServer from "~server/lib/BaseServer";
 import type Train from "~server/lib/Train";
 
-@Route({ namespace: "/batch/:collection" })
+@Route({ namespace: "/batch" })
 export default class Batch extends BaseRoute {
 
     protected modelsRoute: Models;
 
     public constructor(server: BaseServer) {
         super(server);
-        this.modelsRoute = new Models(server);
-    }
-
-    @Query({ name: "/:id", accessRight: () => true })
-    public async handleInstanceQuery(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg({ primary: true }) id: UUID, @Arg() batch: IExecutedAction[]) {
-        return this.handleRequest(train, collection, batch, id);
+        this.modelsRoute = new Models(server, true);
     }
 
     @Query({ name: "/", accessRight: () => true })
-    public async handleStaticQuery(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg() batch: IExecutedAction[]) {
-        return this.handleRequest(train, collection, batch);
-    }
-
-    @Mutation({ name: "/:id", accessRight: () => true })
-    public async handleInstanceMutation(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg({ primary: true }) id: UUID, @Arg() batch: IExecutedAction[]) {
-        return this.handleRequest(train, collection, batch, id);
+    public async handleGet(train: Train<typeof BaseModel>, @Arg() batch: IExecutedAction[]) {
+        return this.handleRequest(train, batch);
     }
 
     @Mutation({ name: "/", accessRight: () => true })
-    public async handleStaticMutation(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg() batch: IExecutedAction[]) {
-        return this.handleRequest(train, collection, batch);
+    public async handlePost(train: Train<typeof BaseModel>, @Arg() batch: IExecutedAction[]) {
+        return this.handleRequest(train, batch);
     }
 
-    protected async handleRequest(train: Train<typeof BaseModel>, collection: string, batch: IExecutedAction[], id?: UUID) {
-        console.log(train.httpMethod, train.url, collection, id, batch);
+    @Mutation({ name: "/", httpMethod: "PATCH", accessRight: () => true })
+    public async handlePatch(train: Train<typeof BaseModel>, @Arg() batch: IExecutedAction[]) {
+        return this.handleRequest(train, batch);
+    }
+
+    protected async handleRequest(train: Train<typeof BaseModel>, batch: IExecutedAction[]) {
+        for (const action of batch) {
+            const { name, collection, args, id, dummyId } = action;
+            console.log(dummyId, args);
+            if (name === "create") {
+                // special behavior
+            } else {
+                if (train.httpMethod === "GET") {
+                    if (id) {
+                        await this.modelsRoute.handleInstanceQuery(train, collection, name, id, args);
+                    } else await this.modelsRoute.handleStaticQuery(train, collection, name, args);
+                } else {
+                    if (id) {
+                        await this.modelsRoute.handleInstanceMutation(train, collection, name, id, args);
+                    } else await this.modelsRoute.handleStaticMutation(train, collection, name, args);
+                }
+            }
+        }
     }
 
 }

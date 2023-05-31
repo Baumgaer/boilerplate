@@ -1,7 +1,7 @@
 import CommonRouteAction from "~common/lib/RouteAction";
 import { Forbidden, NotFound } from "~server/lib/Errors";
-import type { HttpMethods } from "~server/@types/ActionSchema";
 import type { RouteLike } from "~server/@types/RouteClass";
+import type { HttpMethods } from "~server/@types/http";
 import type ActionSchema from "~server/lib/ActionSchema";
 import type BaseModel from "~server/lib/BaseModel";
 import type Train from "~server/lib/Train";

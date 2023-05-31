@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { TypeError } from "~env/lib/Errors";
+import { getValue, isObject } from "~env/utils/utils";
 import type { SafeParseReturnType } from "zod";
 import type { ValidationResult, TypedKinds } from "~env/@types/Errors";
 
@@ -78,11 +79,11 @@ export const baseTypeFuncs = {
     void: z.void.bind(z)
 };
 
-export function toInternalValidationReturnType(result: SafeParseReturnType<any, any>, errorClass = TypeError): ValidationResult {
-    if (result.success) return { success: result.success, errors: [] };
+export function toInternalValidationReturnType(name: string, value: unknown, validationResult: SafeParseReturnType<any, any>, errorClass = TypeError): ValidationResult {
+    if (validationResult.success) return { success: validationResult.success, errors: [] };
 
     const errors = [];
-    for (const issue of result.error.issues) {
+    for (const issue of validationResult.error.issues) {
         let kind: TypedKinds = "unknown";
         if (issue.message === "Required") {
             kind = "required";
@@ -95,7 +96,9 @@ export function toInternalValidationReturnType(result: SafeParseReturnType<any, 
         } else if (issue.code.startsWith("invalid") && !issue.code.endsWith("type")) {
             kind = "format";
         } else kind = "type";
-        errors.push(new errorClass(issue.message, kind, issue.path));
+
+        if (isObject(value)) value = getValue(value, issue.path);
+        errors.push(new errorClass(name, kind, issue.path, value));
     }
 
     if (errors.length) return { success: false, errors };

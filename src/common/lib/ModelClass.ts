@@ -97,7 +97,11 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // want to have the changes
             if (args?.[0]?.id) {
                 proxy.removeChanges();
-            } else this.addExecutedAction("create", { params: args?.[0] ?? {} });
+            } else {
+                const { dummyId, collectionName } = proxy;
+                proxy.addExecutedAction({ dummyId, collection: collectionName, name: "create", args: { params: args?.[0] ?? {} } });
+            }
+
             return proxy;
         }
 
@@ -250,8 +254,13 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     // eslint-disable-next-line prefer-const
     constructorProxy = new Proxy(ModelClass, {
         get(target, property) {
-            // Do not use receiver.getAction(stringProperty) because of recursion error
-            const actionSchema = metadataStore.getSchema("Action", target, String(property));
+            // Do not use receiver.getActionSchema(stringProperty) because of recursion error
+            // We also can't use metadataStore.getSchema() because we have to look for the closest
+            // schema with the internal name
+            const actionSchema = metadataStore.getSchemas("Action", target).find((schema) => {
+                const { owner, internalName } = schema;
+                return owner === constructorProxy && internalName === String(property);
+            });
 
             let action = null;
             if (actionSchema) {
@@ -259,7 +268,7 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
                 action = metadataStore.getInstance("Action", target, actionSchema.name);
                 if (!action) {
                     const theTarget = target;
-                    action = new ModelAction(theTarget, actionSchema.name as any, actionSchema);
+                    action = new ModelAction(theTarget, actionSchema.name, actionSchema);
                     metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
                     metadataStore.setInstance("Action", theTarget, `internal_${actionSchema.internalName}`, action);
                 }

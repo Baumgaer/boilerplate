@@ -1,11 +1,10 @@
 import type { SetOptional } from "type-fest";
-import type { ArgOptions } from "~env/@types/ArgumentSchema";
 import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IDeepTypedMetadata } from "~env/@types/MetadataTypes";
+import type { HttpMethods } from "~env/@types/http";
 import type SchemaBased from "~env/lib/SchemaBased";
 
 export type AccessRightFunc = (user?: any, object?: any) => boolean;
-export type HttpMethods = "GET" | "POST" | "PUT" | "PATCH" | "OPTIONS" | "DELETE";
 
 export interface ActionOptions<T extends typeof SchemaBased> extends DeepTypedOptions<T> {
 
@@ -29,17 +28,13 @@ export interface ActionOptions<T extends typeof SchemaBased> extends DeepTypedOp
     accessRight?: AccessRightFunc
 }
 
-export interface ActionDefinition<T extends typeof SchemaBased> {
-    descriptor: PropertyDescriptor;
-    params: ActionOptions<T>;
-    args: ArgOptions<T>[];
-}
-
 export type ActionOptionsWithMetadataJson<T extends typeof SchemaBased> = ActionOptions<T> & { metadataJson: string };
 export type ActionOptionsPartialMetadataJson<T extends typeof SchemaBased> = IDeepTypedMetadata & SetOptional<ActionOptionsWithMetadataJson<T>, "metadataJson">;
 
 export interface IExecutedAction {
-    id?: string;
+    id?: UUID;
+    dummyId?: UUID;
+    collection: string;
     name: string;
     args: Record<string, any>;
 }

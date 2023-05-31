@@ -25,6 +25,11 @@ export default class ArgumentSchema<T extends typeof SchemaBased> extends PlainO
     public index?: number;
 
     /**
+     * @inheritdoc
+     */
+    public kind: ArgOptions<T>["kind"];
+
+    /**
      * This is the internal state for indicating the finished construction,
      * which is always the case for arguments.
      */
@@ -57,6 +62,7 @@ export default class ArgumentSchema<T extends typeof SchemaBased> extends PlainO
         super.setConstants(options);
 
         this.index = options.index;
+        this.kind = options.kind ?? "match";
     }
 
 }

@@ -43,7 +43,7 @@ export class TypeError extends BaseError {
 
 export class AttributeError extends TypeError {
 
-    public override readonly name: `${Capitalize<TypedKinds>}Error`;
+    public override readonly name: string = "AttributeError";
 
     public readonly attribute: string;
 
@@ -51,13 +51,12 @@ export class AttributeError extends TypeError {
         const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
         super(`attribute "${name}" is invalid: ${errorName}`, kind, path, value);
         this.attribute = name;
-        this.name = `${errorName}Error`;
     }
 }
 
 export class ParameterError extends TypeError {
 
-    public override readonly name: `${Capitalize<TypedKinds>}Error`;
+    public override readonly name: string = "ParameterError";
 
     public readonly parameter: string;
 
@@ -65,13 +64,12 @@ export class ParameterError extends TypeError {
         const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
         super(`parameter "${name}" is invalid: ${errorName}`, kind, path, value);
         this.parameter = name;
-        this.name = `${errorName}Error`;
     }
 }
 
 export class ActionError extends TypeError {
 
-    public override readonly name: `${Capitalize<TypedKinds>}Error`;
+    public override readonly name: string = "ActionError";
 
     public readonly action: string;
 
@@ -79,7 +77,6 @@ export class ActionError extends TypeError {
         const errorName = <PascalCase<TypedKinds>>upperFirst(kind);
         super(`action "${name}" is invalid: ${errorName}`, kind, path, value);
         this.action = name;
-        this.name = `${errorName}Error`;
     }
 }
 

@@ -57,7 +57,7 @@ export default class Train<T extends typeof EnvBaseModel> {
         return this.request.headers;
     }
 
-    public get coolies() {
+    public get cookies() {
         return this.request.cookies;
     }
 

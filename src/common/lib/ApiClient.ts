@@ -1,7 +1,6 @@
 import path from "path";
 import Configurator from "~env/lib/Configurator";
 import { isArray } from "~env/utils/utils";
-import type { SetOptional } from "type-fest";
 import type { RequestParams, MethodParams, TargetComponents } from "~env/@types/ApiClient";
 
 const configurator = new Configurator();
@@ -38,8 +37,8 @@ export default class ApiClient {
         return this.request({ target, method: "OPTIONS", headers, data });
     }
 
-    public static batch({ collectionName, id = "", parameters, headers, data }: SetOptional<Omit<MethodParams, "actionName">, "id">) {
-        const target = this.buildTarget({ prefix: "batch", actionName: "", collectionName, id, parameters });
+    public static batch({ parameters, headers, data }: Omit<MethodParams, "actionName" | "collectionName" | "id">) {
+        const target = this.buildTarget({ prefix: "batch", actionName: "", collectionName: "", id: "", parameters });
         return this.request({ target, method: "post", headers, data });
     }
 
@@ -77,7 +76,7 @@ export default class ApiClient {
         return configurator.get("common.cors.enable") ? configurator.get("common.cors.policy") as RequestMode : "no-cors";
     }
 
-    protected static buildTarget({ prefix = "", collectionName, actionName, id, parameters = [["aString", "lalala"], ["aNumber", 1], ["anObject", { test: 1, testen: "2" }]] }: TargetComponents) {
+    protected static buildTarget({ prefix = "", collectionName, actionName, id, parameters = [] }: TargetComponents) {
         let target = path.normalize(path.join(prefix || "", collectionName || "", id || "", actionName || ""));
         if (parameters.length) {
             target += `?${parameters.map((parameter) => {
