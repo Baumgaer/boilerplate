@@ -131,7 +131,7 @@ export function isChangeObserved(value: unknown) {
  * @param value the value to check
  * @returns true if it is a value and false else
  */
-export function isValue(value: unknown): boolean {
+export function isValue<T = unknown>(value: T): value is Exclude<T, undefined | null> {
     return !_.isUndefined(value) && !isNull(value);
 }
 

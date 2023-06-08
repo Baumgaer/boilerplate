@@ -23,7 +23,7 @@ export default class AnotherExample extends AnotherCommonExample {
     }
 
     @Query({ name: "getName", accessRight: () => true })
-    public static override queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
+    public static override queryName(@Arg({ primary: true }) id: UUID, @Arg() test: string = "testen") {
         logger.raw("AnotherExample", this, id, test);
         return Promise.resolve();
     }

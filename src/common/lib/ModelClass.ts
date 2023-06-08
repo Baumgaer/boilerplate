@@ -2,12 +2,14 @@ import { v4 as uuid } from "uuid";
 import BaseAttribute from "~env/lib/BaseAttribute";
 import MetadataStore from "~env/lib/MetadataStore";
 import ModelAction from "~env/lib/ModelAction";
+import Store from "~env/lib/Store";
 import { hasOwnProperty, upperFirst, camelCase } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { ModelOptions, ModelLike } from "~env/@types/ModelClass";
 import type BaseModel from "~env/lib/BaseModel";
 
 const metadataStore = new MetadataStore();
+const store = Store.getInstance();
 
 // Here we are storing all attributes during construction time to have access
 // to them when creating an attribute. This is possible with some webpack magic.
@@ -93,6 +95,10 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             this.createAttributes(proxy);
             this.createActions(proxy);
             Object.assign(proxy, this.mergeProperties(proxy, args?.[0]));
+
+            const modelFromStore = store.getModelById(proxy.collectionName, proxy.getId());
+            if (modelFromStore) return modelFromStore as ModelClass;
+
             // If this is an initialization of an existing model, we don't
             // want to have the changes
             if (args?.[0]?.id) {
@@ -101,6 +107,8 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
                 const { dummyId, collectionName } = proxy;
                 proxy.addExecutedAction({ dummyId, collection: collectionName, name: "create", args: { params: args?.[0] ?? {} } });
             }
+
+            store.addModel(proxy);
 
             return proxy;
         }

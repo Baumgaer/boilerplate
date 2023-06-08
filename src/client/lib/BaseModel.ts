@@ -1,6 +1,6 @@
 import { reactive } from "vue";
 import ApiClient from "~client/lib/ApiClient";
-import { Model } from "~client/utils/decorators";
+import { Model, Query, Arg } from "~client/utils/decorators";
 import CommonBaseModel from "~common/lib/BaseModel";
 import type { SaveOptions } from "typeorm";
 import type BaseModelParams from "~client/interfaces/lib/BaseModel";
@@ -13,6 +13,11 @@ export default abstract class BaseModel extends CommonBaseModel {
 
     public constructor(params?: BaseModelParams) {
         super(params);
+    }
+
+    @Query({ accessRight: () => true })
+    public static override async getById<T extends BaseModel>(@Arg({ primary: true }) id: UUID): Promise<T | null> {
+        return super.getById(id);
     }
 
     public override async save(options?: SaveOptions): Promise<(this & BaseModel) | null> {

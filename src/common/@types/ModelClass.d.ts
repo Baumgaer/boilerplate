@@ -7,6 +7,7 @@ import type { IModelMetadata } from "~env/@types/MetadataTypes";
 import type BaseModel from "~env/lib/BaseModel";
 
 export type ModelLike = typeof BaseModel | ReturnType<typeof embeddedEntityFactory>;
+export type MinimumModel = { collectionName: string, className: string, id?: UUID, dummyId?: UUID };
 export type AllowedModelFields = "engine" | "orderBy" | "withoutRowid" | "database" | "schema";
 
 export interface IMultiRowIndex {

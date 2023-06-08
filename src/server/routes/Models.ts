@@ -26,6 +26,20 @@ export default class Models extends CommonModels {
         return this.handleRequest(train, collection, action, query);
     }
 
+    @Mutation({ name: "/create", accessRight: () => true })
+    public async handleCreate(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg() body: Record<string, any>): Promise<BaseModel> {
+        const [ModelClass, _] = await this.getModelActionSchema(train, collection, "");
+        if (!ModelClass || ModelClass instanceof BaseModel) throw new NotFound();
+
+        const schemaValidationResult = ModelClass.getSchema()?.validate(body);
+        if (!schemaValidationResult) throw new NotFound();
+        if (!schemaValidationResult.success) throw new AggregateError(schemaValidationResult.errors);
+
+        const newModel: BaseModel = new (ModelClass as any)(body);
+        if (!this.isBatchAccess) newModel.save();
+        return newModel;
+    }
+
     @Mutation({ name: "/:id/:action", accessRight: () => true })
     public async handleInstanceMutation(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg() action: string, @Arg({ primary: true }) id: UUID, @Arg({ kind: "body" }) body: Record<string, any>) {
         return this.handleRequest(train, collection, action, body, id);
@@ -48,15 +62,16 @@ export default class Models extends CommonModels {
 
         if (this.isBatchAccess) return [model, result];
 
-        if (result instanceof BaseModel) result.save();
-        if (model instanceof BaseModel) model.save();
+        if (train.httpMethod !== "GET") {
+            if (result instanceof BaseModel) result.save();
+            if (model instanceof BaseModel) model.save();
+        }
 
         return result;
     }
 
     protected async getModelActionSchema(train: Train<typeof BaseModel>, collection: string, action: string, id?: UUID) {
-        const map = getCollectionNameToModelMap();
-        const ModelClass = map[collection];
+        const ModelClass = getCollectionNameToModelMap(collection);
         if (!ModelClass) return [null, null] as const;
 
         if (id) {

@@ -1,5 +1,5 @@
 import { TypeError, AttributeError, BaseError } from "~env/lib/Errors";
-import { baseTypeFuncs, toInternalValidationReturnType } from "~env/utils/schema";
+import { baseTypeFuncs, toInternalValidationReturnType, getModelNameToModelMap } from "~env/utils/schema";
 import { isObject, isPlainObject, hasOwnProperty } from "~env/utils/utils";
 import type { Constructor } from "type-fest";
 import type { getAttributeForValidation } from "~env/@types/BaseModel";
@@ -91,8 +91,9 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
 
     const funcs = {
         get schemaType() {
-            if (!(name in global.MODEL_NAME_TO_MODEL_MAP)) return schemaType;
-            return global.MODEL_NAME_TO_MODEL_MAP[name].getSchema()?.getSchemaType() || schemaType;
+            const ModelClass = getModelNameToModelMap(name);
+            if (!ModelClass) return schemaType;
+            return ModelClass.getSchema()?.getSchemaType() || schemaType;
         },
         validate: (value: unknown): ValidationResult => {
             if (!getAttribute) return { success: false, errors: [new TypeError("no attribute getter given", "unknown", [])] };
@@ -120,14 +121,16 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             return { success: true, errors: [] };
         },
         guard: <T extends BaseModel>(value: unknown): value is T => {
-            if (!(name in global.MODEL_NAME_TO_MODEL_MAP) || !isObject(value)) return false;
-            return value instanceof global.MODEL_NAME_TO_MODEL_MAP[name];
+            const ModelClass = getModelNameToModelMap(name);
+            if (!ModelClass || !isObject(value)) return false;
+            return value instanceof ModelClass;
         },
         cast: <T extends BaseModel>(value: unknown) => {
-            if (!(name in global.MODEL_NAME_TO_MODEL_MAP)) return new AggregateError([new BaseError("unknown model name")]);
+            const ModelClass = getModelNameToModelMap(name);
+            if (!ModelClass) return new AggregateError([new BaseError("unknown model name")]);
             const result = funcs.validate(value);
             if (result.success) {
-                if (isPlainObject(value)) return new (global.MODEL_NAME_TO_MODEL_MAP[name] as unknown as Constructor<T>)(value);
+                if (isPlainObject(value)) return new (ModelClass as unknown as Constructor<T>)(value);
                 return value as T;
             }
             return new AggregateError(result.errors);

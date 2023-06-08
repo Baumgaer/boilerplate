@@ -1,8 +1,7 @@
 import Logger from "~client/lib/Logger";
-import { Attr, Model, Mutation, Query, Arg } from "~client/utils/decorators";
+import { Attr, Model, Query, Arg } from "~client/utils/decorators";
 import CommonExample from "~common/models/Example";
 import type ExampleParams from "~client/interfaces/models/Example";
-import type YetAnotherExample from "~client/models/YetAnotherExample";
 
 const logger = new Logger("devel");
 @Model()
@@ -13,12 +12,6 @@ export default class Example extends CommonExample {
 
     @Attr()
     public exampleClient: string = "test";
-
-    @Attr({ relationColumn: "oneToManyRelation" })
-    public manyToOneRelation!: YetAnotherExample;
-
-    @Attr()
-    protected manyToOneRelationId?: UUID;
 
     public constructor(params?: ExampleParams) {
         super(params);
@@ -34,13 +27,6 @@ export default class Example extends CommonExample {
     public static somethingElse(@Arg() test: string = "testen"): Promise<void> {
         logger.raw(test);
         return Promise.resolve();
-    }
-
-    @Mutation({ accessRight: () => true })
-    public changeName(@Arg() name: string): Promise<this> {
-        this.name = name;
-        // return this.save();
-        return Promise.resolve(this);
     }
 
     @Query({ accessRight: () => true })

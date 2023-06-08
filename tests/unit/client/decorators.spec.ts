@@ -160,8 +160,10 @@ describe('decorators', () => {
 
         it(`should have generated a required date type`, () => {
             const schema = TestModel.getAttributeSchema("aDate");
-            const type = schema?.getSchemaType() as ZodOptional<ZodString>;
-            expect(type).to.be.instanceOf(ZodDate);
+            const type = schema?.getSchemaType() as ZodUnion<[ZodDate, ZodString]>;
+            expect(type).to.be.instanceOf(ZodUnion);
+            expect(type._def.options[0]).to.be.instanceOf(ZodDate);
+            expect(type._def.options[1]).to.be.instanceOf(ZodString);
         });
 
         it(`should have generated a required union type with string literal "Test" and number literal 42`, () => {

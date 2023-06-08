@@ -261,7 +261,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             typeName = "simple-array";
             defaultOptions.array = true;
         }
-        if (this.isPlainObjectType(type)) typeName = "simple-json";
+        if (this.isPlainObjectType(type) || this.isRecordType(type)) typeName = "simple-json";
         if (this.isNumberType(type)) typeName = "double precision"; // because every number in javascript is a double
         if (this.isBooleanType(type)) typeName = "boolean";
         if (this.isDateType(type)) typeName = "date";
@@ -414,6 +414,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
         const identifier = this.getTypeIdentifier() || "";
         if (!identifier) return false;
         const proto = this._ctor.prototype;
+
         const otherModel = await getModelClassByName(identifier);
         if (!otherModel) return false;
 
@@ -430,13 +431,19 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             ManyToOne: ManyToOne(typeFunc, inverseFunc, options),
             ManyToMany: ManyToMany(typeFunc, inverse, options)
         };
+
         const relationType = await this.getRelationType();
         if (!relationType) return false;
+
         logger.debug(`Creating column ${this._ctor.name}#${attributeName}: ${otherModel.name} = ${relationType}#${JSON.stringify(options)}`);
         relationTypes[relationType](proto, attributeName);
+        const isArray = ["ManyToMany", "OneToMany"].includes(relationType);
+        Column(isArray ? "text" : "uuid", { nullable: true, array: isArray })(proto, `${attributeName}Id`);
+
         if (["OneToOne", "ManyToOne"].includes(relationType)) {
             JoinColumn()(proto, attributeName);
         } else if (this.isRelationOwner && relationType === "ManyToMany") JoinTable()(proto, attributeName);
+
         return true;
     }
 

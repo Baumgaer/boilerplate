@@ -1,5 +1,5 @@
 import CommonBaseModel from "~common/lib/BaseModel";
-import { Model } from "~server/utils/decorators";
+import { Model, Query, Arg } from "~server/utils/decorators";
 import type { SaveOptions } from "typeorm";
 import type BaseModelParams from "~server/interfaces/lib/BaseModel";
 
@@ -11,6 +11,11 @@ export default abstract class BaseModel extends CommonBaseModel {
 
     public constructor(params?: BaseModelParams) {
         super(params);
+    }
+
+    @Query({ accessRight: () => true })
+    public static override async getById<T extends BaseModel>(@Arg({ primary: true }) id: UUID): Promise<T | null> {
+        return super.getById(id);
     }
 
     public override save(options?: SaveOptions): Promise<this & BaseModel> {

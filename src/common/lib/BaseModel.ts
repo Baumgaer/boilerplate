@@ -1,6 +1,7 @@
 import { Model as ModelType } from "~env/lib/DataTypes";
 import ModelSchemaBased from "~env/lib/ModelSchemaBased";
-import { Attr, Model } from "~env/utils/decorators";
+import Store from "~env/lib/Store";
+import { Attr, Model, AttrObserver } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
 import type ModelAction from "./ModelAction";
 import type { Repository, SaveOptions } from "typeorm";
@@ -84,6 +85,11 @@ export default abstract class BaseModel extends ModelSchemaBased {
 
     public static async getById<T extends EnvBaseModel>(id: UUID): Promise<T | null> {
         if (!id) return null;
+
+        const store = Store.getInstance();
+        const modelFromStore = store.getModelById(this.collectionName, id);
+        if (modelFromStore) return modelFromStore as T;
+
         try {
             const model = await this.repository.findOne({ where: { id }, withDeleted: true }) as T | null;
             return model;
@@ -108,6 +114,19 @@ export default abstract class BaseModel extends ModelSchemaBased {
      */
     public static override getActionSchema(name: string): ActionSchema<typeof EnvBaseModel> | null {
         return super.getActionSchema(name);
+    }
+
+    @AttrObserver("id", "change")
+    protected onIdChange(_newValue: UUID, parameters?: ObserverParameters<UUID>) {
+        const store = Store.getInstance();
+        const { className, dummyId, collectionName } = this;
+        const oldId = parameters?.oldValue;
+
+        const oldEntry = store.getModelById(collectionName, oldId ?? dummyId);
+        if (oldEntry) {
+            store.removeModel({ className, dummyId, collectionName });
+            store.addModel(this);
+        }
     }
 
     /**

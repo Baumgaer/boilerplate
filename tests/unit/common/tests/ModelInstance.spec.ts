@@ -1,9 +1,10 @@
 import { expect } from "chai";
 import { pick, isEqual } from "lodash";
-import { v4 } from "uuid";
+import { v1 } from "uuid";
 import { getExtendedTestModelArgs } from "~env/TestUtils";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
+import type { AttributeError } from "~env/lib/Errors";
 
 const args = getExtendedTestModelArgs({ aString: "lolHaha" } as const);
 // @ts-expect-error Date makes it hard to compare
@@ -19,7 +20,7 @@ export default function (_environment = "common") {
 
         it("should get the dummyId id first and the given id then", () => {
             expect(testModel.getId()).to.be.equal(testModel.dummyId);
-            Reflect.set(testModel, "id", v4());
+            Reflect.set(testModel, "id", v1());
             expect(testModel.getId()).to.be.equal(testModel.id);
         });
 
@@ -31,12 +32,16 @@ export default function (_environment = "common") {
 
         it("should recognize the inexistent key", () => {
             testModel.removeChanges();
-            expect(testModel.validate({ inexistentKey: true }).errors[0].name).to.be.equal("InexistentError");
+            const error = testModel.validate({ inexistentKey: true }).errors[0] as AttributeError;
+            expect(error.name).to.be.equal("AttributeError");
+            expect(error.kind).to.be.equal("inexistent");
         });
 
         it("should recognize the internal key", () => {
             testModel.removeChanges();
-            expect(testModel.validate({ aNumber: 42 }).errors[0].name).to.be.equal("ForbiddenError");
+            const error = testModel.validate({ aNumber: 42 }).errors[0] as AttributeError;
+            expect(error.name).to.be.equal("AttributeError");
+            expect(error.kind).to.be.equal("forbidden");
         });
 
         it("should give an object variant ob the model", () => {
@@ -67,7 +72,7 @@ export default function (_environment = "common") {
         });
 
         it("should not have changes", () => {
-            const newTestModel = new TestModel(getExtendedTestModelArgs({ id: v4() as UUID }));
+            const newTestModel = new TestModel(getExtendedTestModelArgs({ id: v1() as UUID }));
             expect(Object.keys(newTestModel.getChanges()).length).to.be.equal(0);
         });
     });

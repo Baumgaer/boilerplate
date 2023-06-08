@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { TypeError } from "~env/lib/Errors";
-import { getValue, isObject } from "~env/utils/utils";
+import { getValue, isObject, isValue } from "~env/utils/utils";
 import type { SafeParseReturnType } from "zod";
 import type { ValidationResult, TypedKinds } from "~env/@types/Errors";
+import type BaseModel from "~env/lib/BaseModel";
 
 export {
     ZodType as Type,
@@ -44,6 +45,7 @@ export const baseTypeFuncs = {
     array: z.array.bind(z),
     bigint: z.bigint.bind(z),
     boolean: z.boolean.bind(z),
+    coerce: z.coerce,
     date: z.date.bind(z),
     discriminatedUnion: z.discriminatedUnion.bind(z),
     effect: z.effect.bind(z),
@@ -97,15 +99,16 @@ export function toInternalValidationReturnType(name: string, value: unknown, val
             kind = "format";
         } else kind = "type";
 
-        if (isObject(value)) value = getValue(value, issue.path);
-        errors.push(new errorClass(name, kind, issue.path, value));
+        let val = value;
+        if (isObject(value)) val = getValue(value, issue.path);
+        errors.push(new errorClass(name, kind, issue.path, val));
     }
 
     if (errors.length) return { success: false, errors };
     return { success: true, errors: [] };
 }
 
-export function getModelNameToModelMap() {
+export function getModelNameToModelMap<T extends string | undefined = undefined, R = T extends string ? typeof BaseModel | null : Record<string, typeof BaseModel>>(name?: T): R {
     if (!global.MODEL_NAME_TO_MODEL_MAP || !global.COLLECTION_NAME_TO_MODEL_MAP) {
         global.MODEL_NAME_TO_MODEL_MAP = {};
         global.COLLECTION_NAME_TO_MODEL_MAP = {};
@@ -117,10 +120,18 @@ export function getModelNameToModelMap() {
             global.COLLECTION_NAME_TO_MODEL_MAP[ModelClass.collectionName] = ModelClass;
         });
     }
-    return global.MODEL_NAME_TO_MODEL_MAP;
+    if (isValue(name)) {
+        if (name in global.MODEL_NAME_TO_MODEL_MAP) return global.MODEL_NAME_TO_MODEL_MAP[name] as R;
+        return null as R;
+    }
+    return global.MODEL_NAME_TO_MODEL_MAP as R;
 }
 
-export function getCollectionNameToModelMap() {
+export function getCollectionNameToModelMap<T extends string | undefined = undefined, R = T extends string ? typeof BaseModel | null : Record<string, typeof BaseModel>>(name?: T): R {
     if (!global.COLLECTION_NAME_TO_MODEL_MAP) getModelNameToModelMap();
-    return global.COLLECTION_NAME_TO_MODEL_MAP;
+    if (isValue(name)) {
+        if (name in global.COLLECTION_NAME_TO_MODEL_MAP) return global.COLLECTION_NAME_TO_MODEL_MAP[name] as R;
+        return null as R;
+    }
+    return global.COLLECTION_NAME_TO_MODEL_MAP as R;
 }

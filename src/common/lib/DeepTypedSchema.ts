@@ -1,7 +1,7 @@
 import * as DataTypes from "~env/lib/DataTypes";
 import Logger from "~env/lib/Logger";
 import Schema from "~env/lib/Schema";
-import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType, toInternalValidationReturnType } from "~env/utils/schema";
+import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType, toInternalValidationReturnType, getModelNameToModelMap } from "~env/utils/schema";
 import { isArray } from "~env/utils/utils";
 import type { DeepTypedOptions, DeepTypedOptionsPartialMetadataJson, SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
 import type { ValidationResult } from "~env/@types/Errors";
@@ -462,7 +462,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
             schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType, false));
         } else if (this.isModelType(type)) {
             const typeIdentifier = this.getTypeIdentifier(type) || "";
-            const modelClass = global.MODEL_NAME_TO_MODEL_MAP[typeIdentifier];
+            const modelClass = getModelNameToModelMap(typeIdentifier);
             const modelSchema = modelClass?.getSchema();
             schemaType = modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as any)) || baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
@@ -480,7 +480,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
                 } else schemaType = schemaType.or(subSchemaType);
             }
         } else if (this.isDateType()) {
-            schemaType = baseTypeFuncs.date();
+            schemaType = baseTypeFuncs.date().or(baseTypeFuncs.string().datetime());
         } else if (this.isRecordType(type)) {
             schemaType = baseTypeFuncs.record(this.buildSchemaType(type.typeArguments[1], false));
         } else if (this.isPlainObjectType(type)) {
