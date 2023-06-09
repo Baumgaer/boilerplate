@@ -3,6 +3,7 @@ import { AttributeError } from "~server/lib/Errors";
 import Logger from "~server/lib/Logger";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model, Query, Arg } from "~server/utils/decorators";
 import type AnotherExampleParams from "~server/interfaces/models/AnotherExample";
+import type User from "~server/models/User";
 
 const logger = new Logger("devel");
 
@@ -23,7 +24,7 @@ export default class AnotherExample extends AnotherCommonExample {
     }
 
     @Query({ name: "getName", accessRight: () => true })
-    public static queryName(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
+    public static queryName(user: User, @Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
         logger.raw("AnotherExample", this, id, test);
         return Promise.resolve();
     }

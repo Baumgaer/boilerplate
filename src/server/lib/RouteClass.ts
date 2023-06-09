@@ -146,21 +146,9 @@ export default function RouteClassFactory<T extends typeof BaseRoute>(ctor: T & 
     // eslint-disable-next-line prefer-const
     constructorProxy = new Proxy(RouteClass, {
         get(target, property) {
-            // Do not use receiver.getAction(stringProperty) because of recursion error
-            const actionSchema = metadataStore.getSchema("Action", target, String(property));
+            const action = target.getAction(String(property));
 
-            let action = null;
-            if (actionSchema) {
-                // Do not use receiver.getAction(stringProperty) because of recursion error
-                action = metadataStore.getInstance("Action", target, actionSchema.name);
-                if (!action) {
-                    const theTarget = target;
-                    action = new RouteAction(theTarget, actionSchema.name, actionSchema, actionSchema.httpMethod);
-                    metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
-                    metadataStore.setInstance("Action", theTarget, `internal_${actionSchema.internalName}`, action);
-                }
-            }
-
+            if (property === "unProxyfiedObject") return target;
             if (property === "name") return options.namespace;
             if (action) return action.get();
             return Reflect.get(target, property);

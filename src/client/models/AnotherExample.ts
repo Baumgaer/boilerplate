@@ -3,6 +3,7 @@ import Logger from "~client/lib/Logger";
 import { Attr, AttrGetter, AttrSetter, AttrValidator, Model, Query, Arg } from "~client/utils/decorators";
 import AnotherCommonExample from "~common/models/AnotherExample";
 import type AnotherExampleParams from "~client/interfaces/models/AnotherExample";
+import type User from "~client/models/User";
 
 const logger = new Logger("devel");
 
@@ -23,21 +24,21 @@ export default class AnotherExample extends AnotherCommonExample {
     }
 
     @Query({ name: "getName", accessRight: () => true })
-    public static override queryName(@Arg({ primary: true }) id: UUID, @Arg() test: string = "testen") {
+    public static override queryName(user: User, @Arg({ primary: true }) id: UUID, @Arg() test: string = "testen") {
         logger.raw("AnotherExample", this, id, test);
         return Promise.resolve();
     }
 
     @Query({ name: "testIt2", accessRight: () => true })
-    public testIt2(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
+    public testIt2(user: User, @Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
         logger.raw("AnotherExample", this, id, test);
         this.name = "test123";
         return Promise.resolve();
     }
 
     @Query({ name: "testIt", accessRight: () => true })
-    public testIt(@Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
-        this.testIt2(id);
+    public testIt(user: User, @Arg({ primary: true }) id: string, @Arg() test: string = "testen") {
+        this.testIt2(user, id);
         return new Promise<void>((resolve) => {
             logger.raw("AnotherExample", this, id, test);
             setTimeout(() => {

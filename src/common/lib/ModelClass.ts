@@ -262,26 +262,9 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
     // eslint-disable-next-line prefer-const
     constructorProxy = new Proxy(ModelClass, {
         get(target, property) {
-            // Do not use receiver.getActionSchema(stringProperty) because of recursion error
-            // We also can't use metadataStore.getSchema() because we have to look for the closest
-            // schema with the internal name
-            const actionSchema = metadataStore.getSchemas("Action", target).find((schema) => {
-                const { owner, internalName } = schema;
-                return owner === constructorProxy && internalName === String(property);
-            });
+            const action = target.getAction(String(property));
 
-            let action = null;
-            if (actionSchema) {
-                // Do not use receiver.getAction(stringProperty) because of recursion error
-                action = metadataStore.getInstance("Action", target, actionSchema.name);
-                if (!action) {
-                    const theTarget = target;
-                    action = new ModelAction(theTarget, actionSchema.name, actionSchema);
-                    metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
-                    metadataStore.setInstance("Action", theTarget, `internal_${actionSchema.internalName}`, action);
-                }
-            }
-
+            if (property === "unProxyfiedObject") return target;
             if (property === "name") return options.className;
             if (action) return action.get();
             return Reflect.get(target, property);

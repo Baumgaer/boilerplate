@@ -10,10 +10,45 @@ const metadataStore = new MetadataStore();
 
 export default abstract class ActionableSchemaBased extends SchemaBased {
 
+    private static actionsCache: any[] | null = null;
+
     private executedActions: IExecutedAction[] = [];
 
     public constructor(params?: Record<string, any>) {
         super(params);
+    }
+
+    public static getAction(name: string, actionClass?: any) {
+        this.getActions(actionClass);
+        return metadataStore.getInstance("Action", this.unProxyfiedObject ?? this, name);
+    }
+
+    public static getActions(actionClass?: any): any[] {
+        if (this.actionsCache && this.actionsCache.length) return this.actionsCache as any[];
+
+        const target = this.unProxyfiedObject ?? this;
+
+        const actionSchemas = metadataStore.getSchemas("Action", target).filter((schema) => schema.owner === this);
+        const actions: any[] = [];
+
+        if (actionSchemas && actionSchemas.length) {
+            for (const actionSchema of actionSchemas) {
+                // Do not use receiver.getAction(stringProperty) because of recursion error
+                let action = metadataStore.getInstance("Action", target, actionSchema.name) as any;
+                if (!action) {
+                    const theTarget = target;
+
+                    action = new (actionClass as any)(theTarget, actionSchema.name, actionSchema, actionSchema.httpMethod);
+                    metadataStore.setInstance("Action", theTarget, actionSchema.name, action);
+                    metadataStore.setInstance("Action", theTarget, `internal_${actionSchema.internalName}`, action);
+                }
+                actions.push(action);
+            }
+        }
+
+        this.actionsCache = actions;
+
+        return actions;
     }
 
     /**

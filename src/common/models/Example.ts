@@ -1,6 +1,7 @@
 import BaseModel from "~env/lib/BaseModel";
 import { Attr, Model, Mutation, Arg } from "~env/utils/decorators";
 import type ExampleParams from "~env/interfaces/models/Example";
+import type User from "~env/models/User";
 import type YetAnotherExample from "~env/models/YetAnotherExample";
 
 @Model()
@@ -20,7 +21,7 @@ export default class Example extends BaseModel {
     }
 
     @Mutation({ accessRight: () => true })
-    public changeName(@Arg() name: string): Promise<this> {
+    public changeName(user: User, @Arg() name: string): Promise<this> {
         this.name = name;
         // return this.save();
         return Promise.resolve(this);

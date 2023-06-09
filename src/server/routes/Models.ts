@@ -28,7 +28,7 @@ export default class Models extends CommonModels {
 
     @Mutation({ name: "/create", accessRight: () => true })
     public async handleCreate(train: Train<typeof BaseModel>, @Arg() collection: string, @Arg() body: Record<string, any>): Promise<BaseModel> {
-        const [ModelClass, _] = await this.getModelActionSchema(train, collection, "");
+        const ModelClass = await this.getModelOrClass(train, collection, "");
         if (!ModelClass || ModelClass instanceof BaseModel) throw new NotFound();
 
         const schemaValidationResult = ModelClass.getSchema()?.validate(body);
@@ -51,36 +51,35 @@ export default class Models extends CommonModels {
     }
 
     protected async handleRequest(train: Train<typeof BaseModel>, collection: string, action: string, data: Record<string, any>, id?: UUID) {
-        const [model, actionSchema] = await this.getModelActionSchema(train, collection, action, id);
-        if (!actionSchema || !actionSchema.descriptor.value) throw new NotFound();
+        const modelOrClass = await this.getModelOrClass(train, collection, action, id);
+        if (!modelOrClass) throw new NotFound();
 
-        if (model instanceof BaseModel) train.setHead(model);
-        if (!actionSchema.accessRight(train.user, train.head)) throw new Forbidden();
+        const theAction = modelOrClass.getAction(action);
+        if (!theAction) throw new NotFound();
 
-        const orderedParameters = actionSchema.orderParameters(undefined, undefined, data);
-        const result = await actionSchema.descriptor.value.call(model, ...orderedParameters);
+        if (modelOrClass instanceof BaseModel) train.setHead(modelOrClass);
+        if (!theAction.schema.accessRight(train.user, train.head)) throw new Forbidden();
 
-        if (this.isBatchAccess) return [model, result];
+        const orderedParameters = theAction.schema.orderParameters(undefined, undefined, data);
+        orderedParameters[0] = train.user;
+        const result = theAction.get()(...orderedParameters);
+
+        if (this.isBatchAccess) return [modelOrClass, result];
 
         if (train.httpMethod !== "GET") {
             if (result instanceof BaseModel) result.save();
-            if (model instanceof BaseModel) model.save();
+            if (modelOrClass instanceof BaseModel) modelOrClass.save();
         }
 
         return result;
     }
 
-    protected async getModelActionSchema(train: Train<typeof BaseModel>, collection: string, action: string, id?: UUID) {
+    protected async getModelOrClass(train: Train<typeof BaseModel>, collection: string, action: string, id?: UUID) {
         const ModelClass = getCollectionNameToModelMap(collection);
-        if (!ModelClass) return [null, null] as const;
+        if (!ModelClass) return null;
 
-        if (id) {
-            const model = await ModelClass.getById(id);
-            if (!model) return [null, null] as const;
-            return [model, model.getActionSchema(action)] as const;
-        }
-
-        return [ModelClass, ModelClass.getActionSchema(action)] as const;
+        if (id) return ModelClass.getById(train.user, id);
+        return ModelClass;
     }
 
 }

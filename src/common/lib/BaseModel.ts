@@ -1,9 +1,9 @@
 import { Model as ModelType } from "~env/lib/DataTypes";
+import ModelAction from "~env/lib/ModelAction";
 import ModelSchemaBased from "~env/lib/ModelSchemaBased";
 import Store from "~env/lib/Store";
 import { Attr, Model, AttrObserver } from "~env/utils/decorators";
 import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
-import type ModelAction from "./ModelAction";
 import type { Repository, SaveOptions } from "typeorm";
 import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type BaseModelParams from "~env/interfaces/lib/BaseModel";
@@ -11,6 +11,7 @@ import type ActionSchema from "~env/lib/ActionSchema";
 import type BaseAttribute from "~env/lib/BaseAttribute";
 import type EnvBaseModel from "~env/lib/BaseModel";
 import type ModelSchema from "~env/lib/ModelSchema";
+import type User from "~env/models/User";
 
 /**
  * This class should be a parent of each other model. It wraps the BaseEntity
@@ -83,7 +84,7 @@ export default abstract class BaseModel extends ModelSchemaBased {
         super(params);
     }
 
-    public static async getById<T extends EnvBaseModel>(id: UUID): Promise<T | null> {
+    public static async getById<T extends EnvBaseModel>(user: User, id: UUID): Promise<T | null> {
         if (!id) return null;
 
         const store = Store.getInstance();
@@ -114,6 +115,14 @@ export default abstract class BaseModel extends ModelSchemaBased {
      */
     public static override getActionSchema(name: string): ActionSchema<typeof EnvBaseModel> | null {
         return super.getActionSchema(name);
+    }
+
+    public static override getAction(name: string) {
+        return super.getAction(name, ModelAction);
+    }
+
+    public static override getActions() {
+        return super.getActions(ModelAction) as ModelAction<any>[];
     }
 
     @AttrObserver("id", "change")
