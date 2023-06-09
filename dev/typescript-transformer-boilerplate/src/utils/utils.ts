@@ -166,6 +166,7 @@ export function resolveTypeReferenceTo<T extends TSNodeNames>(program: ts.Progra
     }
 
     const sourceFile = node.getSourceFile();
+    if (!sourceFile) return;
     let typeName = "";
     if (isTypeReferenceNode(node)) {
         typeName = node.typeName.getText(sourceFile);

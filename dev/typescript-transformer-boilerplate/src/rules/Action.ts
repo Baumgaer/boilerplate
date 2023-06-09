@@ -15,19 +15,12 @@ export const Action = createRule({
         };
     },
     emitType(program, sourceFile, node, next) {
-        console.log(1);
         if (node.type) return next(node.type);
-        console.log(2);
         const checker = program.getTypeChecker();
-        console.log(3);
         const signature = checker.getSignatureFromDeclaration(node);
-        console.log(4);
         if (signature) {
-            console.log(5);
             const type = checker.getReturnTypeOfSignature(signature);
-            console.log(6);
             const typeNode = checker.typeToTypeNode(type, node, undefined);
-            console.log(7);
             if (typeNode) return next(typeNode);
         }
     }
