@@ -14,18 +14,18 @@ export default function (_environment = "common") {
 
             const idArgumentSchema = actionSchema?.getArgumentSchema("id");
             expect(idArgumentSchema).to.be.an.instanceOf(ArgumentSchema);
-            expect(idArgumentSchema?.index).to.be.equal(0);
+            expect(idArgumentSchema?.index).to.be.equal(1);
             expect(idArgumentSchema?.primary).to.be.true;
 
             const param1ArgumentSchema = actionSchema?.getArgumentSchema("param1");
             expect(param1ArgumentSchema).to.be.an.instanceOf(ArgumentSchema);
-            expect(param1ArgumentSchema?.index).to.be.equal(1);
+            expect(param1ArgumentSchema?.index).to.be.equal(2);
             expect(param1ArgumentSchema?.primary).to.be.false;
             expect(param1ArgumentSchema?.max).to.be.equal(20);
 
             const param2ArgumentSchema = actionSchema?.getArgumentSchema("param2");
             expect(param2ArgumentSchema).to.be.an.instanceOf(ArgumentSchema);
-            expect(param2ArgumentSchema?.index).to.be.equal(2);
+            expect(param2ArgumentSchema?.index).to.be.equal(3);
             expect(param2ArgumentSchema?.primary).to.be.false;
         });
 

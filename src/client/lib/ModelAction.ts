@@ -8,8 +8,8 @@ import type User from "~client/models/User";
 
 export default class ModelAction<T extends typeof BaseModel> extends CommonModelAction<T> {
 
-    public override call(thisArg: T | InstanceType<T>, user: User, ...args: any[]): Promise<any> {
-        super.call(thisArg, user, ...args); // validation only no need to wait
+    public override async call(thisArg: T | InstanceType<T>, user: User, ...args: any[]): Promise<any> {
+        await super.call(thisArg, user, ...args); // validation only no need to wait
 
         const result = this.schema.descriptor.value?.call(thisArg, user, ...args);
         const entries = Object.entries(this.schema.argumentSchemas);
@@ -32,7 +32,7 @@ export default class ModelAction<T extends typeof BaseModel> extends CommonModel
 
         this.makeRequest(thisArg, id, parameters);
 
-        return result || Promise.resolve();
+        return result;
     }
 
     protected makeRequest(thisArg: T | InstanceType<T>, id: string, parameters: [string, any][]): void {

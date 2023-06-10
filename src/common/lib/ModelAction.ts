@@ -5,7 +5,7 @@ import type User from "~env/models/User";
 
 export default class ModelAction<T extends ModelLike> extends BaseAction<T> {
 
-    public call(thisArg: T | InstanceType<T>, user: User, ...args: any[]): Promise<any> {
+    public async call(thisArg: T | InstanceType<T>, user: User, ...args: any[]): Promise<any> {
         if (!this.schema.descriptor.value) throw new NotFound();
         if (!this.schema.accessRight(user, this.owner)) throw new Forbidden();
 

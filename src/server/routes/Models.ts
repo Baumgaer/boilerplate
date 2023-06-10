@@ -1,6 +1,6 @@
 import CommonModels from "~common/routes/Models";
 import BaseModel from "~server/lib/BaseModel";
-import { Forbidden, NotFound } from "~server/lib/Errors";
+import { NotFound } from "~server/lib/Errors";
 import { Route, Query, Mutation, Arg } from "~server/utils/decorators";
 import { getCollectionNameToModelMap } from "~server/utils/schema";
 import type BaseServer from "~server/lib/BaseServer";
@@ -58,7 +58,6 @@ export default class Models extends CommonModels {
         if (!theAction) throw new NotFound();
 
         if (modelOrClass instanceof BaseModel) train.setHead(modelOrClass);
-        if (!theAction.schema.accessRight(train.user, train.head)) throw new Forbidden();
 
         const orderedParameters = theAction.schema.orderParameters(undefined, undefined, data);
         orderedParameters[0] = train.user;

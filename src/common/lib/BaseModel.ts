@@ -118,7 +118,7 @@ export default abstract class BaseModel extends ModelSchemaBased {
     }
 
     public static override getAction(name: string) {
-        return super.getAction(name, ModelAction);
+        return super.getAction(name, ModelAction) as ModelAction<any>;
     }
 
     public static override getActions() {

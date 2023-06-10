@@ -3,9 +3,11 @@ import { v4 } from "uuid";
 import ApiClient from "~env/lib/ApiClient";
 import Configurator from "~env/lib/Configurator";
 import TestModel from "~env/models/TestModel";
+import User from "~env/models/User";
 
 const configurator = new Configurator();
 const testModel = new TestModel();
+const testUser = new User({ name: "TestUser" });
 
 export default function (_environment = "common") {
     describe('BaseAction', () => {
@@ -14,12 +16,12 @@ export default function (_environment = "common") {
             ApiClient.lastRequestParams = null;
         });
 
-        it("should send a GET request", () => {
+        it("should send a GET request", async () => {
             testModel.getActionSchema("testQueryAction")?.updateOptions({ local: false });
             const uuid = v4() as UUID;
 
             try {
-                testModel.testQueryAction(uuid, "test", { prop1: "test" });
+                await testModel.testQueryAction(testUser, uuid, "test", { prop1: "test" });
             } catch (error) {
                 // intentionally do nothing
             }
@@ -35,12 +37,12 @@ export default function (_environment = "common") {
             expect(target).to.include(`param2={%22prop1%22:%22test%22}`);
         });
 
-        it("shouldn't send a GET request", () => {
+        it("shouldn't send a GET request", async () => {
             testModel.getActionSchema("testQueryAction")?.updateOptions({ local: true });
             const uuid = v4() as UUID;
 
             try {
-                testModel.testQueryAction(uuid, "test", { prop1: "test" });
+                await testModel.testQueryAction(testUser, uuid, "test", { prop1: "test" });
             } catch (error) {
                 // intentionally do nothing
             }
@@ -48,12 +50,12 @@ export default function (_environment = "common") {
             expect(ApiClient.lastRequestParams).to.be.null;
         });
 
-        it.skip("should send a POST request", () => {
+        it.skip("should send a POST request", async () => {
             testModel.getActionSchema("testMutationAction")?.updateOptions({ local: false });
             const uuid = v4() as UUID;
 
             try {
-                testModel.testMutationAction(uuid, "test");
+                await testModel.testMutationAction(testUser, uuid, "test");
             } catch (error) {
                 // intentionally do nothing
             }
@@ -61,12 +63,12 @@ export default function (_environment = "common") {
             expect(ApiClient.lastRequestParams?.method).to.be.equal("POST");
         });
 
-        it.skip("should send a PATCH request", () => {
+        it.skip("should send a PATCH request", async () => {
             testModel.getActionSchema("testMutationAction")?.updateOptions({ httpMethod: "PATCH" });
             const uuid = v4() as UUID;
 
             try {
-                testModel.testMutationAction(uuid, "test");
+                await testModel.testMutationAction(testUser, uuid, "test");
             } catch (error) {
                 // intentionally do nothing
             }
