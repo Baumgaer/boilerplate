@@ -72,7 +72,6 @@ module.exports = (_env, options, returnConfigObject) => {
                     {
                         loader: 'ts-loader',
                         options: {
-                            compiler: "ttypescript",
                             configFile: TSCONFIG_PATH,
                             context: path.dirname(TSCONFIG_PATH),
                             happyPackMode: false,

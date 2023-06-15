@@ -6,7 +6,7 @@
         "lodash": "^4.17.21",
         "minimatch": "^9.0.0",
         "tsutils": "^3.21.0",
-        "typescript": "^4.9.5"
+        "typescript": "^5.0.4"
     },
     "description": "Import with certain structure",
     "devDependencies": {
@@ -14,7 +14,6 @@
         "@types/lodash": "^4.14.194",
         "@types/node": "^20.1.5",
         "tsup": "^6.7.0",
-        "ttypescript": "^1.5.13",
         "type-fest": "^3.10.0"
     },
     "files": [
