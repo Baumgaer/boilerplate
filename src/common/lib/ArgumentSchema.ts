@@ -51,7 +51,7 @@ export default class ArgumentSchema<T extends typeof SchemaBased> extends PlainO
     /**
      * @InheritDoc
      */
-    public validate(value: unknown): ValidationResult {
+    public async validate(value: unknown): Promise<ValidationResult> {
         return this.internalValidation(value, ParameterError);
     }
 

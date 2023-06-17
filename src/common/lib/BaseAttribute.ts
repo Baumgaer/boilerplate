@@ -221,11 +221,11 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      * @param value the value to check
      * @returns true if the value is valid and an error else
      */
-    public validate(value: unknown): ValidationResult {
+    public async validate(value: unknown): Promise<ValidationResult> {
         if (!this.owner.isNew() && this.schema.isImmutable) {
             return { success: false, errors: [new AttributeError(this.name.toString(), "immutable", [], value)] };
         }
-        let result = this.schema.validate(value);
+        let result = await this.schema.validate(value);
         if (result.success) {
             const hookValue = this.callHook("validator", value);
             if (hookValue instanceof BaseError) result = { success: false, errors: [hookValue] };

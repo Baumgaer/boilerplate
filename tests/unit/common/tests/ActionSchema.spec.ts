@@ -48,8 +48,8 @@ export default function (_environment = "common") {
 
         it("should validate correctly", async () => {
             const actionSchema = testModel.getActionSchema("testQueryAction");
-            expect(actionSchema?.validate(undefined).success).to.be.true;
-            expect(actionSchema?.validate(42).success).to.be.false;
+            expect((await actionSchema?.validate(undefined))?.success).to.be.true;
+            expect((await actionSchema?.validate(42))?.success).to.be.false;
         });
     });
 }

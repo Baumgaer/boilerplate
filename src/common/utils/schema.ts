@@ -37,7 +37,8 @@ export {
     ZodUndefined as UndefinedType,
     ZodUnion as UnionType,
     ZodUnknown as UnknownType,
-    ZodVoid as VoidType
+    ZodVoid as VoidType,
+    NEVER as NEVER
 } from "zod";
 
 export const baseTypeFuncs = {

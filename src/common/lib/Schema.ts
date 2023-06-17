@@ -92,7 +92,7 @@ export default abstract class Schema<T> {
      * @param value Any value to validate
      * @returns A validation result which contains success state and multiple errors
      */
-    public abstract validate(value: unknown): ValidationResult;
+    public abstract validate(value: unknown): Promise<ValidationResult>;
 
     /**
      * Generates a schema which will be used to validate a value. This schema is

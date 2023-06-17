@@ -29,14 +29,14 @@ export default function (_environment = "common") {
             expect(param2ArgumentSchema?.primary).to.be.false;
         });
 
-        it("should validate correctly", () => {
+        it("should validate correctly", async () => {
             const actionSchema = testModel.getActionSchema("testQueryAction");
             const idArgumentSchema = actionSchema?.getArgumentSchema("id");
-            expect(idArgumentSchema?.validate(v4()).success).to.be.true;
+            expect((await idArgumentSchema?.validate(v4()))?.success).to.be.true;
 
             const param2ArgumentSchema = actionSchema?.getArgumentSchema("param2");
-            expect(param2ArgumentSchema?.validate({ prop1: "test" }).success).to.be.true;
-            expect(param2ArgumentSchema?.validate({ prop1: 42 }).success).to.be.false;
+            expect((await param2ArgumentSchema?.validate({ prop1: "test" }))?.success).to.be.true;
+            expect((await param2ArgumentSchema?.validate({ prop1: 42 }))?.success).to.be.false;
         });
 
         it("should overwrite options", () => {

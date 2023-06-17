@@ -106,7 +106,7 @@ export default function (environment = "common") {
             expect(innerType.options[1].value).to.be.equal(42);
         });
 
-        it(`should have generated an optional intersection type with TestMyTestModel & TestMyTesterModel`, () => {
+        it(`should have generated an optional intersection type with TestMyTestModel & TestMyTesterModel`, async () => {
             const schema = TestModel.getAttributeSchema("anIntersection");
             const type = schema?.getSchemaType() as ZodOptional<ZodObject<any>>;
             expect(type).to.be.instanceOf(ZodOptional);
@@ -302,7 +302,7 @@ export default function (environment = "common") {
             expect(await schema?.getRelationType()).to.be.null;
         });
 
-        it(`should validate correctly`, () => {
+        it(`should validate correctly`, async () => {
             const modelSchema = TestModel.getSchema();
 
             const inputs: Record<string, Record<"valid" | "invalid", any[]>> = {
@@ -510,21 +510,17 @@ export default function (environment = "common") {
                 }
             };
 
-            try {
-                for (const attrName in inputs) {
-                    if (hasOwnProperty(inputs, attrName)) {
-                        const attributeSchema = modelSchema?.attributeSchemas[attrName];
-                        const possibleInputs = inputs[attrName];
-                        for (const valid of possibleInputs.valid) {
-                            expect(attributeSchema?.validate(valid).success, `attribute ${attrName}, value ${JSON.stringify(valid)}`).to.be.true;
-                        }
-                        for (const invalid of possibleInputs.invalid) {
-                            expect(attributeSchema?.validate(invalid).success, `attribute ${attrName}, value ${JSON.stringify(invalid)}`).to.be.false;
-                        }
+            for (const attrName in inputs) {
+                if (hasOwnProperty(inputs, attrName)) {
+                    const attributeSchema = modelSchema?.attributeSchemas[attrName];
+                    const possibleInputs = inputs[attrName];
+                    for (const valid of possibleInputs.valid) {
+                        expect((await attributeSchema?.validate(valid))?.success, `attribute ${attrName}, value ${JSON.stringify(valid)}`).to.be.true;
+                    }
+                    for (const invalid of possibleInputs.invalid) {
+                        expect((await attributeSchema?.validate(invalid))?.success, `attribute ${attrName}, value ${JSON.stringify(invalid)}`).to.be.false;
                     }
                 }
-            } catch (error) {
-                debugger;
             }
         });
     });

@@ -1,5 +1,6 @@
 import { createRule } from "../lib/RuleContext";
 import { isPropertyDeclaration, isPropertySignature, isParameter, isTypeReferenceNode, isIdentifierNode } from "../utils/SyntaxKind";
+import { getTypeArguments } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypePromise = createRule({
@@ -15,6 +16,7 @@ export const TypePromise = createRule({
         return { isLazy: true };
     },
     emitType(program, sourceFile, node, next) {
-        if (node.typeArguments) return next(node.typeArguments[0]);
+        const typeArguments = getTypeArguments(node);
+        if (typeArguments) return next(typeArguments[0]);
     }
 });

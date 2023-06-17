@@ -95,7 +95,7 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             if (!ModelClass) return schemaType;
             return ModelClass.getSchema()?.getSchemaType() || schemaType;
         },
-        validate: (value: unknown): ValidationResult => {
+        validate: async (value: unknown): Promise<ValidationResult> => {
             if (!getAttribute) return { success: false, errors: [new TypeError("no attribute getter given", "unknown", [])] };
             if (!isObject(value)) {
                 return { success: false, errors: [new TypeError("Value is not an object", "type", [])] };
@@ -112,7 +112,7 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
                     } else if ("isBaseAttribute" in attribute && attribute.schema.isInternal) {
                         errors.push(new AttributeError(key, "forbidden", [key], value[key]));
                     } else {
-                        const validationResult = attribute.validate(value[key]);
+                        const validationResult = await attribute.validate(value[key]);
                         if (!validationResult.success) errors.push(...validationResult.errors);
                     }
                 }
@@ -125,10 +125,10 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             if (!ModelClass || !isObject(value)) return false;
             return value instanceof ModelClass;
         },
-        cast: <T extends BaseModel>(value: unknown) => {
+        cast: async <T extends BaseModel>(value: unknown) => {
             const ModelClass = getModelNameToModelMap(name);
             if (!ModelClass) return new AggregateError([new BaseError("unknown model name")]);
-            const result = funcs.validate(value);
+            const result = await funcs.validate(value);
             if (result.success) {
                 if (isPlainObject(value)) return new (ModelClass as unknown as Constructor<T>)(value);
                 return value as T;

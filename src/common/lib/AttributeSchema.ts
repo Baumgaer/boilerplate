@@ -180,7 +180,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
     /**
      * @InheritDoc
      */
-    public validate(value: unknown): ValidationResult {
+    public async validate(value: unknown): Promise<ValidationResult> {
         return this.internalValidation(value, AttributeError);
     }
 

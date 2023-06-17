@@ -8,15 +8,15 @@ import {
     isTypeReferenceNode,
     isLiteralTypeNode
 } from "../utils/SyntaxKind";
-import { isInEnvironmentalPath } from "../utils/utils";
+import { isInEnvironmentalPath, getTypeArguments, getTypeFromNode } from "../utils/utils";
 import type ts from "typescript";
 
 const NOT_FOUND = "$$__NotFound__$$" as const;
 
 function getDeclaration(program: ts.Program, nodeToCheck: ts.TypeReferenceNode) {
     const checker = program.getTypeChecker();
-    const type = checker.getTypeFromTypeNode(nodeToCheck);
-    return type.aliasSymbol?.getDeclarations()?.[0];
+    const type = getTypeFromNode(checker, nodeToCheck);
+    return type && type.aliasSymbol?.getDeclarations()?.[0];
 }
 
 function getTagValueFromDeclaration(declaration: ts.TypeAliasDeclaration, tag: string) {
@@ -27,7 +27,7 @@ function getTagValueFromDeclaration(declaration: ts.TypeAliasDeclaration, tag: s
 function typeParameterToTypeArgumentValue(declaration: ts.TypeAliasDeclaration, typeNode: ts.TypeReferenceNode, typeParameterName: string, parse = true) {
     const index = declaration.typeParameters?.findIndex((typeParameter) => typeParameter.name.getText() === typeParameterName);
     if (typeof index === "number" && index >= 0) {
-        const argument = typeNode.typeArguments?.at(index);
+        const argument = getTypeArguments(typeNode)?.at(index);
         if (parse) {
             if (!isLiteralTypeNode(argument)) return NOT_FOUND;
             try {

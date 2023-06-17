@@ -84,6 +84,10 @@ export default abstract class BaseModel extends ModelSchemaBased {
         super(params);
     }
 
+    public static getRepository() {
+        return this.repository;
+    }
+
     public static async getById<T extends EnvBaseModel>(user: User, id: UUID): Promise<T | null> {
         if (!id) return null;
 

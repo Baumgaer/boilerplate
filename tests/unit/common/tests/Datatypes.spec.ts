@@ -18,12 +18,12 @@ export default function (_environment = "common") {
             expect(schema?.isStringType()).to.be.true;
         });
 
-        it("should be a varchar", () => {
+        it("should be a varchar", async () => {
             const schema = TestModel.getAttributeSchema("theVarchar");
             expect(schema?.validator).to.be.equal("Varchar");
-            expect(schema?.validate("").success).to.be.true;
-            expect(schema?.validate(randGen.generateString(0, 15)).success).to.be.true;
-            expect(schema?.validate(randGen.generateString(16, 17)).success).to.be.false;
+            expect((await schema?.validate(""))?.success).to.be.true;
+            expect((await schema?.validate(randGen.generateString(0, 15)))?.success).to.be.true;
+            expect((await schema?.validate(randGen.generateString(16, 17)))?.success).to.be.false;
 
             const varchar = Varchar();
             expect(varchar.validate(randGen.generateString(0, 65535)).success).to.be.true;
@@ -33,12 +33,12 @@ export default function (_environment = "common") {
             expect(varchar.cast(randGen.generateString(65536, 65537))).to.have.a.lengthOf(65535);
         });
 
-        it("should be a number range", () => {
+        it("should be a number range", async () => {
             const schema = TestModel.getAttributeSchema("theNumberRange");
             expect(schema?.validator).to.be.equal("NumberRange");
-            expect(schema?.validate(randGen.generateNumber(5, 15)).success).to.be.true;
-            expect(schema?.validate(randGen.generateNumber(-Infinity, 4)).success).to.be.false;
-            expect(schema?.validate(randGen.generateNumber(16, Infinity)).success).to.be.false;
+            expect((await schema?.validate(randGen.generateNumber(5, 15)))?.success).to.be.true;
+            expect((await schema?.validate(randGen.generateNumber(-Infinity, 4)))?.success).to.be.false;
+            expect((await schema?.validate(randGen.generateNumber(16, Infinity)))?.success).to.be.false;
 
             const numberRange = NumberRange();
             expect(numberRange.validate(randGen.generateNumber()).success).to.be.true;
@@ -50,12 +50,12 @@ export default function (_environment = "common") {
             expect(numberRange.cast(randGen.generateString())).to.be.equal(-Infinity);
         });
 
-        it("should be a text range", () => {
+        it("should be a text range", async () => {
             const schema = TestModel.getAttributeSchema("theTextRange");
             expect(schema?.validator).to.be.equal("TextRange");
-            expect(schema?.validate(randGen.generateString(5, 15)).success).to.be.true;
-            expect(schema?.validate(randGen.generateString(0, 4)).success).to.be.false;
-            expect(schema?.validate(randGen.generateString(16, 20)).success).to.be.false;
+            expect((await schema?.validate(randGen.generateString(5, 15)))?.success).to.be.true;
+            expect((await schema?.validate(randGen.generateString(0, 4)))?.success).to.be.false;
+            expect((await schema?.validate(randGen.generateString(16, 20)))?.success).to.be.false;
 
             const textRange = TextRange();
             expect(textRange.validate(randGen.generateString()).success).to.be.true;
@@ -69,13 +69,13 @@ export default function (_environment = "common") {
             expect(anotherTextRange.cast(randGen.generateNumber()).length).to.be.above(2).and.below(21);
         });
 
-        it("should be an email", () => {
+        it("should be an email", async () => {
             const schema = TestModel.getAttributeSchema("theEmail");
             expect(schema?.validator).to.be.equal("Email");
 
             const validMail = `${randGen.generateString(3, 25, false)}@${randGen.generateString(3, 25, false)}.${randGen.generateString(2, 4, false)}`;
-            expect(schema?.validate(validMail).success).to.be.true;
-            expect(schema?.validate(randGen.generateString()).success).to.be.false;
+            expect((await schema?.validate(validMail))?.success).to.be.true;
+            expect((await schema?.validate(randGen.generateString()))?.success).to.be.false;
 
             const email = Email();
             expect(email.validate(validMail).success).to.be.true;
@@ -86,29 +86,29 @@ export default function (_environment = "common") {
             expect(email.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
         });
 
-        it("should be an UUID", () => {
+        it("should be an UUID", async () => {
             const schema = TestModel.getAttributeSchema("aGeneratedColumn");
             expect(schema?.validator).to.be.equal("UUID");
-            expect(schema?.validate(v1()).success, "v1").to.be.true;
-            expect(schema?.validate(v4()).success, "v4").to.be.true;
-            expect(schema?.validate(randGen.generateString()).success).to.be.false;
+            expect((await schema?.validate(v1()))?.success, "v1").to.be.true;
+            expect((await schema?.validate(v4()))?.success, "v4").to.be.true;
+            expect((await schema?.validate(randGen.generateString()))?.success).to.be.false;
 
-            const email = UUID();
+            const uuid = UUID();
             const validUUID = v1();
-            expect(email.validate(v4()).success).to.be.true;
-            expect(email.guard(v4())).to.be.true;
-            expect(email.guard(randGen.generateNumber())).to.be.false;
-            expect(email.guard(randGen.generateString())).to.be.false;
-            expect(email.cast(validUUID)).to.be.equal(validUUID);
-            expect(email.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
+            expect(uuid.validate(v4()).success).to.be.true;
+            expect(uuid.guard(v4())).to.be.true;
+            expect(uuid.guard(randGen.generateNumber())).to.be.false;
+            expect(uuid.guard(randGen.generateString())).to.be.false;
+            expect(uuid.cast(validUUID)).to.be.equal(validUUID);
+            expect(uuid.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
         });
 
-        it("should be a Model", () => {
+        it("should be a Model", async () => {
             const staticModel = Model({ name: "TestModel", getAttribute: (name) => TestModel.getAttributeSchema(name) });
 
             const args = getExtendedTestModelArgs({ aDate: new Date() });
 
-            expect(staticModel.validate(Object.assign({}, args, { aNumber: 24 })).success).to.be.false;
+            expect((await staticModel.validate(Object.assign({}, args, { aNumber: 24 }))).success).to.be.false;
 
             const testModel = new TestModel(Object.assign({}, args));
             const model = Model({
@@ -123,20 +123,20 @@ export default function (_environment = "common") {
             const clone = pick(schemaType.schema.shape, Object.keys(args));
             expect(clone).to.to.have.keys(Object.keys(args));
 
-            expect(model.validate(testModel).success).to.be.true;
-            expect(model.validate(args).success).to.be.true;
+            expect((await model.validate(testModel)).success).to.be.true;
+            expect((await model.validate(args)).success).to.be.true;
             expect(model.guard<TestModel>(testModel)).to.be.true;
-            expect(model.cast(args)).to.be.an.instanceOf(TestModel);
-            expect(model.cast(testModel)).to.be.an.instanceOf(TestModel);
-            expect(model.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
+            expect(await model.cast(args)).to.be.an.instanceOf(TestModel);
+            expect(await model.cast(testModel)).to.be.an.instanceOf(TestModel);
+            expect(await model.cast(randGen.generateString())).to.be.an.instanceOf(AggregateError);
         });
 
-        it("should be an Model datatype", () => {
+        it("should be an Model datatype", async () => {
             const model = Model();
             expect(model.schemaType).to.be.an.instanceOf(ZodNever);
-            expect(model.validate({}).success).to.be.false;
+            expect((await model.validate({})).success).to.be.false;
             expect(model.guard<TestModel>({})).to.be.false;
-            expect(model.cast({})).to.be.an.instanceOf(AggregateError);
+            expect(await model.cast({})).to.be.an.instanceOf(AggregateError);
         });
     });
 }

@@ -10,7 +10,7 @@ export default class ModelAction<T extends ModelLike> extends BaseAction<T> {
         if (!this.schema.accessRight(user, this.owner)) throw new Forbidden();
 
         args = [user, ...args];
-        const validationResult = this.schema.validateArguments(args);
+        const validationResult = await this.schema.validateArguments(args);
         if (!validationResult.success) throw new AggregateError(validationResult.errors);
 
         return Promise.resolve();

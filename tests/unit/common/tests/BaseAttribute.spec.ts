@@ -25,17 +25,17 @@ export default function (_environment = "common") {
             expect(testModel.setterCount).to.be.equal(2);  // Respecting the initial undefined value
         });
 
-        it("should trigger the validator", () => {
-            let result = testModel.validate({ aString: "lol" });
+        it("should trigger the validator", async () => {
+            let result = await testModel.validate({ aString: "lol" });
             expect(result.success).to.be.true;
             expect(testModel.validateCount).to.be.equal(1);
 
-            result = testModel.validate({ aString: "meep" });
+            result = await testModel.validate({ aString: "meep" });
             expect(result.success).to.be.false;
             expect(result.errors[0]).to.be.an.instanceOf(AttributeError);
             expect(testModel.validateCount).to.be.equal(2);
 
-            result = testModel.validate({ aString: 24 });
+            result = await testModel.validate({ aString: 24 });
             expect(result.success).to.be.false;
             expect(result.errors[0]).to.be.an.instanceOf(TypeError);
             expect(testModel.validateCount).to.be.equal(2); // Validator is only triggered when type is correct
@@ -226,11 +226,11 @@ export default function (_environment = "common") {
             ])).to.be.true;
         });
 
-        it("should validate", () => {
+        it("should validate", async () => {
             const aTupleAttribute = testModel.getAttribute("aTuple") as unknown as BaseAttribute<typeof TestModel>;
             expect(aTupleAttribute).to.be.an.instanceOf(BaseAttribute);
-            expect(aTupleAttribute.validate(testModel.aTuple).success).to.be.true;
-            expect(aTupleAttribute.validate(testModel.aBoolean).success).to.be.false;  // it's new, so an AggregateError is expected
+            expect((await aTupleAttribute.validate(testModel.aTuple)).success).to.be.true;
+            expect((await aTupleAttribute.validate(testModel.aBoolean)).success).to.be.false;  // it's new, so an AggregateError is expected
         });
     });
 }

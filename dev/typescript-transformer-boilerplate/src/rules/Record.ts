@@ -1,5 +1,6 @@
 import { createRule } from "../lib/RuleContext";
 import { isTypeReferenceNode, isPropertyDeclaration, isParameter, isIdentifierNode, isPropertySignature } from "../utils/SyntaxKind";
+import { getTypeArguments } from "../utils/utils";
 import type ts from "typescript";
 
 export const TypeRecord = createRule({
@@ -12,8 +13,8 @@ export const TypeRecord = createRule({
         return nodeToCheck;
     },
     emitType(program, sourceFile, node, next) {
-        const key = node.typeArguments?.[0];
-        const value = node.typeArguments?.[1];
+        const key = getTypeArguments(node)?.[0];
+        const value = getTypeArguments(node)?.[1];
 
         return {
             isObjectType: true,

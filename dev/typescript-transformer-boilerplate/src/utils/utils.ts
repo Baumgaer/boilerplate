@@ -25,11 +25,38 @@ import {
     isNamedExportsNode,
     isTypeNode,
     isPropertyDeclaration,
-    isPropertySignature
+    isPropertySignature,
+    isMethodDeclaration
 } from "./SyntaxKind";
 import type { environment } from "../@types/Transformer";
 import type { TypeReturn, TSNodeNames } from "../@types/Utils";
 import type * as ts from "typescript";
+
+const constructedTypeNodes = new Map<ts.TypeNode, { type: ts.Type, enclosingDeclaration: ts.Declaration }>();
+const constructedTypeArguments = new Map<ts.Node, ts.TypeNode[]>();
+
+export function typeToTypeNode(checker: ts.TypeChecker, type: ts.Type, enclosingDeclaration: ts.Declaration) {
+    const typeNode = checker.typeToTypeNode(type, enclosingDeclaration, undefined);
+    if (typeNode) {
+        constructedTypeNodes.set(typeNode, { type, enclosingDeclaration });
+        typeNode.getSourceFile = () => enclosingDeclaration.getSourceFile();
+        typeNode.getText = () => checker.typeToString(type, enclosingDeclaration);
+
+        if ("resolvedTypeArguments" in type && Array.isArray(type.resolvedTypeArguments)) {
+            const typeArguments = (type.resolvedTypeArguments ?? []).map((type) => {
+                return typeToTypeNode(checker, type, enclosingDeclaration);
+            }).filter((node) => node !== undefined);
+            constructedTypeArguments.set(typeNode, typeArguments as ts.TypeNode[]);
+        }
+    }
+    return typeNode;
+}
+
+export function getTypeArguments(node: ts.Node) {
+    if (constructedTypeArguments.has(node)) return constructedTypeArguments.get(node);
+    if (isTypeReferenceNode(node) && node.typeArguments) return Array.from(node.typeArguments);
+    return undefined;
+}
 
 export function getTypeFromTypeNode(checker: ts.TypeChecker, node?: ts.TypeNode): TypeReturn {
     if (!node) return undefined;
@@ -42,11 +69,22 @@ export function getTypeFromExpression(checker: ts.TypeChecker, node?: ts.Express
 }
 
 export function getTypeFromNode(checker: ts.TypeChecker, node: ts.Node): TypeReturn {
+    if (isMethodDeclaration(node) && !node.type) {
+        const signature = checker.getSignatureFromDeclaration(node);
+        if (!signature) return;
+        return checker.getReturnTypeOfSignature(signature);
+    }
+
     if (isPropertyDeclaration(node) || isPropertySignature(node)) {
         if (node.type) return getTypeFromTypeNode(checker, node.type);
         if (node.initializer) return getTypeFromExpression(checker, node.initializer);
     }
-    if (isTypeNode(node)) return checker.getTypeFromTypeNode(node);
+
+    if (isTypeNode(node)) {
+        if (constructedTypeNodes.has(node)) return constructedTypeNodes.get(node)?.type;
+        return checker.getTypeFromTypeNode(node);
+    }
+
     return checker.getTypeAtLocation(node);
 }
 

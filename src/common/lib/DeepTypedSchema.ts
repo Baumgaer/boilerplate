@@ -1,8 +1,10 @@
+import { ZodEffects } from "zod";
 import * as DataTypes from "~env/lib/DataTypes";
+import { TypeError } from "~env/lib/Errors";
 import Logger from "~env/lib/Logger";
 import Schema from "~env/lib/Schema";
 import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType, toInternalValidationReturnType, getModelNameToModelMap } from "~env/utils/schema";
-import { isArray } from "~env/utils/utils";
+import { isArray, isPlainObject } from "~env/utils/utils";
 import type { DeepTypedOptions, DeepTypedOptionsPartialMetadataJson, SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type {
@@ -25,7 +27,6 @@ import type {
     IObjectType,
     IRecordType
 } from "~env/@types/MetadataTypes";
-import type { TypeError } from "~env/lib/Errors";
 import type SchemaBased from "~env/lib/SchemaBased";
 import type { ObjectType } from "~env/utils/schema";
 
@@ -416,7 +417,7 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
     /**
      * @see Schema.validate
      */
-    protected internalValidation(value: unknown, errorClass: typeof TypeError): ValidationResult {
+    protected async internalValidation(value: unknown, errorClass: typeof TypeError): Promise<ValidationResult> {
         const name = this.name.toString();
 
         const rawType = this.options.type;
@@ -433,8 +434,21 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
         // eslint-disable-next-line import/namespace
         const DataType = this.validator && DataTypes[this.validator];
         if (DataType) {
-            result = DataType({ min: this.min, max: this.max, name: this.getTypeIdentifier(), getAttribute: () => this as any }).validate(value);
-        } else result = toInternalValidationReturnType(String(this.name), value, this.getSchemaType().safeParse(value), errorClass);
+            result = await DataType({ min: this.min, max: this.max, name: this.getTypeIdentifier(), getAttribute: () => this as any }).validate(value);
+        } else {
+            const validationResult: any = await this.getSchemaType().safeParseAsync(value);
+            let success = validationResult.success;
+            let error = validationResult.error;
+            if ("data" in validationResult) {
+                try {
+                    error = await validationResult.data;
+                } catch (err) {
+                    success = false;
+                    error = err;
+                }
+            }
+            result = toInternalValidationReturnType(String(this.name), value, { success, error }, errorClass);
+        }
 
         return result;
     }
@@ -460,25 +474,63 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
             schemaType = baseTypeFuncs.array(this.buildSchemaType(type.subType, false));
         } else if (this.isOptionalType(type)) {
             schemaType = baseTypeFuncs.optional(this.buildSchemaType(type.subType, false));
-        } else if (this.isModelType(type)) {
-            const typeIdentifier = this.getTypeIdentifier(type) || "";
-            const modelClass = getModelNameToModelMap(typeIdentifier);
-            const modelSchema = modelClass?.getSchema();
-            schemaType = modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as any)) || baseTypeFuncs.never();
         } else if (this.isIntersectionType(type) || this.isUnionType(type)) {
             const subTypes = type.subTypes.slice();
-            schemaType = this.buildSchemaType(subTypes.shift() as MetadataType, false);
+            const firstSubtype = subTypes.shift() as MetadataType;
+            schemaType = this.buildSchemaType(firstSubtype, false);
             for (const subType of subTypes) {
                 let subSchemaType = this.buildSchemaType(subType, false) as ObjectType<any>;
                 if (this.isIntersectionType(type)) {
+                    if (!this.isObjectLikeType(firstSubtype) && !this.isObjectLikeType(subType)) {
+                        throw new TypeError("Only ObjectLike types can be intersected", "format", []);
+                    }
+
+                    if (this.isModelType(firstSubtype) && schemaType instanceof ZodEffects) {
+                        schemaType = schemaType._def.schema;
+                    }
+
+                    if (this.isModelType(subType) && subSchemaType instanceof ZodEffects) {
+                        subSchemaType = (subSchemaType._def as any).schema;
+                    }
+
                     if (subSchemaType instanceof UnionType) subSchemaType = subSchemaType.options[0];
                     if (subSchemaType instanceof LazyType) subSchemaType = subSchemaType.schema;
+
                     if (schemaType instanceof UnionType) schemaType = schemaType.options[0];
                     if (schemaType instanceof LazyType) {
                         schemaType = baseTypeFuncs.object(Object.assign({}, schemaType.schema.shape, subSchemaType.shape));
                     } else schemaType = Object.assign({}, (schemaType as ObjectType<any>).shape, subSchemaType.shape);
+
                 } else schemaType = schemaType.or(subSchemaType);
             }
+        } else if (this.isModelType(type)) {
+            const typeIdentifier = this.getTypeIdentifier(type) || "";
+            const modelClass = getModelNameToModelMap(typeIdentifier);
+            const modelSchema = modelClass?.getSchema();
+            schemaType = modelSchema?.getSchemaType()?.or(baseTypeFuncs.instanceof(modelClass as any))?.transform(async (val, ctx) => {
+                if (!modelClass) return ctx.addIssue({ code: "custom", fatal: true, message: "No model class found" });
+                if (val instanceof modelClass) return val;
+                if (DataTypes.UUID({ name: typeIdentifier }).guard(val)) {
+                    const result = await modelClass.getRepository().findOne({ where: { id: val }, withDeleted: true });
+                    if (!result) return ctx.addIssue({ code: "custom", message: "Not a model" });
+                    return result;
+                }
+                if (isPlainObject(val)) {
+                    const validationResult = await modelSchema?.getSchemaType().safeParseAsync(val);
+                    let success = validationResult.success;
+                    if ("data" in validationResult) {
+                        try {
+                            await validationResult.data;
+                        } catch (err) {
+                            success = false;
+                        }
+                    }
+                    if (!success) return ctx.addIssue({ code: "custom", message: "Not a model" });
+                    if (val.id) return modelClass.getRepository().findOne({ where: { id: val.id }, withDeleted: true });
+                    return new (modelClass as any)(val);
+                }
+                return ctx.addIssue({ code: "custom", message: "Not a model" });
+            }) || baseTypeFuncs.never();
         } else if (this.isDateType()) {
             schemaType = baseTypeFuncs.date().or(baseTypeFuncs.string().datetime());
         } else if (this.isRecordType(type)) {

@@ -1,5 +1,6 @@
 import { createRule } from "../lib/RuleContext";
 import { isMethodDeclaration } from "../utils/SyntaxKind";
+import { typeToTypeNode } from "../utils/utils";
 import type ts from "typescript";
 
 export const Action = createRule({
@@ -20,7 +21,7 @@ export const Action = createRule({
         const signature = checker.getSignatureFromDeclaration(node);
         if (signature) {
             const type = checker.getReturnTypeOfSignature(signature);
-            const typeNode = checker.typeToTypeNode(type, node, undefined);
+            const typeNode = typeToTypeNode(checker, type, node);
             if (typeNode) return next(typeNode);
         }
     }

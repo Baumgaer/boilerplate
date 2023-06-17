@@ -1,5 +1,6 @@
 import ActionableSchema from "~env/lib/ActionableSchema";
 import { baseTypeFuncs } from "~env/utils/schema";
+import type { ValidationResult } from "~env/@types/Errors";
 import type { RouteOptions, RouteLike } from "~env/@types/RouteClass";
 import type { HttpMethods } from "~env/@types/http";
 import type ActionSchema from "~env/lib/ActionSchema";
@@ -40,7 +41,7 @@ export default class RouteSchema<T extends RouteLike> extends ActionableSchema<T
         return this.schemaType;
     }
 
-    public validate(_value: unknown) {
+    public async validate(_value: unknown): Promise<ValidationResult> {
         return { success: false, errors: [] };
     }
 

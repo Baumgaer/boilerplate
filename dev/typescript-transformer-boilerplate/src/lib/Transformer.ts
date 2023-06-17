@@ -4,7 +4,7 @@ import isCi from "is-ci";
 import { merge } from "lodash";
 import * as ts from "typescript";
 import { isIdentifierNode, isDecoratorNode } from "../utils/SyntaxKind";
-import { getDecorators, hasDecorator, programFromConfig } from "../utils/utils";
+import { getDecorators, hasDecorator, programFromConfig, getTypeArguments } from "../utils/utils";
 import { emittingDecorators } from "./RuleContext";
 import type { createRule } from "./RuleContext";
 import type { IConfiguration, ValidDeclaration } from "../@types/Transformer";
@@ -79,7 +79,7 @@ export default function transformer(config: PluginConfig & IConfiguration, rules
                     )])
                 );
             }
-            return ts.factory.updateCallExpression(node, node.expression, node.typeArguments, [objectLiteralExpression]);
+            return ts.factory.updateCallExpression(node, node.expression, getTypeArguments(node), [objectLiteralExpression]);
         }
 
         function processCallExpression(program: ts.Program, sourceFile: ts.SourceFile, node: ts.CallExpression) {

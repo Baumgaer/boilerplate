@@ -13,9 +13,8 @@ const testModel = new TestModel(Object.assign({}, args, { oneToOne: new TestMyTe
 
 export default function (_environment = "common") {
     describe('ModelInstance', () => {
-        it("should successfully validate the dummy test model", () => {
-            const result = testModel.validate();
-            expect(result.success).to.be.true;
+        it("should successfully validate the dummy test model", async () => {
+            expect((await testModel.validate()).success).to.be.true;
         });
 
         it("should get the dummyId id first and the given id then", () => {
@@ -24,22 +23,22 @@ export default function (_environment = "common") {
             expect(testModel.getId()).to.be.equal(testModel.id);
         });
 
-        it("should successfully validate the final test model", () => {
+        it("should successfully validate the final test model", async () => {
             testModel.removeChanges();
-            expect(testModel.validate().success).to.be.true;
-            expect(testModel.validate({ aString: "meep" }).success).to.be.false;
+            expect((await testModel.validate()).success).to.be.true;
+            expect((await testModel.validate({ aString: "meep" })).success).to.be.false;
         });
 
-        it("should recognize the inexistent key", () => {
+        it("should recognize the inexistent key", async () => {
             testModel.removeChanges();
-            const error = testModel.validate({ inexistentKey: true }).errors[0] as AttributeError;
+            const error = (await testModel.validate({ inexistentKey: true })).errors[0] as AttributeError;
             expect(error.name).to.be.equal("AttributeError");
             expect(error.kind).to.be.equal("inexistent");
         });
 
-        it("should recognize the internal key", () => {
+        it("should recognize the internal key", async () => {
             testModel.removeChanges();
-            const error = testModel.validate({ aNumber: 42 }).errors[0] as AttributeError;
+            const error = (await testModel.validate({ aNumber: 42 })).errors[0] as AttributeError;
             expect(error.name).to.be.equal("AttributeError");
             expect(error.kind).to.be.equal("forbidden");
         });

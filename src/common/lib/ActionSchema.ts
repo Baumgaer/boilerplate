@@ -89,15 +89,15 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
     /**
      * @InheritDoc
      */
-    public validate(value: unknown): ValidationResult {
+    public async validate(value: unknown): Promise<ValidationResult> {
         return this.internalValidation(value, ActionError);
     }
 
-    public validateArguments(args: any[]): ValidationResult {
+    public async validateArguments(args: any[]): Promise<ValidationResult> {
         const errors: BaseError[] = [];
 
         for (const argumentSchema of Object.values(this.argumentSchemas)) {
-            const validationResult = argumentSchema.validate(args[argumentSchema.index ?? 0]);
+            const validationResult = await argumentSchema.validate(args[argumentSchema.index ?? 0]);
             if (!validationResult.success) errors.push(...validationResult.errors);
         }
 
