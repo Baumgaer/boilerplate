@@ -100,7 +100,7 @@ export function Model(params: { name?: string, getAttribute?: getAttributeForVal
             if (!isObject(value)) {
                 return { success: false, errors: [new TypeError("Value is not an object", "type", [])] };
             }
-            if (Reflect.get(value, "isModel")?.(value)) return (value as BaseModel).validate();
+            if ("isBaseModel" in value) return (value as BaseModel).validate();
             const errors: BaseError[] = [];
             for (const key in value) {
                 if (hasOwnProperty(value, key)) {
