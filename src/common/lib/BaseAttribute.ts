@@ -18,6 +18,11 @@ import type AttributeSchema from "~env/lib/AttributeSchema";
  */
 export default abstract class BaseAttribute<T extends ModelLike> {
 
+    /**
+     * Provides the possibility to check if a value is a base attribute.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
     public readonly isBaseAttribute: boolean = true;
 
     /**

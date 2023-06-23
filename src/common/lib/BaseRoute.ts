@@ -13,6 +13,13 @@ export default class BaseRoute extends ActionableSchemaBased {
 
     public static readonly namespace: string;
 
+    /**
+     * Provides the possibility to check if a value is a base route.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isBaseRoute: boolean = true;
+
     public readonly namespace!: string;
 
     /**

@@ -16,11 +16,21 @@ import type { Type } from "~env/utils/schema";
 export default abstract class Schema<T> {
 
     /**
-     * The name of the attribute in the schema. Corresponds to the attribute
-     * name in the class (maybe not in runtime)
+     * Provides the possibility to check if a value is a schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isSchema: boolean = true;
+
+    /**
+     * The name of the schema. Corresponds to the name in the code if not
+     * explicitly defined (attribute name, action name, model name and so on)
      */
     public readonly name: string | keyof T;
 
+    /**
+     * Represents the name of the schema like written in the code
+     */
     public readonly internalName: string;
 
     /**

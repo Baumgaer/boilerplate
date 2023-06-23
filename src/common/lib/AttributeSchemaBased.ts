@@ -7,6 +7,13 @@ const metadataStore = new MetadataStore();
 
 export default abstract class AttributeSchemaBased extends ActionableSchemaBased {
 
+    /**
+     * Provides the possibility to check if a value is an attribute schema base object.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isAttributeSchemaBased: boolean = true;
+
     public constructor(params?: Record<string, any>) {
         super(params);
     }

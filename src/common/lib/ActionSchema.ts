@@ -19,6 +19,11 @@ export default class ActionSchema<T extends typeof SchemaBased> extends PlainObj
      */
     declare public readonly options: Readonly<ActionOptionsPartialMetadataJson<T>>;
 
+    /**
+     * Provides the possibility to check if a value is an action schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
     public readonly isActionSchema: boolean = true;
 
     /**

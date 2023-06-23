@@ -17,6 +17,11 @@ export default class ArgumentSchema<T extends typeof SchemaBased> extends PlainO
      */
     declare public readonly options: Readonly<ArgOptionsPartialMetadataJson<T>>;
 
+    /**
+     * Provides the possibility to check if a value is an argument schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
     public readonly isArgumentSchema: boolean = true;
 
     /**

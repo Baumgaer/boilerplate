@@ -71,6 +71,11 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      */
     declare public readonly options: Readonly<AttrOptionsPartialMetadataJson<T>>;
 
+    /**
+     * Provides the possibility to check if a value is an attribute schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
     public readonly isAttributeSchema: boolean = true;
 
     /**
@@ -160,12 +165,22 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      */
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
     // @ts-ignore this is necessary because TypeScript seems to have problems with recursive definitions
-    private embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
+    private _embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
+
+    private _relation: any;
 
     public constructor(ctor: T, name: keyof T, internalName: string, options: AttrOptionsPartialMetadataJson<T>) {
         super(ctor, name, internalName, options);
         this.setConstants(options);
         this.buildSchema(options.type);
+    }
+
+    public get relation() {
+        return this._relation;
+    }
+
+    public get embeddedEntity() {
+        return this._embeddedEntity;
     }
 
     /**
@@ -346,8 +361,8 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * @returns The schema type of the embedded entity if exists and a never type else
      */
     protected buildPlainObjectSchemaType(): ObjectSchemaType {
-        if (this.embeddedEntity) {
-            const result = this.embeddedEntity.getSchema()?.getSchemaType() as ObjectSchemaType;
+        if (this._embeddedEntity) {
+            const result = this._embeddedEntity.getSchema()?.getSchemaType() as ObjectSchemaType;
             return result || baseTypeFuncs.never();
         }
         return baseTypeFuncs.never();
@@ -387,11 +402,11 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             DeleteDateColumn(options)(proto, attrName);
         } else if (this.isVersion) {
             VersionColumn(options)(proto, attrName);
-        } else if (!await this.buildRelation(attrName, options)) {
-            this.embeddedEntity = this.buildEmbeddedEntity(attrName, type);
+        } else if (!(this._relation = await this.buildRelation(attrName, options))) {
+            this._embeddedEntity = this.buildEmbeddedEntity(attrName, type);
             // eslint-disable-next-line @typescript-eslint/ban-types
             let usedType: ColumnType | (() => Function | IEmbeddedEntity) = typeName;
-            if (this.embeddedEntity) usedType = () => this.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
+            if (this._embeddedEntity) usedType = () => this._embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
             logger.debug(`Creating column ${this._ctor.name}#${attrName}: ${usedType} = ${JSON.stringify(options)}`);
             Column(usedType as any, options)(proto, attrName);
         }
@@ -444,7 +459,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
             JoinColumn()(proto, attributeName);
         } else if (this.isRelationOwner && relationType === "ManyToMany") JoinTable()(proto, attributeName);
 
-        return true;
+        return { type: relationType, mirrorClass: otherModel, mirrorAttributeName: this.relationColumn };
     }
 
 }

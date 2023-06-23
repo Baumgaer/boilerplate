@@ -10,6 +10,13 @@ import type { Type } from "~env/utils/schema";
 export default abstract class PlainObjectSchema<T extends typeof SchemaBased> extends DeepTypedSchema<T> {
 
     /**
+     * Provides the possibility to check if a value is a plain object schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isPlainObjectSchema: boolean = true;
+
+    /**
      * @InheritDoc
      */
     public getSchemaType(): Type {

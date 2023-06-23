@@ -12,6 +12,13 @@ export default abstract class ActionableSchemaBased extends SchemaBased {
 
     private static actionsCache: any[] | null = null;
 
+    /**
+     * Provides the possibility to check if a value is an actionable schema base object.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isActionableSchemaBased: boolean = true;
+
     private executedActions: IExecutedAction[] = [];
 
     public constructor(params?: Record<string, any>) {

@@ -3,7 +3,7 @@ import ModelAction from "~env/lib/ModelAction";
 import ModelSchemaBased from "~env/lib/ModelSchemaBased";
 import Store from "~env/lib/Store";
 import { Attr, Model, AttrObserver } from "~env/utils/decorators";
-import { eachDeep, setValue, isUndefined, hasOwnProperty, isObject } from "~env/utils/utils";
+import { eachDeep, setValue, isUndefined, hasOwnProperty } from "~env/utils/utils";
 import type { Repository, SaveOptions } from "typeorm";
 import type { ModelChanges, RawObject } from "~env/@types/BaseModel";
 import type BaseModelParams from "~env/interfaces/lib/BaseModel";
@@ -23,12 +23,14 @@ import type User from "~env/models/User";
 export default abstract class BaseModel extends ModelSchemaBased {
 
     /**
-     * This gives access to the model (instance | class) without proxy around.
-     * This enables to change an attribute without causing
-     * changes and also gives the ability to improve performance.
+     * @inheritdoc
      */
     public static override readonly unProxyfiedObject: typeof BaseModel;
 
+    /**
+     * The interface to the database layer to be able to find, insert, delete or
+     * update a model.
+     */
     protected static repository: Repository<EnvBaseModel>;
 
     /**
@@ -40,7 +42,7 @@ export default abstract class BaseModel extends ModelSchemaBased {
     public readonly id?: UUID;
 
     /**
-     * The date of creation. This will be set automatically
+     * The date of creation. This will be set automatically.
      */
     @Attr({ isCreationDate: true })
     public readonly createdAt: Date = new Date();
@@ -73,10 +75,15 @@ export default abstract class BaseModel extends ModelSchemaBased {
     @Attr()
     public name!: string;
 
+    /**
+     * Provides the possibility to check if a value is a model.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
     public readonly isBaseModel: boolean = true;
 
     /**
-     * The id of the model until it has no official id from the server
+     * The id of the model until it has no official id from the server.
      */
     public dummyId!: UUID;
 
@@ -140,19 +147,6 @@ export default abstract class BaseModel extends ModelSchemaBased {
             store.removeModel({ className, dummyId, collectionName });
             store.addModel(this);
         }
-    }
-
-    /**
-     * Provides the possibility to check if a value is a model.
-     * HINT: This is mainly provided to avoid import loops. You should prefer
-     * the usual instanceof check.
-     *
-     * @param value the value to check for model instance
-     * @returns true if the given value is a model and false else
-     */
-    public isModel(value: unknown): value is BaseModel {
-        if (!value || !isObject(value)) return false;
-        return value instanceof BaseModel;
     }
 
     /**
@@ -228,6 +222,9 @@ export default abstract class BaseModel extends ModelSchemaBased {
         return super.getAction(name) as ModelAction<typeof EnvBaseModel> | null;
     }
 
+    /**
+     * @inheritdoc
+     */
     public override getActions() {
         return super.getActions() as ModelAction<typeof EnvBaseModel>[];
     }

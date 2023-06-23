@@ -25,6 +25,12 @@ export default abstract class ModelSchemaBased extends AttributeSchemaBased {
      */
     public static override readonly unProxyfiedObject: typeof ModelSchemaBased;
 
+    /**
+     * Provides the possibility to check if a value is a model schema based object.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isModelSchemaBased: boolean = true;
 
     /**
      * @see ModelSchemaBased.className

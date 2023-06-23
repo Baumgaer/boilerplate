@@ -44,6 +44,13 @@ const logger = new Logger("schema");
 export default abstract class DeepTypedSchema<T extends typeof SchemaBased> extends Schema<T> implements DeepTypedOptions<T> {
 
     /**
+     * Provides the possibility to check if a value is a deep typed schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isDeepTypedSchema: boolean = true;
+
+    /**
      * Holds the class object which created the schema. This is only a valid
      * value after processing the schema of the class!
      */

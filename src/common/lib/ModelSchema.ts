@@ -27,6 +27,13 @@ import type { LazyType, ObjectType, Type } from "~env/utils/schema";
 export default class ModelSchema<T extends ModelLike> extends ActionableSchema<T> {
 
     /**
+     * Provides the possibility to check if a value is a model schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isModelSchema: boolean = true;
+
+    /**
      * The name of the database table where all the models of this type are stored
      */
     public readonly collectionName: string;

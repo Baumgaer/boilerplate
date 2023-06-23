@@ -8,6 +8,13 @@ import type { LazyType, NeverType } from "~env/utils/schema";
 
 export default class RouteSchema<T extends RouteLike> extends ActionableSchema<T> {
 
+    /**
+     * Provides the possibility to check if a value is a route schema.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isRouteSchema: boolean = true;
+
     declare public readonly name: never;
 
     public readonly namespace: string;

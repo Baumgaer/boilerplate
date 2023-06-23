@@ -89,7 +89,7 @@ export default class Store {
             if (added) model = added;
         }
 
-        if ("isModel" in model && model.isModel(model)) {
+        if ("isBaseModel" in model && model.isBaseModel) {
             model.applyChanges(changes);
             return model;
         }

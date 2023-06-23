@@ -4,6 +4,13 @@ import type SchemaBased from "~env/lib/SchemaBased";
 export default abstract class BaseAction<T extends typeof SchemaBased> {
 
     /**
+     * Provides the possibility to check if a value is a base action.
+     * HINT: This is mainly provided to avoid import loops. You should prefer
+     * the usual instanceof check if possible.
+     */
+    public readonly isBaseAction: boolean = true;
+
+    /**
      * Holds the instance which holds the attribute. This instance is a proxy
      * which detects changes to any attribute which were made.
      */

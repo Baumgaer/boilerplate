@@ -31,7 +31,7 @@ export default class Models extends CommonModels {
         const ModelClass = await this.getModelOrClass(train, collection, "");
         if (!ModelClass || ModelClass instanceof BaseModel) throw new NotFound();
 
-        const schemaValidationResult = ModelClass.getSchema()?.validate(body);
+        const schemaValidationResult = await ModelClass.getSchema()?.validate(body);
         if (!schemaValidationResult) throw new NotFound();
         if (!schemaValidationResult.success) throw new AggregateError(schemaValidationResult.errors);
 
