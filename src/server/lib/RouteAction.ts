@@ -15,12 +15,12 @@ export default class RouteAction<T extends RouteLike> extends CommonRouteAction<
         this.httpMethod = httpMethod;
     }
 
-    public call(thisArg: T | InstanceType<T>, train: Train<typeof BaseModel>, ...args: any[]) {
+    public async call(thisArg: T | InstanceType<T>, train: Train<typeof BaseModel>, ...args: any[]) {
         if (!this.schema.descriptor.value) throw new NotFound();
         if (!this.schema.accessRight(train.user, train)) throw new Forbidden();
 
         args = [train, ...args];
-        const validationResult = this.schema.validateArguments(args);
+        const validationResult = await this.schema.validateArguments(args);
         if (!validationResult.success) throw new AggregateError(validationResult.errors);
 
         return this.schema.descriptor.value.call(thisArg, ...args) || Promise.resolve();

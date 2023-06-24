@@ -18,6 +18,10 @@ module.exports = {
     configureWebpack: (config) => {
         config.devtool = 'source-map';
 
+        const pgIgnore = new webpack.IgnorePlugin({
+            resourceRegExp: /^pg-native$|^cloudflare:sockets$/,
+        });
+
         const tsConfigPathsPlugin = new TsconfigPathsPlugin({
             configFile: TSCONFIG_PATH,
             extensions: [".ts", ".tsx", ".vue", ".scss", ".css"]
@@ -35,8 +39,8 @@ module.exports = {
         const providePlugin = new webpack.ProvidePlugin(providePluginConfig);
 
         if (!config.plugins) {
-            config.plugins = [normalModuleReplacementPlugin, providePlugin];
-        } else config.plugins.push(normalModuleReplacementPlugin, providePlugin);
+            config.plugins = [normalModuleReplacementPlugin, providePlugin, pgIgnore];
+        } else config.plugins.push(normalModuleReplacementPlugin, providePlugin, pgIgnore);
 
         if (config.resolve.plugins) {
             config.resolve.plugins.push(tsConfigPathsPlugin);
@@ -57,6 +61,8 @@ module.exports = {
         config.resolve.fallback.http = false;
         config.resolve.fallback.https = false;
         config.resolve.fallback.zlib = false;
+        config.resolve.fallback.pg = false;
+        config.resolve.fallback["pg-cloudflare"] = false;
         config.resolve.fallback.path = require.resolve("path-browserify");
         if (process.env.NODE_ENV !== "test") {
             config.resolve.fallback['process/browser'] = require.resolve('process/browser');
@@ -84,6 +90,7 @@ module.exports = {
             args[0].typescript.configFile = TSCONFIG_PATH;
             return args;
         });
+
         config.module.rule('yml').test(/\.ya?ml$/).use('yaml-loader').loader('yaml-loader').end();
 
         config.optimization.minimizer('terser').tap(args => {
