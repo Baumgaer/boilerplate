@@ -76,8 +76,7 @@ module.exports = {
         config.module.rule('ts').use('ts-loader').merge({
             options: {
                 configFile: TSCONFIG_PATH,
-                context: path.dirname(TSCONFIG_PATH),
-                compiler: "ttypescript"
+                context: path.dirname(TSCONFIG_PATH)
             }
         });
 

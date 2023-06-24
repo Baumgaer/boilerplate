@@ -101,8 +101,8 @@ export function Attr<T extends typeof BaseModel>(options: AttrOptions<T> = {}): 
  * @param attributeName the name of the attribute
  * @returns a decorator which registers the method as a validator
  */
-export function AttrValidator<T>(attributeName: keyof T) {
-    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], true | AttributeError>>) => {
+export function AttrValidator<T, K extends keyof T>(attributeName: K) {
+    return (target: T, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[K], true | AttributeError>>) => {
         Reflect.defineMetadata(`${String(attributeName)}:validator`, descriptor, target as object);
     };
 }
@@ -116,8 +116,8 @@ export function AttrValidator<T>(attributeName: keyof T) {
  * @param attributeName the name of the attribute
  * @returns a decorator which registers the method as a getter
  */
-export function AttrGetter<T>(attributeName: keyof T) {
-    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[typeof attributeName]>) => {
+export function AttrGetter<T, K extends keyof T>(attributeName: K) {
+    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<() => T[K]>) => {
         Reflect.defineMetadata(`${String(attributeName)}:getter`, descriptor, target as object);
     };
 }
@@ -132,8 +132,8 @@ export function AttrGetter<T>(attributeName: keyof T) {
  * @param attributeName the name of the attribute
  * @returns a decorator which registers the method as a setter
  */
-export function AttrSetter<T>(attributeName: keyof T) {
-    return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[typeof attributeName], T[typeof attributeName]>>) => {
+export function AttrSetter<T, K extends keyof T>(attributeName: K) {
+    return (target: T, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<GeneralHookFunction<T[K], T[K]>>) => {
         Reflect.defineMetadata(`${String(attributeName)}:setter`, descriptor, target as object);
     };
 }
@@ -149,7 +149,7 @@ export function AttrSetter<T>(attributeName: keyof T) {
  * @param type the type of the observer
  * @returns a decorator which registers the method as an observer
  */
-export function AttrObserver<T>(attributeName: keyof T, type: AttrObserverTypes) {
+export function AttrObserver<T, K extends keyof T>(attributeName: K, type: AttrObserverTypes) {
     return (target: PartialDeep<T>, _methodName: string | symbol, descriptor: TypedPropertyDescriptor<ObserverHookFunction<any>>) => {
         Reflect.defineMetadata(`${String(attributeName)}:observer:${type}`, descriptor, target as object);
     };
@@ -223,7 +223,7 @@ export function Arg<T extends typeof SchemaBased>(options: ArgOptions<T> = {}) {
     const metadataOptions: ArgOptionsPartialMetadataJson<T> = mergeWith({}, metadata, options as ArgOptionsWithMetadataJson<T>);
     delete metadataOptions.metadataJson;
 
-    return (target: T, methodName: string | symbol, index: number) => {
+    return (target: PartialDeep<T>, methodName: string | symbol, index: number) => {
         metadataOptions.index = metadataOptions.index ?? index;
 
         const theTarget = (target.constructor.prototype === target ? target.constructor : target) as T;

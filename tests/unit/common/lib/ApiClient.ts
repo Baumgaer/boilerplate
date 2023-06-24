@@ -1,5 +1,5 @@
 import SrcApiClient from "~src/common/lib/ApiClient";
-import type { RequestParams } from "~common/@types/ApiClient";
+import type { RequestParams } from "~env/@types/ApiClient";
 
 export default class ApiClient extends SrcApiClient {
 

@@ -1,5 +1,11 @@
 {
     "extends": "./../../.eslintrc",
+    "env": {
+        "node": false
+    },
+    "parserOptions": {
+        "project": "src/client/tsconfig.json"
+    },
     "rules": {
         "boilerplate/no-invalid-common-import": [
             "error"

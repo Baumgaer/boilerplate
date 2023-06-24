@@ -56,18 +56,10 @@
     "include": [
         "./@types/*.d.ts",
         "./**/*.js",
-        "src/**/*.ts",
-        "src/**/*.d.ts",
-        "src/**/*.tsx",
-        "src/**/*.vue",
         "dev/**/*.ts",
         "dev/**/*.js",
-        "tests/**/*.ts",
-        "tests/**/*.d.ts",
-        "tests/**/*.tsx",
         "./capacitor.config.ts",
-        "./cypress.config.ts",
-        "./.mocharc.js"
+        "./cypress.config.ts"
     ],
     "exclude": [
         "node_modules"

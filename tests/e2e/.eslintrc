@@ -6,6 +6,9 @@
         "cypress/globals": true,
         "mocha": true
     },
+    "parserOptions": {
+        "project": "tests/e2e/tsconfig.json"
+    },
     "plugins": [
         "cypress"
     ],

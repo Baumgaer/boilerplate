@@ -1,4 +1,4 @@
-import { AttributeError } from "~common/lib/Errors";
+import { AttributeError } from "~env/lib/Errors";
 import TestAbstractModel from "~env/models/TestAbstractModel";
 import { Attr, AttrGetter, AttrSetter, AttrObserver, AttrValidator, Model, Arg, Mutation, Query } from "~env/utils/decorators";
 import type { ITestMyInterface, ITestMySecondInterface } from "~env/@types/ITestMyInterface";
@@ -251,7 +251,7 @@ export default class TestModel extends TestAbstractModel {
 
     @AttrSetter("anArray")
     protected setAnArray(value: string[]) {
-        if (!value) return;
+        if (!value) return [];
         this.setterCount++;
         if (!value.length) return ["1", "2", "3"];
         return value;
@@ -286,7 +286,7 @@ export default class TestModel extends TestAbstractModel {
     }
 
     @AttrValidator("aString")
-    protected validateAString(value: this["aString"]) {
+    protected validateAString(value?: string) {
         this.validateCount++;
         if (!value?.startsWith("lol")) return new AttributeError("aString", "format", [], value);
         return true;

@@ -48,7 +48,7 @@ export default class Configurator {
             eachDeep(oldValue, (currentValue, key, parentValue, context) => {
                 let allowedTypes: string[] = [typeof currentValue];
                 if (isArray(parentValue)) {
-                    if (!parentValue.length || isArray(value) && key >= value.length) return; // No type to determine
+                    if (!parentValue.length || isArray(value) && Number(key) >= value.length) return; // No type to determine
                     allowedTypes = Array.from(new Set(parentValue.map((item) => typeof item)));
                 }
                 if (context.path && !allowedTypes.includes(typeof getValue(value, context.path))) {

@@ -1,7 +1,6 @@
 import { expect } from "chai";
-import { AttributeError } from "~common/lib/Errors";
 import BaseAttribute from "~env/lib/BaseAttribute";
-import { TypeError } from "~env/lib/Errors";
+import { AttributeError, TypeError } from "~env/lib/Errors";
 import TestModel from "~env/models/TestModel";
 import { isEqual } from "~env/utils/utils";
 import type { IAttributeChange } from "~env/@types/AttributeSchema";
@@ -157,7 +156,7 @@ export default function (_environment = "common") {
         it("should adjust changes", () => {
             const anArrayAttribute = testModel.getAttribute("anArray") as unknown as BaseAttribute<typeof TestModel>;
             expect(anArrayAttribute).to.be.an.instanceOf(BaseAttribute);
-            Reflect.set(testModel, "anArray", undefined);
+            Reflect.set(testModel, "anArray", undefined); // Will set it to an empty array
             anArrayAttribute.removeChanges();
 
             testModel.anArray = ["1"];
@@ -168,7 +167,7 @@ export default function (_environment = "common") {
             ];
             anArrayAttribute.applyChanges(changes);
             expect(isEqual(anArrayAttribute.getChanges(), [
-                { type: 'init', path: [], value: [], previousValue: undefined },
+                { type: 'change', path: [], value: [], previousValue: [] },
                 { type: 'add', path: ['2'], value: '1', previousValue: undefined },
                 { type: 'add', path: ['3'], value: '2', previousValue: undefined },
                 { type: 'add', path: ['4'], value: '3', previousValue: undefined },
@@ -192,7 +191,7 @@ export default function (_environment = "common") {
         it("should generate changes with all array functions", () => {
             const anArrayAttribute = testModel.getAttribute("anArray") as unknown as BaseAttribute<typeof TestModel>;
             expect(anArrayAttribute).to.be.an.instanceOf(BaseAttribute);
-            Reflect.set(testModel, "anArray", undefined);
+            Reflect.set(testModel, "anArray", undefined); // Will set it to an empty array
             anArrayAttribute.removeChanges();
             testModel.anArray = ["1"];
 
@@ -204,7 +203,7 @@ export default function (_environment = "common") {
             testModel.anArray.fill("0", 0, 2);
             testModel.anArray.splice(2, 2);
             expect(isEqual(anArrayAttribute.getChanges(), [
-                { type: 'init', path: [], value: [], previousValue: undefined },
+                { type: 'change', path: [], value: [], previousValue: [] },
                 { type: 'add', path: ['0'], value: '1', previousValue: undefined },
                 { type: 'add', path: ['1'], value: '2', previousValue: undefined },
                 { type: 'add', path: ['2'], value: '3', previousValue: undefined },

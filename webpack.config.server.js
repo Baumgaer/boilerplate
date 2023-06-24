@@ -1,6 +1,5 @@
-/* eslint-disable */
-const arp = require('app-root-path');
 const path = require('path');
+const arp = require('app-root-path');
 const lodash = require("lodash");
 
 const nodeExternals = require('webpack-node-externals');
@@ -56,7 +55,7 @@ module.exports = (env, options, returnConfigObject) => {
         node: {
             // Need this when working with express, otherwise the build fails
             __dirname: false,   // if you don't put this is, __dirname
-            __filename: false,  // and __filename return blank or /
+            __filename: false  // and __filename return blank or /
         },
         externals: [nodeExternals({
             allowlist: (moduleName) => {

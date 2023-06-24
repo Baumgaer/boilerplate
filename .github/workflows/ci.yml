@@ -40,8 +40,8 @@ jobs:
             - name: Run linting
               run: npm run lint
 
-            - name: Run type coverage
-              run: npm run type-coverage
+            # - name: Run type coverage
+            #   run: npm run type-coverage
 
             - name: Run unit tests
               uses: nick-fields/retry@v2

@@ -1,0 +1,6 @@
+{
+    "extends": "./../../../src/client/.eslintrc",
+    "parserOptions": {
+        "project": "tests/unit/client/tsconfig.json"
+    }
+}

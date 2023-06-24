@@ -3,6 +3,7 @@ import { expect } from "chai";
 import * as randGen from "random-input-generator";
 import { v4 as uuIdV4 } from "uuid";
 import { ZodObject, ZodLazy, ZodString, ZodOptional, ZodNumber, ZodDate, ZodBoolean, ZodUnion, ZodLiteral, ZodTuple, ZodArray, ZodNull } from "zod";
+// eslint-disable-next-line boilerplate/prefer-env-import
 import { embeddedEntityFactory } from "~common/lib/EmbeddedEntity";
 import ModelSchema from "~env/lib/ModelSchema";
 import TestModel from "~env/models/TestModel";
@@ -175,8 +176,7 @@ export default function (environment = "common") {
             }
 
             const schema = TestModel.getAttributeSchema("anInterface");
-            // @ts-expect-error 002
-            const embeddedEntityClass = schema?.embeddedEntity as ReturnType<typeof embeddedEntityFactory>;
+            const embeddedEntityClass = schema?.embeddedEntity as unknown as ReturnType<typeof embeddedEntityFactory>;
             const commonEmbeddedEntityClass = embeddedEntityFactory(className, {
                 prop1: { name: "prop1", isRequired: true, isLazy: false, type: { identifier: "String", isPrimitive: true } },
                 prop2: { name: "prop2", isRequired: false, isLazy: false, type: { identifier: "Number", isPrimitive: true } }

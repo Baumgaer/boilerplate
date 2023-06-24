@@ -1,4 +1,3 @@
-/* eslint-disable */
 const os = require('os');
 const path = require('path');
 const arp = require('app-root-path');
@@ -41,7 +40,7 @@ module.exports = (_env, options, returnConfigObject) => {
         devtool: 'source-map',
         cache: {
             type: 'filesystem',
-            cacheDirectory: path.resolve(__dirname, '.build'),
+            cacheDirectory: path.resolve(__dirname, '.build')
         },
         plugins: [
             new ForkTsCheckerWebpackPlugin({
@@ -72,7 +71,6 @@ module.exports = (_env, options, returnConfigObject) => {
                     {
                         loader: 'ts-loader',
                         options: {
-                            compiler: "ttypescript",
                             configFile: TSCONFIG_PATH,
                             context: path.dirname(TSCONFIG_PATH),
                             happyPackMode: false,

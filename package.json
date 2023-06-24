@@ -57,7 +57,8 @@
         "prepare": "npm-run-all -s prepare:*",
         "prepare:eslint-plugin-boilerplate": "cd ./dev/eslint-plugin-boilerplate && npm ci && npm run build",
         "prepare:typescript-transformer-boilerplate": "cd ./dev/typescript-transformer-boilerplate && npm ci && npm run build",
-        "prepare:husky": "is-ci || husky install"
+        "prepare:husky": "is-ci || husky install",
+        "prepare:ts-patch": "ts-patch install"
     },
     "dependencies": {
         "@babel/runtime": "^7.22.5",
@@ -178,6 +179,7 @@
         "stylelint-config-standard-scss": "^9.0.0",
         "thread-loader": "^4.0.2",
         "ts-loader": "^9.4.3",
+        "ts-patch": "^3.0.1",
         "ts-plugin-type-coverage": "^2.26.0",
         "tsconfig-paths-webpack-plugin": "^4.0.1",
         "ttypescript": "^1.5.15",
@@ -185,8 +187,7 @@
         "type-fest": "^3.12.0",
         "typedoc": "^0.24.8",
         "typedoc-plugin-rename-defaults": "^0.6.5",
-        "typescript": "^4.9.5",
-        "typescript-coverage-report": "^0.7.0",
+        "typescript": "^5.0.4",
         "typescript-transformer-boilerplate": "./dev/typescript-transformer-boilerplate/",
         "webpack": "^5.88.0",
         "webpack-cli": "^5.1.4",
