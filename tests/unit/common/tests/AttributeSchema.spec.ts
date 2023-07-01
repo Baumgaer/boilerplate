@@ -9,7 +9,7 @@ import ModelSchema from "~env/lib/ModelSchema";
 import TestModel from "~env/models/TestModel";
 import TestMyTestModel from "~env/models/TestMyTestModel";
 import TestMyTesterModel from "~env/models/TestMyTesterModel";
-import { hasOwnProperty, upperFirst } from "~env/utils/utils";
+import { hasOwnProperty, upperFirst, isEqual } from "~env/utils/utils";
 import type { ZodRawShape, ZodUndefined } from "zod";
 
 export default function (environment = "common") {
@@ -270,36 +270,82 @@ export default function (environment = "common") {
             expect(schema?.isLazy).to.be.true;
         });
 
-        it(`should use every time its own raw type`, () => {
-            let schema = TestModel.getAttributeSchema("aBoolean");
-            expect(schema?.isArrayType()).to.be.false;
-            expect(schema?.isBooleanType()).to.be.true;
-            expect(schema?.isCustomType()).to.be.false;
-            expect(schema?.isDateType()).to.be.false;
-            expect(schema?.isIntersectionType()).to.be.false;
-            expect(schema?.isUnionType()).to.be.false;
-            expect(schema?.isLiteralType()).to.be.false;
-            expect(schema?.isModelType()).to.be.false;
-            expect(schema?.isNullType()).to.be.false;
-            expect(schema?.isNumberType()).to.be.false;
-            expect(schema?.isObjectLikeType()).to.be.false;
-            expect(schema?.isOptionalType()).to.be.false;
-            expect(schema?.isPlainObjectType()).to.be.false;
-            expect(schema?.isStringType()).to.be.false;
-            expect(schema?.isTupleType()).to.be.false;
-            expect(schema?.isUndefinedType()).to.be.false;
-            expect(schema?.isUnresolvedType()).to.be.false;
+        it(`should use every time its own raw type`, async () => {
+            const typeFuncs = ["isUnionType", "isIntersectionType", "isLiteralType", "isStringType", "isNumberType", "isBooleanType", "isDateType", "isModelType", "isArrayType", "isTupleType", "isOptionalType", "isObjectLikeType", "isPlainObjectType", "isRecordType", "isUnresolvedType", "isAnyType", "isUndefinedType", "isNullType", "isCustomType"] as const;
 
-            expect(schema?.hasIdentifier()).to.be.true;
-            expect(schema?.getUnionTypeValues().length).to.be.equal(0);
+            const buildEquality = (params: { getTypeIdentifier?: string | undefined, hasIdentifier?: boolean, getRelationType?: null | string }) => {
+                const getTypeIdentifier = "";
+                const hasIdentifier = true;
+                const getRelationType = null;
+                const defaultValues = { getTypeIdentifier, hasIdentifier, getRelationType };
+                return Object.assign(defaultValues, params);
+            };
 
-            schema = TestModel.getAttributeSchema("aTuple");
-            expect(schema?.getTypeIdentifier()).to.be.equal("String");
+            const testCases = [
+                {
+                    modelClass: TestModel,
+                    testCases: [
+                        { attr: "oneToOne", isType: ["isObjectLikeType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestMyTestModel", getRelationType: "OneToOne" }) },
+                        { attr: "oneToOneUnion", isType: ["isObjectLikeType", "isModelType", "isUnionType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false, getRelationType: "OneToOne" }) },
+                        { attr: "bidirectionalOneToOne", isType: ["isObjectLikeType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestMyTestModel", getRelationType: "OneToOne" }) },
+                        { attr: "manyToMany", isType: ["isObjectLikeType", "isArrayType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestMyTestModel", hasIdentifier: false, getRelationType: "ManyToMany" }) },
+                        { attr: "noRelation", isType: ["isObjectLikeType", "isArrayType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestMyTestModel", hasIdentifier: false }) },
+                        { attr: "aGeneratedColumn", isType: ["isCustomType"], equality: buildEquality({ getTypeIdentifier: "varchar" }) },
+                        { attr: "aBoolean", isType: ["isBooleanType"], equality: buildEquality({ getTypeIdentifier: "Boolean" }) },
+                        { attr: "aString", isType: ["isStringType"], equality: buildEquality({ getTypeIdentifier: "String" }) },
+                        { attr: "aDate", isType: ["isObjectLikeType", "isDateType"], equality: buildEquality({ getTypeIdentifier: "Date" }) },
+                        { attr: "anUnion", isType: ["isUnionType", "isLiteralType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false }) },
+                        { attr: "aParenthesizedUnion", isType: ["isUnionType", "isLiteralType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false }) },
+                        { attr: "aUselessField", isType: ["isUnionType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false }) },
+                        { attr: "anIntersection", isType: ["isObjectLikeType", "isPlainObjectType", "isIntersectionType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false }) },
+                        { attr: "anIntersectionWithinArray", isType: ["isObjectLikeType", "isPlainObjectType", "isArrayType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false }) },
+                        { attr: "aTuple", isType: ["isObjectLikeType", "isArrayType", "isTupleType"], equality: buildEquality({ getTypeIdentifier: undefined, hasIdentifier: false }) },
+                        { attr: "anInterface", isType: ["isObjectLikeType", "isPlainObjectType"], equality: buildEquality({ getTypeIdentifier: "ITestMyInterface" }) },
+                        { attr: "anArray", isType: ["isObjectLikeType", "isArrayType", "isStringType"], equality: buildEquality({ getTypeIdentifier: "String", hasIdentifier: false }) },
+                        { attr: "theLazyOne", isType: ["isStringType"], equality: buildEquality({ getTypeIdentifier: "String" }) },
+                        { attr: "theTextRange", isType: ["isCustomType"], equality: buildEquality({ getTypeIdentifier: "text" }) },
+                        { attr: "theNumberRange", isType: ["isCustomType"], equality: buildEquality({ getTypeIdentifier: "float" }) },
+                        { attr: "theEmail", isType: ["isCustomType"], equality: buildEquality({ getTypeIdentifier: "varchar" }) },
+                        { attr: "theUniqueOne", isType: ["isStringType"], equality: buildEquality({ getTypeIdentifier: "String" }) },
+                        { attr: "theVarchar", isType: ["isCustomType"], equality: buildEquality({ getTypeIdentifier: "varchar" }) },
+                        { attr: "aNumber", isType: ["isNumberType"], equality: buildEquality({ getTypeIdentifier: "Number" }) },
+                        { attr: "aNull", isType: ["isNullType"], equality: buildEquality({ getTypeIdentifier: "Null" }) },
+                        { attr: "anUndefined", isType: ["isUndefinedType"], equality: buildEquality({ getTypeIdentifier: "Undefined" }) },
+                        { attr: "aStringLiteral", isType: ["isLiteralType", "isStringType"], equality: buildEquality({ getTypeIdentifier: "String" }) },
+                        { attr: "aNumberLiteral", isType: ["isLiteralType", "isNumberType"], equality: buildEquality({ getTypeIdentifier: "Number" }) },
+                        { attr: "aBooleanLiteral", isType: ["isLiteralType", "isBooleanType"], equality: buildEquality({ getTypeIdentifier: "Boolean" }) }
+                    ]
+                },
+                {
+                    modelClass: TestMyTestModel,
+                    testCases: [
+                        { attr: "bidirectionalOneToOne", isType: ["isObjectLikeType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestModel", getRelationType: "OneToOne" }) },
+                        { attr: "oneToMany", isType: ["isObjectLikeType", "isArrayType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestModel", hasIdentifier: false, getRelationType: "OneToMany" }) },
+                        { attr: "manyToMany", isType: ["isObjectLikeType", "isArrayType", "isModelType"], equality: buildEquality({ getTypeIdentifier: "TestModel", hasIdentifier: false, getRelationType: "ManyToMany" }) }
+                    ]
+                }
+            ];
+
+            for (const superTestCase of testCases) {
+                for (const testCase of superTestCase.testCases) {
+                    const schema = superTestCase.modelClass.getAttributeSchema(testCase.attr);
+                    for (const typeCheckMethod of testCase.isType) {
+                        expect((schema as any)?.[typeCheckMethod]?.(), `Attr: ${testCase.attr} returns true for ${typeCheckMethod}`).to.be.true;
+                    }
+                    for (const typeCheckMethod of typeFuncs.filter((typeFunc) => !testCase.isType.includes(typeFunc))) {
+                        expect(schema?.[typeCheckMethod]?.(), `Attr: ${testCase.attr} returns false for ${typeCheckMethod}`).to.be.false;
+                    }
+                    for (const [methodName, value] of Object.entries(testCase.equality)) {
+                        expect((await (schema as any)?.[methodName]?.()), `Attr: ${testCase.attr} ${methodName} is equal to ${value}`).to.be.equal(value);
+                    }
+                }
+            }
+
         });
 
-        it(`should not have a relation type`, async () => {
-            const schema = TestModel.getAttributeSchema("aBoolean");
-            expect(await schema?.getRelationType()).to.be.null;
+        it(`should build relation correctly`, async () => {
+            const schema = TestModel.getAttributeSchema("bidirectionalOneToOne");
+            expect(isEqual(schema?.relation, { type: "OneToOne", mirrorClass: TestMyTestModel, mirrorAttributeName: "bidirectionalOneToOne" })).to.be.true;
         });
 
         it(`should validate correctly`, async () => {

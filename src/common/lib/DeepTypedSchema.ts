@@ -4,7 +4,7 @@ import { TypeError } from "~env/lib/Errors";
 import Logger from "~env/lib/Logger";
 import Schema from "~env/lib/Schema";
 import { baseTypeFuncs, LazyType, NumberType, StringType, UnionType, toInternalValidationReturnType, getModelNameToModelMap } from "~env/utils/schema";
-import { isArray, isPlainObject } from "~env/utils/utils";
+import { isArray, isPlainObject, allEqual } from "~env/utils/utils";
 import type { DeepTypedOptions, DeepTypedOptionsPartialMetadataJson, SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type {
@@ -144,7 +144,10 @@ export default abstract class DeepTypedSchema<T extends typeof SchemaBased> exte
      */
     public getTypeIdentifier(altType?: MetadataType): string | undefined {
         const type = altType || this.rawType;
-        if (this.isTupleType(type)) return type.subTypes.find(this.hasIdentifier.bind(this))?.identifier;
+        if (this.isTupleType(type)) {
+            if (allEqual(type.subTypes)) return type.subTypes.find(this.hasIdentifier.bind(this))?.identifier;
+            return;
+        }
         if (this.isArrayType(type) && !this.isTupleType(type) && this.hasIdentifier(type.subType)) return type.subType.identifier;
         if (this.hasIdentifier(type)) return type.identifier;
     }

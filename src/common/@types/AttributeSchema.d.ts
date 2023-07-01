@@ -10,6 +10,7 @@ import type { SpatialColumnOptions } from "typeorm/decorator/options/SpatialColu
 import type { DeepTypedOptions } from "~env/@types/DeepTypedSchema";
 import type { IAttrMetadata } from "~env/@types/MetadataTypes";
 import type { ModelLike } from "~env/@types/ModelClass";
+import type BaseModel from "~env/lib/BaseModel";
 
 export type { SchemaTypes, ObjectSchemaType } from "~env/@types/DeepTypedSchema";
 
@@ -84,6 +85,12 @@ export interface IAttributeChange {
 
 export interface IEmbeddedEntity {
     static className: string;
+}
+
+export interface RelationDefinition {
+    type: "OneToOne" | "OneToMany" | "ManyToOne" | "ManyToMany";
+    mirrorClass: typeof BaseModel;
+    mirrorAttributeName?: string
 }
 
 export type SchemaNameByModelClass<T> = keyof ConstructionParams<InstanceType<T>>;

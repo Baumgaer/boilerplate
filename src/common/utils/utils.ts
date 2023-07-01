@@ -148,3 +148,13 @@ export function setValue(...args: Parameters<typeof _["set"]>): ReturnType<typeo
 export function getValue(...args: Parameters<typeof _["get"]>): ReturnType<typeof _["get"]> {
     return _.get(...args);
 }
+
+/**
+ * Checks if all elements within an array are lodash equal
+ *
+ * @param array elements to check
+ * @returns true if all elements are lodash equal and false else
+ */
+export function allEqual(array: unknown[]): boolean {
+    return array.every(item => lodash.isEqual(item, array[0]));
+}

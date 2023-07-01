@@ -28,7 +28,8 @@ import type {
     AttrOptionsPartialMetadataJson,
     IEmbeddedEntity,
     SchemaNameByModelClass,
-    ObjectSchemaType
+    ObjectSchemaType,
+    RelationDefinition
 } from "~env/@types/AttributeSchema";
 import type { ValidationResult } from "~env/@types/Errors";
 import type {
@@ -164,10 +165,13 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * this attribute schema.
      */
     // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-    // @ts-ignore this is necessary because TypeScript seems to have problems with recursive definitions
+    // @ts-ignore this is necessary because TypeScript seems to have problems with recursive definitions.
     private _embeddedEntity: ReturnType<typeof embeddedEntityFactory> | null = null;
 
-    private _relation: any;
+    /**
+     * Stores the result of building the relation. Is false if it is not a relation and RelationDefinition else.
+     */
+    private _relation?: RelationDefinition | false;
 
     public constructor(ctor: T, name: keyof T, internalName: string, options: AttrOptionsPartialMetadataJson<T>) {
         super(ctor, name, internalName, options);
@@ -424,7 +428,7 @@ export default class AttributeSchema<T extends ModelLike> extends DeepTypedSchem
      * @param options options for the relation
      * @returns true if a relation was build and false else
      */
-    private async buildRelation(attributeName: string, options: RelationOptions) {
+    private async buildRelation(attributeName: string, options: RelationOptions): Promise<false | RelationDefinition> {
         if (!this.isModelType()) return false;
         const identifier = this.getTypeIdentifier() || "";
         if (!identifier) return false;

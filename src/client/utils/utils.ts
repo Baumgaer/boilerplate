@@ -23,7 +23,8 @@ export {
     setValue,
     union,
     upperFirst,
-    uniq
+    uniq,
+    allEqual
 } from "~common/utils/utils";
 
 export function getEnvironment() {
