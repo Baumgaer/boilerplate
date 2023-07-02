@@ -190,12 +190,15 @@
                 "alwaysTryTypes": true, // always try to resolve types under `<root>@types` directory even it doesn't contain any source code, like `@types/unist`
                 // use an array
                 "project": [
+                    "tsconfig.json",
                     "src/client/tsconfig.json",
                     "src/common/tsconfig.json",
                     "src/server/tsconfig.json",
                     "tests/unit/client/tsconfig.json",
                     "tests/unit/common/tsconfig.json",
                     "tests/unit/server/tsconfig.json",
+                    "tests/e2e/tsconfig.json",
+                    "dev/typescript-transformer-boilerplate/tsconfig.json",
                     "dev/eslint-plugin-boilerplate/tsconfig.json"
                 ]
             }

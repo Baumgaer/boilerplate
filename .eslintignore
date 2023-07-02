@@ -1,3 +1,9 @@
+dist
+coverage
+android
+ios
+docs
+
 interfaces
 mocharc.js
 gulpfile.js

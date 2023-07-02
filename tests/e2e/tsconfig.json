@@ -1,8 +1,9 @@
 {
     "extends": "./../../tsconfig.json",
     "include": [
-        "./**/*.js",
-        "./**/*.cy.js"
+        "**/*.js",
+        "**/*.cy.js",
+        "**/*.ts"
     ],
     "exclude": [
         "node_modules"

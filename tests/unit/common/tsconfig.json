@@ -30,11 +30,11 @@
         "../../../src/common/**/*.spec.ts",
         "../../../src/common/**/*.d.ts",
         "../../../src/common/**/*.tsx",
-        "./*.ts",
-        "./*.spec.ts",
-        "./**/*.ts",
-        "./**/*.spec.ts",
-        "./**/*.d.ts",
-        "./**/*.tsx"
+        "*.ts",
+        "*.spec.ts",
+        "**/*.ts",
+        "**/*.spec.ts",
+        "**/*.d.ts",
+        "**/*.tsx"
     ]
 }

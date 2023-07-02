@@ -54,12 +54,12 @@
         ]
     },
     "include": [
-        "./@types/*.d.ts",
-        "./**/*.js",
+        "@types/*.d.ts",
+        "**/*.js",
         "dev/**/*.ts",
         "dev/**/*.js",
-        "./capacitor.config.ts",
-        "./cypress.config.ts"
+        "capacitor.config.ts",
+        "cypress.config.ts"
     ],
     "exclude": [
         "node_modules"

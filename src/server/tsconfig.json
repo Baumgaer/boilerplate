@@ -22,11 +22,11 @@
         ]
     },
     "include": [
-        "./**/*.ts",
-        "./**/*.d.ts",
-        "./**/*.tsx",
-        "./../common/**/*.ts",
-        "./../common/**/*.d.ts",
-        "./../common/**/*.tsx"
+        "**/*.ts",
+        "**/*.d.ts",
+        "**/*.tsx",
+        "../common/**/*.ts",
+        "../common/**/*.d.ts",
+        "../common/**/*.tsx"
     ]
 }
