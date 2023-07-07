@@ -174,7 +174,7 @@
         "random-input-generator": "^1.0.0",
         "sass": "^1.63.6",
         "sass-loader": "^13.3.2",
-        "stylelint": "^15.7.0",
+        "stylelint": "^15.10.1",
         "stylelint-config-clean-order": "^5.0.1",
         "stylelint-config-standard-scss": "^9.0.0",
         "thread-loader": "^4.0.2",
