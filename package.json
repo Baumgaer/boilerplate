@@ -37,7 +37,7 @@
         "test": "npm run test:unit && npm run test:e2e",
         "test:unit": "npm run test:unit:server && npm run test:unit:client",
         "test:unit:server": "echo \"no test:unit:server script\"",
-        "test:unit:client": "npm run compile:test:unit:client:config && cross-env NODE_ENV=test nyc vue-cli-service test:unit ./tests/unit/client/index.spec.ts --inspect-brk",
+        "test:unit:client": "npm run compile:test:unit:client:config && cross-env NODE_ENV=test nyc vue-cli-service test:unit ./tests/unit/client/index.spec.ts",
         "test:e2e": "vue-cli-service test:e2e",
         "//4b": "",
         "compile:test:unit:server:config": "cross-env NODE_ENV=test TS_CONFIG_PATH=tests/unit/server/tsconfig.json ENVIRONMENT=server gulp",
