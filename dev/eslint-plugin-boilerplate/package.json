@@ -5,10 +5,10 @@
     },
     "description": "Import with certain structure",
     "devDependencies": {
-        "@types/eslint": "^8.40.2",
+        "@types/eslint": "^8.44.0",
         "@types/estree": "^1.0.1",
-        "@types/node": "^20.3.1",
-        "tsup": "^7.0.0",
+        "@types/node": "^20.4.2",
+        "tsup": "^7.1.0",
         "typescript": "^5.0.4"
     },
     "files": [
