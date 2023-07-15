@@ -1,4 +1,4 @@
-import ts, { SymbolFlags, SyntaxKind } from "typescript";
+import ts, { SymbolFlags, SyntaxKind, isDecorator } from "typescript";
 import type { TSNodeNames } from "../@types/Utils";
 
 export function isDecoratorNode(node?: ts.Node): node is ts.Decorator {
@@ -118,31 +118,31 @@ export function isAnyKeyword(node?: ts.Node): node is ts.DefaultKeyword {
 }
 
 export function isDefaultKeyword(node?: ts.Node): node is ts.DefaultKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.DefaultKeyword) === SyntaxKind.DefaultKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.DefaultKeyword) === SyntaxKind.DefaultKeyword);
 }
 
 export function isPublicKeyword(node?: ts.Node): node is ts.PublicKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.PublicKeyword) === SyntaxKind.PublicKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.PublicKeyword) === SyntaxKind.PublicKeyword);
 }
 
 export function isProtectedKeyword(node?: ts.Node): node is ts.ProtectedKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.ProtectedKeyword) === SyntaxKind.ProtectedKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.ProtectedKeyword) === SyntaxKind.ProtectedKeyword);
 }
 
 export function isPrivateKeyword(node?: ts.Node): node is ts.PrivateKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.PrivateKeyword) === SyntaxKind.PrivateKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.PrivateKeyword) === SyntaxKind.PrivateKeyword);
 }
 
 export function isExportKeyword(node?: ts.Node): node is ts.ExportKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.ExportKeyword) === SyntaxKind.ExportKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.ExportKeyword) === SyntaxKind.ExportKeyword);
 }
 
 export function isAbstractKeyword(node?: ts.Node): node is ts.AbstractKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.AbstractKeyword) === SyntaxKind.AbstractKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.AbstractKeyword) === SyntaxKind.AbstractKeyword);
 }
 
 export function isReadonlyKeyword(node?: ts.Node): node is ts.ReadonlyKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.ReadonlyKeyword) === SyntaxKind.ReadonlyKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.ReadonlyKeyword) === SyntaxKind.ReadonlyKeyword);
 }
 
 export function isVoidKeyword(node?: ts.Node): node is ts.VoidExpression {
@@ -150,7 +150,7 @@ export function isVoidKeyword(node?: ts.Node): node is ts.VoidExpression {
 }
 
 export function isOverrideKeyword(node?: ts.Node): node is ts.OverrideKeyword {
-    return Boolean(node && (node.kind & SyntaxKind.OverrideKeyword) === SyntaxKind.OverrideKeyword);
+    return Boolean(node && !isDecorator(node) && (node.kind & SyntaxKind.OverrideKeyword) === SyntaxKind.OverrideKeyword);
 }
 
 export function isPromiseTypeNode(checker: ts.TypeChecker, node?: ts.Node) {

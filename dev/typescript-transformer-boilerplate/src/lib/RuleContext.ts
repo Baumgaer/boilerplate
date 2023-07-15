@@ -139,7 +139,7 @@ class RuleContext<T extends DecoratorNames, D extends ts.Node> {
         const metadata = this.options.emitMetadata?.call(this.config, ...params) ?? {};
 
         const name = node.name.getText();
-        const isRequired = !node.questionToken && !node.initializer || isPropertyDeclaration(node) && node.exclamationToken && !node.initializer;
+        const isRequired = !node.questionToken && "initializer" in node && !node.initializer || isPropertyDeclaration(node) && node.exclamationToken && !node.initializer;
         const isReadOnly = canHaveModifiers(node) && getModifiers(node)?.some((modifier) => isReadonlyKeyword(modifier));
         const isInternal = canHaveModifiers(node) && getModifiers(node)?.every((modifier) => !isPublicKeyword(modifier));
         const isLazy = isPromiseTypeNode(checker, node.type);
