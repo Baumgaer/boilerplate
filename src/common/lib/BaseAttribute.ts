@@ -1,7 +1,7 @@
 import onChange from "on-change";
 import { v4 as uuid } from "uuid";
 import { BaseError, AttributeError } from "~env/lib/Errors";
-import { setValue, getValue, isChangeObservable, isChangeObserved, isArray, isPlainObject } from "~env/utils/utils";
+import { setValue, getValue, isChangeObservable, isChangeObserved, isArray, isPlainObject, isObject } from "~env/utils/utils";
 import type { Options, ApplyData } from "on-change";
 import type { ChangeMethodsArgs, IAttributeChange } from "~env/@types/AttributeSchema";
 import type { ValidationResult } from "~env/@types/Errors";
@@ -114,11 +114,16 @@ export default abstract class BaseAttribute<T extends ModelLike> {
         if (this.unProxyfiedOwner[this.name] === undefined) changeType = "init";
 
         const hookValue = this.callHook("setter", value);
-        const oldValue = Reflect.get(this.owner, this.name);
+        const oldValue = Reflect.get(this.owner, this.name) as unknown;
         const newValue = this.observeChangesOf(hookValue !== undefined ? hookValue : value);
 
         const setResult = Reflect.set(this.unProxyfiedOwner, this.name, newValue);
-        if (setResult && oldValue !== newValue) {
+        const oldUnProxyfied = oldValue && isObject(oldValue) && "unProxyfiedObject" in oldValue && oldValue.unProxyfiedObject;
+        const newUnProxyfied = newValue && isObject(newValue) && "unProxyfiedObject" in newValue && newValue.unProxyfiedObject;
+        const unProxyfiedEqual = (oldUnProxyfied || newUnProxyfied) && oldUnProxyfied === newUnProxyfied;
+        const originalEqual = oldValue === newValue;
+        if (setResult && !unProxyfiedEqual && !originalEqual) {
+            this.reflect(newValue, oldValue);
             this.callHook("observer:change", newValue, { path: [], oldValue });
             this.addChange({ type: changeType, path: [], value: newValue, previousValue: oldValue });
         }
@@ -236,6 +241,97 @@ export default abstract class BaseAttribute<T extends ModelLike> {
             if (hookValue instanceof BaseError) result = { success: false, errors: [hookValue] };
         }
         return result;
+    }
+
+    protected reflect(value: any, previousValue: any) {
+        if (!this.schema.relation) return;
+
+        const { type, mirrorAttributeName } = this.schema.relation;
+        if (!mirrorAttributeName) return;
+
+        if (type === "OneToOne") {
+            if (value) {
+                value[mirrorAttributeName] = this.owner;
+            } else if (previousValue) delete previousValue[mirrorAttributeName];
+        } else if (type === "OneToMany") {
+            // I am an array other one is single value
+            if (!previousValue && isArray(value)) {
+                // init
+                for (const item of value) item[mirrorAttributeName] = this.owner;
+            } else if (isArray(previousValue) && isArray(value)) {
+                // set change
+                for (const item of previousValue) delete item[mirrorAttributeName];
+                for (const item of value) item[mirrorAttributeName] = this.owner;
+            } else if (isArray(previousValue) && !value) {
+                // unset change
+                for (const item of previousValue) delete item[mirrorAttributeName];
+            } else if (!previousValue && value) {
+                // added
+                value[mirrorAttributeName] = this.owner;
+            } else if (previousValue && value) {
+                // replaced
+                value[mirrorAttributeName] = this.owner;
+            } else if (previousValue && !value) {
+                // removed
+                delete previousValue[mirrorAttributeName];
+            }
+        } else if (type === "ManyToOne") {
+            // other one is array I am single value
+            if (!previousValue && value) {
+                // added
+                if (!value[mirrorAttributeName]) {
+                    value[mirrorAttributeName] = [this.owner];
+                } else value[mirrorAttributeName].push(this.owner);
+            } else if (previousValue && value) {
+                // replaced
+                const previousIndex = previousValue[mirrorAttributeName].indexOf(this.owner);
+                if (previousIndex >= 0) previousValue[mirrorAttributeName].splice(previousIndex, 1);
+                if (!value[mirrorAttributeName]) {
+                    value[mirrorAttributeName] = [this.owner];
+                } else value[mirrorAttributeName].push(this.owner);
+            } else if (previousValue && !value) {
+                // removed
+                const previousIndex = previousValue[mirrorAttributeName].indexOf(this.owner);
+                if (previousIndex >= 0) previousValue[mirrorAttributeName].splice(previousIndex, 1);
+            }
+        } else if (type === "ManyToMany") {
+            // both are arrays
+            if (!previousValue && isArray(value)) {
+                // init
+                for (const item of value) {
+                    if (!item[mirrorAttributeName]) {
+                        item[mirrorAttributeName] = [this.owner];
+                    } else item[mirrorAttributeName].push(this.owner);
+                }
+            } else if (isArray(previousValue) && isArray(value)) {
+                // set change
+                for (const item of previousValue) delete item[mirrorAttributeName];
+                for (const item of value) {
+                    if (!item[mirrorAttributeName]) {
+                        item[mirrorAttributeName] = [this.owner];
+                    } else item[mirrorAttributeName].push(this.owner);
+                }
+            } else if (isArray(previousValue) && !value) {
+                // unset change
+                for (const item of previousValue) delete item[mirrorAttributeName];
+            } else if (!previousValue && value) {
+                // added
+                if (!value[mirrorAttributeName]) {
+                    value[mirrorAttributeName] = [this.owner];
+                } else value[mirrorAttributeName].push(this.owner);
+            } else if (previousValue && value) {
+                // replaced
+                const previousIndex = previousValue[mirrorAttributeName].indexOf(this.owner);
+                if (previousIndex >= 0) previousValue[mirrorAttributeName].splice(previousIndex, 1);
+                if (!value[mirrorAttributeName]) {
+                    value[mirrorAttributeName] = [this.owner];
+                } else value[mirrorAttributeName].push(this.owner);
+            } else if (previousValue && !value) {
+                // removed
+                const previousIndex = previousValue[mirrorAttributeName].indexOf(this.owner);
+                if (previousIndex >= 0) previousValue[mirrorAttributeName].splice(previousIndex, 1);
+            }
+        }
     }
 
     /**
@@ -392,6 +488,7 @@ export default abstract class BaseAttribute<T extends ModelLike> {
      */
     private processArrayChange(...args: ChangeMethodsArgs<unknown>) {
         const [path, value, previousValue] = args;
+        this.reflect(value, previousValue);
         if (previousValue === undefined && value !== undefined) {
             this.callHook("observer:add", value, { path, oldValue: previousValue });
             this.addChange({ type: "add", path, value, previousValue });

@@ -90,8 +90,8 @@ export default function ModelClassFactory<T extends typeof BaseModel>(ctor: T & 
             // @ts-expect-error yes it's read only but not during construction...
             this.unProxyfiedObject = this;
 
-            let proxy = new Proxy(this, this.proxyHandler);
-            proxy = this.addReactivity(proxy);
+            let proxy = this.addReactivity(this);
+            proxy = new Proxy(proxy, this.proxyHandler);
             this.createAttributes(proxy);
             this.createActions(proxy);
             Object.assign(proxy, this.mergeProperties(proxy, args?.[0]));

@@ -2,8 +2,8 @@ import type { ColumnType } from "typeorm";
 
 export type CombinedDataType<T> = T | IUnionOrIntersectionType<T>;
 
-export type LiteralTypes = string | number | bigint | boolean | undefined | symbol | null;
-export type LiteralTypeNames = "String" | "Number" | "Bigint" | "Boolean" | "Undefined" | "Symbol" | "Null";
+export type LiteralType = string | number | bigint | boolean | undefined | symbol | null;
+export type LiteralTypeName = "String" | "Number" | "Bigint" | "Boolean" | "Undefined" | "Symbol" | "Null";
 
 export type MetadataType = IMixedType | IUnresolvedType | IOptionalType | IIdentifiedType<string> | ICustomType | IPrimitiveType | ILiteralType | IObjectType | IThisType | INamedObject | IArrayType | ITupleType | IInterfaceType | IModelType | IUnionType | IIntersectionType | IRecordType;
 
@@ -28,11 +28,11 @@ export interface ICustomType<T = ColumnType> extends IIdentifiedType<T> {
     isCustomType: boolean;
 }
 
-export interface IPrimitiveType<T = LiteralTypeNames> extends IIdentifiedType<T> {
+export interface IPrimitiveType<T = LiteralTypeName> extends IIdentifiedType<T> {
     isPrimitive: boolean;
 }
 
-export interface ILiteralType<T = LiteralTypes, N = LiteralTypeNames> extends IPrimitiveType<N> {
+export interface ILiteralType<T = LiteralType, N = LiteralTypeName> extends IPrimitiveType<N> {
     isLiteral: boolean;
     value: T
 }
