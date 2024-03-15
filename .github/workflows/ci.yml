@@ -44,7 +44,7 @@ jobs:
             #   run: npm run type-coverage
 
             - name: Compile test pre requisites
-              run: npm run compile:test:unit:server:config && npm run compile:test:unit:client:config
+              run: npm run compile:test:unit:client:config
 
             - name: Run unit tests
               uses: nick-fields/retry@v2
