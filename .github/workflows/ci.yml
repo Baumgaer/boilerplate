@@ -15,7 +15,7 @@ jobs:
         strategy:
             matrix:
                 os: [ubuntu-latest]
-                node: [16]
+                node: [20]
 
         steps:
             - name: Checkout
@@ -42,6 +42,9 @@ jobs:
 
             # - name: Run type coverage
             #   run: npm run type-coverage
+
+            - name: Compile test pre requisites
+              run: npm run compile:test:unit:server:config && compile:test:unit:client:config
 
             - name: Run unit tests
               uses: nick-fields/retry@v2
