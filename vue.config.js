@@ -28,7 +28,9 @@ module.exports = {
         });
 
         const normalModuleReplacementPlugin = new webpack.NormalModuleReplacementPlugin(/typeorm$/, function (result) {
-            result.request = result.request.replace(/typeorm/, "typeorm/browser");
+            if (process.env.NODE_ENV === "test") {
+                result.request = result.request.replace(/typeorm/, "typeorm");
+            } else result.request = result.request.replace(/typeorm/, "typeorm/browser");
         });
 
         const providePluginConfig = {
